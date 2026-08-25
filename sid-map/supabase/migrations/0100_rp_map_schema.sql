@@ -248,7 +248,7 @@ create policy "map_comments_delete_admin" on map_comments for delete
 -- Carte du monde complète (zones + lieux) en un seul appel
 create or replace function get_world_map()
 returns jsonb
-language sql stability stable security definer
+language sql stable security definer
 set search_path = public
 as $$
   select jsonb_build_object(
@@ -260,7 +260,7 @@ $$;
 -- Plan complet d'une ville (quartiers + bâtiments)
 create or replace function get_city_plan(p_city_id uuid)
 returns jsonb
-language sql stability stable security definer
+language sql stable security definer
 set search_path = public
 as $$
   select jsonb_build_object(
@@ -273,7 +273,7 @@ $$;
 -- Détail d'un bâtiment + tous ses étages
 create or replace function get_building_detail(p_building_id uuid)
 returns jsonb
-language sql stability stable security definer
+language sql stable security definer
 set search_path = public
 as $$
   select jsonb_build_object(
@@ -285,7 +285,7 @@ $$;
 -- Commentaires d'une cible avec le profil auteur (pseudo, avatar)
 create or replace function list_map_comments(p_target_type text, p_target_id uuid)
 returns jsonb
-language sql stability stable security definer
+language sql stable security definer
 set search_path = public
 as $$
   select coalesce(jsonb_agg(row_to_json(t) order by t.created_at), '[]'::jsonb)
