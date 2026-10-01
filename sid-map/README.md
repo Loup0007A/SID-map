@@ -131,6 +131,55 @@ au lieu de le deviner, et s'exécutent en **SECURITY INVOKER** (donc
 respectent exactement les permissions/RLS déjà en place sur `groups` et
 `quests` — aucun contournement de confidentialité).
 
+## Voyage réel, montures, relief/biomes, lieux-bâtiments (session majeure)
+
+**⚠️ Hypothèses à vérifier avant de jouer la migration 0105 :**
+- Je pars du principe que `quest_participants` a des colonnes `quest_id`
+  et `user_id`. Si ce n'est pas le cas, `check_quest_arrival()` échouera
+  silencieusement (elle ne casse rien, mais ne validera rien non plus).
+- La validation automatique appelle `validate_quest_participant(quest_id, user_id)`
+  qui existe déjà sur le site 1. Si cette fonction est réservée aux
+  admins (vérification de permission interne), l'appel par un joueur
+  échouera proprement — dis-le-moi et j'ajouterai un chemin dédié.
+- Je ne touche **que** la colonne `balance` de `wallets`, toujours en
+  `UPDATE` (jamais `INSERT`), donc aucun risque sur ses autres colonnes.
+
+**Fin de la téléportation** — Plus aucune écriture libre de
+`character_positions` n'est permise côté client (les policies RLS qui le
+permettaient sont supprimées par la migration). Tout changement de lieu
+passe par `start_journey()` / `arrive_at_destination()`, qui calculent et
+revalident le temps de trajet **côté serveur** : impossible de tricher en
+rappelant la fonction trop tôt ou en bricolant une requête directe. Seule
+exception : le tout premier positionnement (`set_initial_place`), qui
+n'est permis que si aucun lieu n'est encore défini.
+
+**Statut dissocié du lieu** — Un champ `status` libre ("disponible pour
+du RP", "dort"...), modifiable à tout moment via `set_character_status()`,
+indépendamment d'où se trouve le personnage.
+
+**Montures** — Les admins créent des types de montures (icône, vitesse,
+vol ou non, prix) et les proposent à la location sur n'importe quel lieu,
+depuis sa fiche de détail. Louer déduit le prix du portefeuille du
+joueur et crédite **50 %** à l'admin propriétaire du point de location
+(l'autre moitié est retirée de la circulation, comme une taxe, pour ne
+pas gonfler l'économie). La monture active accélère tous les trajets
+(route ou vol direct si elle vole).
+
+**Relief et biomes** — Deux nouvelles couches activables indépendamment
+(boutons 🏔/🌿 dans le coin bas-droit), éditables par les admins via les
+mêmes outils de dessin que le reste (onglets Carte/Relief/Biomes dans la
+barre d'édition).
+
+**Lieux-bâtiments** — N'importe quel lieu (pas seulement une ville) peut
+être marqué "bâtiment éditable" depuis sa fiche, avec ses propres étages
+à `/lieu/[id]`. Sous-sols via le bouton "+ Sous-sol" (numéros négatifs),
+et les pièces de type "Escalier" peuvent indiquer l'étage auquel elles
+mènent — cliquer dessus en vue à plat y navigue directement.
+
+**Quêtes validées par présence** — Si un personnage reste 1h sur le lieu
+d'une quête à laquelle il participe, elle se valide automatiquement
+(vérifié chaque minute en arrière-plan, affiche un compte à rebours).
+
 ## Mise à jour de la base
 
 Quatre migrations additives à jouer dans l'ordre (renomme-les avec la
@@ -142,6 +191,9 @@ vraie numérotation du site 1) :
    active Supabase Realtime sur ces deux tables.
 5. `0104_territory_and_quests.sql` — contrôle territorial (factions) +
    quêtes localisées sur la carte.
+6. `0105_travel_mounts_layers.sql` — voyage réel sans téléportation,
+   statut dissocié, montures louables, relief, biomes, lieux-bâtiments
+   (sous-sols/escaliers), validation de quête par présence.
 
 
 

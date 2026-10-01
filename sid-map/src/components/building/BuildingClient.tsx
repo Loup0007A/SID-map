@@ -45,12 +45,14 @@ export default function BuildingClient({ buildingId }: { buildingId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildingId]);
 
-  async function addFloor() {
-    const nextNumber = floors.length === 0 ? 0 : Math.max(...floors.map((f) => f.floor_number)) + 1;
+  async function addFloor(direction: 'up' | 'down') {
+    const numbers = floors.map((f) => f.floor_number);
+    const nextNumber =
+      floors.length === 0 ? 0 : direction === 'up' ? Math.max(...numbers) + 1 : Math.min(...numbers) - 1;
     await supabase.from('building_floors').insert({
       building_id: buildingId,
       floor_number: nextNumber,
-      name: `Étage ${nextNumber}`
+      name: nextNumber < 0 ? `Sous-sol ${Math.abs(nextNumber)}` : `Étage ${nextNumber}`
     });
     load();
   }
@@ -102,7 +104,7 @@ export default function BuildingClient({ buildingId }: { buildingId: string }) {
                             : 'border border-white/15 bg-white/5 text-paper/70 hover:border-accent'
                         }`}
                       >
-                        {f.name || `Étage ${f.floor_number}`}
+                        {f.name || (f.floor_number < 0 ? `Sous-sol ${Math.abs(f.floor_number)}` : `Étage ${f.floor_number}`)}
                       </button>
                       {canEditPlan && (
                         <button
@@ -116,12 +118,20 @@ export default function BuildingClient({ buildingId }: { buildingId: string }) {
                     </div>
                   ))}
                 {!view3D && canEditPlan && (
-                  <button
-                    onClick={addFloor}
-                    className="rounded-lg border border-dashed border-accent/50 px-3 py-1.5 text-sm text-accent hover:bg-accent/10"
-                  >
-                    + Ajouter un étage
-                  </button>
+                  <>
+                    <button
+                      onClick={() => addFloor('up')}
+                      className="rounded-lg border border-dashed border-accent/50 px-3 py-1.5 text-sm text-accent hover:bg-accent/10"
+                    >
+                      + Étage
+                    </button>
+                    <button
+                      onClick={() => addFloor('down')}
+                      className="rounded-lg border border-dashed border-white/25 px-3 py-1.5 text-sm text-paper/60 hover:bg-white/5"
+                    >
+                      + Sous-sol
+                    </button>
+                  </>
                 )}
               </div>
 
@@ -139,7 +149,12 @@ export default function BuildingClient({ buildingId }: { buildingId: string }) {
             {floors.length > 0 && view3D && <Building3DView floors={floors} />}
 
             {floors.length > 0 && !view3D && current && (
-              <FloorView floor={current} canEdit={canEditPlan} onUpdated={load} />
+              <FloorView
+                floor={current}
+                canEdit={canEditPlan}
+                onUpdated={load}
+                onNavigateFloor={(n) => setActiveFloor(n)}
+              />
             )}
           </div>
         </div>

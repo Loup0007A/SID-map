@@ -20,11 +20,13 @@ const ROOM_COLORS: Record<string, string> = {
 export default function FloorView({
   floor,
   canEdit,
-  onUpdated
+  onUpdated,
+  onNavigateFloor
 }: {
   floor: BuildingFloor;
   canEdit: boolean;
   onUpdated: () => void;
+  onNavigateFloor?: (floorNumber: number) => void;
 }) {
   const supabase = createClient();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -67,7 +69,7 @@ export default function FloorView({
     if (w > 2 && h > 2) setPendingRect({ x, y, w, h });
   }
 
-  async function saveRoom(name: string, type: string) {
+  async function saveRoom(name: string, type: string, connectsToFloor?: number) {
     if (!pendingRect) return;
     const newRoom: Room = {
       id: crypto.randomUUID(),
@@ -76,7 +78,8 @@ export default function FloorView({
       x: pendingRect.x,
       y: pendingRect.y,
       w: pendingRect.w,
-      h: pendingRect.h
+      h: pendingRect.h,
+      ...(type === 'Escalier' && connectsToFloor != null ? { connectsToFloor } : {})
     };
     const updatedPlan = [...(floor.plan_data ?? []), newRoom];
     await supabase.from('building_floors').update({ plan_data: updatedPlan }).eq('id', floor.id);
@@ -122,44 +125,61 @@ export default function FloorView({
             ))}
           </g>
 
-          {(floor.plan_data ?? []).map((room) => (
-            <g key={room.id}>
-              <rect
-                x={room.x}
-                y={room.y}
-                width={room.w}
-                height={room.h}
-                fill={ROOM_COLORS[room.type] ?? '#8a8a8a'}
-                fillOpacity={0.55}
-                stroke="#f4ecd8"
-                strokeWidth={0.25}
-                rx={0.5}
-              />
-              <text x={room.x + room.w / 2} y={room.y + room.h / 2} textAnchor="middle" fontSize="2.2" fill="#f4ecd8">
-                {room.name}
-              </text>
-              {canEdit && (
-                <g
-                  className="cursor-pointer"
+          {(floor.plan_data ?? []).map((room) => {
+            const isStairs = room.type === 'Escalier' && room.connectsToFloor != null;
+            return (
+              <g key={room.id}>
+                <rect
+                  x={room.x}
+                  y={room.y}
+                  width={room.w}
+                  height={room.h}
+                  fill={ROOM_COLORS[room.type] ?? '#8a8a8a'}
+                  fillOpacity={0.55}
+                  stroke="#f4ecd8"
+                  strokeWidth={0.25}
+                  rx={0.5}
+                  className={isStairs ? 'cursor-pointer' : undefined}
                   onClick={(e) => {
+                    if (!isStairs) return;
                     e.stopPropagation();
-                    deleteRoom(room.id);
+                    onNavigateFloor?.(room.connectsToFloor!);
                   }}
+                />
+                <text
+                  x={room.x + room.w / 2}
+                  y={room.y + room.h / 2}
+                  textAnchor="middle"
+                  fontSize="2.2"
+                  fill="#f4ecd8"
+                  className={isStairs ? 'pointer-events-none' : undefined}
                 >
-                  <circle cx={room.x + room.w - 2} cy={room.y + 2} r={2.2} fill="#00000060" />
-                  <text
-                    x={room.x + room.w - 2}
-                    y={room.y + 2.8}
-                    textAnchor="middle"
-                    fontSize="2.6"
-                    fill="#ff8080"
+                  {room.name}
+                  {isStairs ? ' ↕' : ''}
+                </text>
+                {canEdit && (
+                  <g
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteRoom(room.id);
+                    }}
                   >
-                    ✕
-                  </text>
-                </g>
-              )}
-            </g>
-          ))}
+                    <circle cx={room.x + room.w - 2} cy={room.y + 2} r={2.2} fill="#00000060" />
+                    <text
+                      x={room.x + room.w - 2}
+                      y={room.y + 2.8}
+                      textAnchor="middle"
+                      fontSize="2.6"
+                      fill="#ff8080"
+                    >
+                      ✕
+                    </text>
+                  </g>
+                )}
+              </g>
+            );
+          })}
 
           {drawing && (
             <rect
@@ -176,7 +196,13 @@ export default function FloorView({
         </svg>
       </div>
 
-      {pendingRect && <RoomFormModal onClose={() => setPendingRect(null)} onSave={saveRoom} />}
+      {pendingRect && (
+        <RoomFormModal
+          onClose={() => setPendingRect(null)}
+          onSave={saveRoom}
+          currentFloorNumber={floor.floor_number}
+        />
+      )}
     </div>
   );
 }

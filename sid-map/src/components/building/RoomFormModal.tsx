@@ -7,13 +7,18 @@ const ROOM_TYPES = ['Chambre', 'Salon', 'Cuisine', 'Salle', 'Couloir', 'Escalier
 
 export default function RoomFormModal({
   onClose,
-  onSave
+  onSave,
+  currentFloorNumber
 }: {
   onClose: () => void;
-  onSave: (name: string, type: string) => void;
+  onSave: (name: string, type: string, connectsToFloor?: number) => void;
+  currentFloorNumber?: number;
 }) {
   const [name, setName] = useState('');
   const [type, setType] = useState(ROOM_TYPES[0]);
+  const [connectsTo, setConnectsTo] = useState(
+    currentFloorNumber != null ? String(currentFloorNumber + 1) : ''
+  );
 
   return (
     <Modal title="Nommer la pièce" onClose={onClose}>
@@ -36,8 +41,23 @@ export default function RoomFormModal({
             </option>
           ))}
         </select>
+        {type === 'Escalier' && (
+          <div className="space-y-1">
+            <label className="text-[11px] uppercase tracking-wide text-paper/50">
+              Mène à l'étage n° (0 = rez-de-chaussée, négatif = sous-sol)
+            </label>
+            <input
+              type="number"
+              value={connectsTo}
+              onChange={(e) => setConnectsTo(e.target.value)}
+              className="w-full glass-input rounded-lg px-3 py-2 text-sm outline-none"
+            />
+          </div>
+        )}
         <button
-          onClick={() => onSave(name.trim() || type, type)}
+          onClick={() =>
+            onSave(name.trim() || type, type, type === 'Escalier' && connectsTo !== '' ? Number(connectsTo) : undefined)
+          }
           className="w-full btn-accent rounded-lg py-2.5 text-sm font-semibold text-paper transition"
         >
           Ajouter la pièce

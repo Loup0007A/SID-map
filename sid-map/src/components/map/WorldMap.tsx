@@ -5,8 +5,19 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { usePermission } from '@/lib/hooks/usePermission';
 import { useSvgViewport } from '@/lib/hooks/useSvgViewport';
-import type { MapGroup, MapPlace, MapQuest, MapRoute, MapZone, MarkerShape, Point } from '@/lib/types';
+import type {
+  MapBiome,
+  MapGroup,
+  MapPlace,
+  MapQuest,
+  MapRelief,
+  MapRoute,
+  MapZone,
+  MarkerShape,
+  Point
+} from '@/lib/types';
 import { ZONE_LABELS } from '@/lib/types';
+import { reliefColor } from '@/lib/relief';
 import type { ShapeTool } from '@/lib/drawTools';
 import { DRAG_SHAPES } from '@/lib/drawTools';
 import {
@@ -32,6 +43,8 @@ import PresencePanel from './PresencePanel';
 import PositionPickerModal from './PositionPickerModal';
 import RouteFormModal from './RouteFormModal';
 import RouteInfoModal from './RouteInfoModal';
+import ReliefFormModal from './ReliefFormModal';
+import BiomeFormModal from './BiomeFormModal';
 import QuestMarkers from './QuestMarkers';
 import TerritoryFlag from './TerritoryFlag';
 import PlaceSearch from './PlaceSearch';
@@ -40,6 +53,7 @@ import ExportMapButton from './ExportMapButton';
 import Navbar from '@/components/layout/Navbar';
 import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
 import { usePositions } from '@/lib/hooks/usePositions';
+import { useNow } from '@/lib/hooks/useNow';
 import { useGroups } from '@/lib/hooks/useGroups';
 import { useToast } from '@/components/ui/Toast';
 
@@ -55,6 +69,7 @@ export default function WorldMap() {
   const vp = useSvgViewport();
   const placeTypes = useTypeConfig('place');
   const positionsHook = usePositions();
+  const now = useNow(1000);
   const groupsHook = useGroups();
   const { showToast } = useToast();
 
@@ -62,6 +77,11 @@ export default function WorldMap() {
   const [places, setPlaces] = useState<MapPlace[]>([]);
   const [routes, setRoutes] = useState<MapRoute[]>([]);
   const [quests, setQuests] = useState<MapQuest[]>([]);
+  const [relief, setRelief] = useState<MapRelief[]>([]);
+  const [biomes, setBiomes] = useState<MapBiome[]>([]);
+  const [showRelief, setShowRelief] = useState(false);
+  const [showBiomes, setShowBiomes] = useState(false);
+  const [editLayer, setEditLayer] = useState<'map' | 'relief' | 'biome'>('map');
   const [loading, setLoading] = useState(true);
   const [didInitialFocus, setDidInitialFocus] = useState(false);
 
@@ -93,17 +113,22 @@ export default function WorldMap() {
 
   async function load() {
     setLoading(true);
-    const [{ data, error }, { data: routeData }, { data: questData }] = await Promise.all([
-      supabase.rpc('get_world_map'),
-      supabase.from('map_routes').select('*'),
-      supabase.rpc('list_map_quests')
-    ]);
+    const [{ data, error }, { data: routeData }, { data: questData }, { data: reliefData }, { data: biomeData }] =
+      await Promise.all([
+        supabase.rpc('get_world_map'),
+        supabase.from('map_routes').select('*'),
+        supabase.rpc('list_map_quests'),
+        supabase.from('map_relief').select('*'),
+        supabase.from('map_biomes').select('*')
+      ]);
     if (!error && data) {
       setZones(data.zones ?? []);
       setPlaces(data.places ?? []);
     }
     setRoutes((routeData as MapRoute[]) ?? []);
     setQuests((questData as MapQuest[]) ?? []);
+    setRelief((reliefData as MapRelief[]) ?? []);
+    setBiomes((biomeData as MapBiome[]) ?? []);
     setLoading(false);
   }
 
@@ -135,6 +160,21 @@ export default function WorldMap() {
     params.set('lieu', p.id);
     router.replace(`/carte?${params.toString()}`, { scroll: false });
   }
+
+  // Vérifie périodiquement si la présence prolongée (1h) sur le lieu
+  // d'une quête à laquelle on participe doit la valider.
+  useEffect(() => {
+    const check = async () => {
+      const result = await positionsHook.checkQuestArrival();
+      if (result?.some((r) => r.validated)) {
+        showToast('Quête validée par ta présence sur place !', 'success');
+      }
+    };
+    check();
+    const id = setInterval(check, 60000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function resetDrawing() {
     setActiveTool(null);
@@ -193,6 +233,18 @@ export default function WorldMap() {
     if (!confirm(`Supprimer la route "${r.name || 'sans nom'}" ?`)) return;
     await supabase.from('map_routes').delete().eq('id', r.id);
     showToast('Route supprimée.');
+    load();
+  }
+  async function deleteRelief(r: MapRelief) {
+    if (!confirm('Supprimer cette zone de relief ?')) return;
+    await supabase.from('map_relief').delete().eq('id', r.id);
+    showToast('Relief supprimé.');
+    load();
+  }
+  async function deleteBiome(b: MapBiome) {
+    if (!confirm('Supprimer cette zone de biome ?')) return;
+    await supabase.from('map_biomes').delete().eq('id', b.id);
+    showToast('Biome supprimé.');
     load();
   }
 
@@ -436,36 +488,60 @@ export default function WorldMap() {
 
                 {editMode && (
                   <>
-                    <button
-                      onClick={() => selectPointTool('point-circle')}
-                      className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 font-display text-xs transition ${
-                        activeTool === 'point-circle'
-                          ? 'btn-accent border-transparent text-paper'
-                          : 'border-white/15 bg-white/5 text-paper/70'
-                      }`}
-                    >
-                      ⚬ Lieu (rond)
-                    </button>
-                    <button
-                      onClick={() => selectPointTool('point-rect')}
-                      className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 font-display text-xs transition ${
-                        activeTool === 'point-rect'
-                          ? 'btn-accent border-transparent text-paper'
-                          : 'border-white/15 bg-white/5 text-paper/70'
-                      }`}
-                    >
-                      ▭ Lieu (rectangle)
-                    </button>
-                    <button
-                      onClick={selectRouteTool}
-                      className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 font-display text-xs transition ${
-                        activeTool === 'route'
-                          ? 'btn-accent border-transparent text-paper'
-                          : 'border-white/15 bg-white/5 text-paper/70'
-                      }`}
-                    >
-                      🛣 Route
-                    </button>
+                    <div className="flex shrink-0 gap-1 rounded-lg border border-white/15 bg-white/5 p-0.5">
+                      {(['map', 'relief', 'biome'] as const).map((layer) => (
+                        <button
+                          key={layer}
+                          onClick={() => {
+                            setEditLayer(layer);
+                            resetDrawing();
+                            setDeleteMode(false);
+                            if (layer === 'relief') setShowRelief(true);
+                            if (layer === 'biome') setShowBiomes(true);
+                          }}
+                          className={`whitespace-nowrap rounded px-2 py-1.5 font-display text-xs transition ${
+                            editLayer === layer ? 'bg-accent text-paper' : 'text-paper/60 hover:text-paper'
+                          }`}
+                        >
+                          {layer === 'map' ? '🗺️ Carte' : layer === 'relief' ? '🏔 Relief' : '🌿 Biomes'}
+                        </button>
+                      ))}
+                    </div>
+
+                    {editLayer === 'map' && (
+                      <>
+                        <button
+                          onClick={() => selectPointTool('point-circle')}
+                          className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 font-display text-xs transition ${
+                            activeTool === 'point-circle'
+                              ? 'btn-accent border-transparent text-paper'
+                              : 'border-white/15 bg-white/5 text-paper/70'
+                          }`}
+                        >
+                          ⚬ Lieu (rond)
+                        </button>
+                        <button
+                          onClick={() => selectPointTool('point-rect')}
+                          className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 font-display text-xs transition ${
+                            activeTool === 'point-rect'
+                              ? 'btn-accent border-transparent text-paper'
+                              : 'border-white/15 bg-white/5 text-paper/70'
+                          }`}
+                        >
+                          ▭ Lieu (rectangle)
+                        </button>
+                        <button
+                          onClick={selectRouteTool}
+                          className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 font-display text-xs transition ${
+                            activeTool === 'route'
+                              ? 'btn-accent border-transparent text-paper'
+                              : 'border-white/15 bg-white/5 text-paper/70'
+                          }`}
+                        >
+                          🛣 Route
+                        </button>
+                      </>
+                    )}
                     <button
                       onClick={toggleDeleteMode}
                       className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 font-display text-xs transition ${
@@ -547,6 +623,42 @@ export default function WorldMap() {
       >
         <rect x={-50} y={-50} width={200} height={200} fill="#0c1a2e" />
 
+        {showBiomes &&
+          biomes.map((b) => (
+            <polygon
+              key={b.id}
+              points={pointsToSvg(b.path_points)}
+              fill={b.color}
+              fillOpacity={0.55}
+              stroke={deleteMode && editLayer === 'biome' ? '#b3261e' : '#00000033'}
+              strokeWidth={deleteMode && editLayer === 'biome' ? 0.3 : 0.1}
+              className={editLayer === 'biome' ? 'cursor-pointer' : ''}
+              onClick={(e) => {
+                if (editLayer !== 'biome') return;
+                e.stopPropagation();
+                if (deleteMode) deleteBiome(b);
+              }}
+            />
+          ))}
+
+        {showRelief &&
+          relief.map((r) => (
+            <polygon
+              key={r.id}
+              points={pointsToSvg(r.path_points)}
+              fill={reliefColor(r.elevation)}
+              fillOpacity={0.4}
+              stroke={deleteMode && editLayer === 'relief' ? '#b3261e' : '#00000022'}
+              strokeWidth={deleteMode && editLayer === 'relief' ? 0.3 : 0.1}
+              className={editLayer === 'relief' ? 'cursor-pointer' : ''}
+              onClick={(e) => {
+                if (editLayer !== 'relief') return;
+                e.stopPropagation();
+                if (deleteMode) deleteRelief(r);
+              }}
+            />
+          ))}
+
         {zones.map((z) => (
           <polygon
             key={z.id}
@@ -558,7 +670,7 @@ export default function WorldMap() {
             className="cursor-pointer transition hover:brightness-110"
             onClick={(e) => {
               e.stopPropagation();
-              if (deleteMode) return deleteZone(z);
+              if (deleteMode && editLayer === 'map') return deleteZone(z);
               if (!activeTool) setSelected({ kind: 'zone', entity: z });
             }}
           />
@@ -587,7 +699,7 @@ export default function WorldMap() {
               className="cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                if (deleteMode) return deleteRoute(r);
+                if (deleteMode && editLayer === 'map') return deleteRoute(r);
                 if (!activeTool) setSelectedRoute(r);
               }}
             />
@@ -659,7 +771,7 @@ export default function WorldMap() {
               className="cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                if (deleteMode) return deletePlace(p);
+                if (deleteMode && editLayer === 'map') return deletePlace(p);
                 if (!activeTool) selectPlaceAndShare(p);
               }}
             >
@@ -712,11 +824,34 @@ export default function WorldMap() {
           kind={selected.kind}
           onClose={() => setSelected(null)}
           onDeleted={load}
+          positionsHook={positionsHook}
         />
       )}
 
-      {finalPoints && (
+      {finalPoints && editLayer === 'map' && (
         <ZoneFormModal
+          points={finalPoints}
+          onClose={resetDrawing}
+          onSaved={() => {
+            resetDrawing();
+            load();
+          }}
+        />
+      )}
+
+      {finalPoints && editLayer === 'relief' && (
+        <ReliefFormModal
+          points={finalPoints}
+          onClose={resetDrawing}
+          onSaved={() => {
+            resetDrawing();
+            load();
+          }}
+        />
+      )}
+
+      {finalPoints && editLayer === 'biome' && (
+        <BiomeFormModal
           points={finalPoints}
           onClose={resetDrawing}
           onSaved={() => {
@@ -766,14 +901,30 @@ export default function WorldMap() {
         <PositionPickerModal
           places={places}
           routes={routes}
-          currentPosition={positionsHook.myPosition}
+          positionsHook={positionsHook}
           onClose={() => setShowPositionPicker(false)}
-          onSave={positionsHook.setPosition}
-          onClear={positionsHook.clearPosition}
         />
       )}
 
       <MapActionStack>
+        <div className="glass flex gap-1 rounded-full p-1">
+          <button
+            onClick={() => setShowRelief((v) => !v)}
+            className={`rounded-full px-2.5 py-1 font-display text-[10px] uppercase tracking-wide transition ${
+              showRelief ? 'bg-accent text-paper' : 'text-paper/60'
+            }`}
+          >
+            🏔 Relief
+          </button>
+          <button
+            onClick={() => setShowBiomes((v) => !v)}
+            className={`rounded-full px-2.5 py-1 font-display text-[10px] uppercase tracking-wide transition ${
+              showBiomes ? 'bg-accent text-paper' : 'text-paper/60'
+            }`}
+          >
+            🌿 Biomes
+          </button>
+        </div>
         <MapLegend
           sections={[
             {
@@ -830,6 +981,21 @@ export default function WorldMap() {
       <div className="absolute left-1/2 top-6 z-20 -translate-x-1/2">
         <PlaceSearch places={places} onSelect={selectPlaceAndShare} />
       </div>
+
+      {(() => {
+        const myPos = positionsHook.myPosition;
+        if (!myPos?.place_id || !myPos.arrived_at || myPos.travel_started_at) return null;
+        const questHere = quests.find((q) => q.place_id === myPos.place_id);
+        if (!questHere) return null;
+        const elapsedMin = (now - new Date(myPos.arrived_at).getTime()) / 60000;
+        if (elapsedMin >= 60) return null;
+        const remaining = Math.ceil(60 - elapsedMin);
+        return (
+          <div className="glass absolute bottom-20 left-1/2 z-10 -translate-x-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-accent md:bottom-16">
+            📜 Quête "{questHere.title}" — validation dans {remaining} min
+          </div>
+        );
+      })()}
 
       <div className="glass absolute bottom-3 left-1/2 z-10 hidden -translate-x-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/60 md:block">
         {deleteMode

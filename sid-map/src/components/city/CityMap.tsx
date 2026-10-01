@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { usePermission } from '@/lib/hooks/usePermission';
 import { useSvgViewport } from '@/lib/hooks/useSvgViewport';
-import type { CityBuilding, CityDistrict, MapPlace, MarkerShape, Point } from '@/lib/types';
+import type { CityBuilding, CityDistrict, MapPlace, MapRoute, MarkerShape, Point } from '@/lib/types';
 import type { ShapeTool } from '@/lib/drawTools';
 import { DRAG_SHAPES } from '@/lib/drawTools';
 import {
@@ -44,6 +44,21 @@ export default function CityMap({ cityId }: { cityId: string }) {
   const { showToast } = useToast();
   const [showPositionPicker, setShowPositionPicker] = useState(false);
   const [openBuildingPresence, setOpenBuildingPresence] = useState<string | null>(null);
+  const [allPlaces, setAllPlaces] = useState<MapPlace[]>([]);
+  const [allRoutes, setAllRoutes] = useState<MapRoute[]>([]);
+
+  useEffect(() => {
+    if (!showPositionPicker || allPlaces.length > 0) return;
+    supabase
+      .from('map_places')
+      .select('*')
+      .then(({ data }) => setAllPlaces((data as MapPlace[]) ?? []));
+    supabase
+      .from('map_routes')
+      .select('*')
+      .then(({ data }) => setAllRoutes((data as MapRoute[]) ?? []));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPositionPicker]);
 
   const [city, setCity] = useState<MapPlace | null>(null);
   const [districts, setDistricts] = useState<CityDistrict[]>([]);
@@ -619,13 +634,12 @@ export default function CityMap({ cityId }: { cityId: string }) {
 
       {showPositionPicker && (
         <PositionPickerModal
-          places={city ? [city] : []}
+          places={allPlaces.length > 0 ? allPlaces : city ? [city] : []}
+          routes={allRoutes}
           buildings={buildings}
           cityId={cityId}
-          currentPosition={positionsHook.myPosition}
+          positionsHook={positionsHook}
           onClose={() => setShowPositionPicker(false)}
-          onSave={positionsHook.setPosition}
-          onClear={positionsHook.clearPosition}
         />
       )}
 

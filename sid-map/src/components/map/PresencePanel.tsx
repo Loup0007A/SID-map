@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import type { CharacterPosition, MapPlace, MapRoute } from '@/lib/types';
+import { useNow } from '@/lib/hooks/useNow';
+import { computeProgress } from '@/lib/travel';
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -25,13 +27,20 @@ export default function PresencePanel({
   onFocusPlace?: (placeId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const now = useNow();
 
   function locationLabel(p: CharacterPosition): string {
-    if (p.note) return p.note;
-    if (p.route_id) {
-      const route = routes.find((r) => r.id === p.route_id);
-      const pct = p.route_progress != null ? Math.round(p.route_progress * 100) : null;
-      return `🛣 En voyage${route?.name ? ` — ${route.name}` : ''}${pct != null ? ` (${pct}%)` : ''}`;
+    if (p.travel_started_at) {
+      const pct = Math.round(computeProgress(p, now) * 100);
+      let destName = '?';
+      if (p.flight_target_place_id) {
+        destName = places.find((pl) => pl.id === p.flight_target_place_id)?.name ?? '?';
+      } else if (p.route_id) {
+        const route = routes.find((r) => r.id === p.route_id);
+        const destId = route ? (route.from_place_id === p.place_id ? route.to_place_id : route.from_place_id) : null;
+        destName = places.find((pl) => pl.id === destId)?.name ?? '?';
+      }
+      return `${p.flight_target_place_id ? '🕊️' : '🛣'} En route vers ${destName} (${pct}%)`;
     }
     if (p.place_id) {
       const place = places.find((pl) => pl.id === p.place_id);
@@ -66,6 +75,7 @@ export default function PresencePanel({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-paper">{p.nickname ?? 'Membre'}</p>
                 <p className="truncate text-[11px] text-paper/50">{locationLabel(p)}</p>
+                {p.status && <p className="truncate text-[10px] italic text-paper/40">"{p.status}"</p>}
               </div>
               <span className="shrink-0 text-[9px] text-paper/30">{timeAgo(p.updated_at)}</span>
             </button>

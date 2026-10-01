@@ -1,14 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { CharacterPosition } from '@/lib/types';
+import { computeRemainingMinutes } from '@/lib/travel';
 
 export function usePositions() {
   const supabase = createClient();
   const [positions, setPositions] = useState<CharacterPosition[]>([]);
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const arrivingRef = useRef(false);
 
   const load = useCallback(async () => {
     const { data } = await supabase.rpc('list_active_positions');
@@ -20,8 +22,6 @@ export function usePositions() {
     supabase.auth.getUser().then(({ data }) => setMyUserId(data.user?.id ?? null));
     load();
 
-    // Live : toute création/modification/suppression de position est
-    // répercutée immédiatement chez tout le monde (Supabase Realtime).
     const channel = supabase
       .channel('character-positions-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'character_positions' }, () => load())
@@ -35,41 +35,79 @@ export function usePositions() {
 
   const myPosition = positions.find((p) => p.user_id === myUserId) ?? null;
 
-  async function setPosition(update: {
-    place_id?: string | null;
-    building_id?: string | null;
-    route_id?: string | null;
-    route_progress?: number | null;
-    note?: string | null;
-    is_visible?: boolean;
-  }) {
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
-    if (!user) return { error: 'not_authenticated' };
+  // Vérifie périodiquement si mon voyage en cours est terminé, et
+  // finalise l'arrivée côté serveur (qui revalide le temps écoulé —
+  // impossible de tricher en appelant trop tôt).
+  useEffect(() => {
+    if (!myPosition?.travel_started_at) return;
+    const check = async () => {
+      if (arrivingRef.current) return;
+      const remaining = computeRemainingMinutes(myPosition, Date.now());
+      if (remaining <= 0) {
+        arrivingRef.current = true;
+        await supabase.rpc('arrive_at_destination');
+        arrivingRef.current = false;
+        load();
+      }
+    };
+    check();
+    const id = setInterval(check, 5000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myPosition?.travel_started_at, myPosition?.travel_duration_minutes]);
 
-    const { error } = await supabase.from('character_positions').upsert(
-      {
-        user_id: user.id,
-        place_id: null,
-        building_id: null,
-        route_id: null,
-        route_progress: null,
-        note: null,
-        is_visible: true,
-        ...update
-      },
-      { onConflict: 'user_id' }
-    );
+  async function setInitialPlace(placeId: string) {
+    const { data, error } = await supabase.rpc('set_initial_place', { p_place_id: placeId });
     if (!error) load();
-    return { error: error?.message ?? null };
+    return { error: error?.message ?? data?.error ?? null };
   }
 
-  async function clearPosition() {
-    if (!myUserId) return;
-    await supabase.from('character_positions').delete().eq('user_id', myUserId);
-    load();
+  async function startJourney(opts: { routeId?: string; targetPlaceId?: string }) {
+    const { data, error } = await supabase.rpc('start_journey', {
+      p_route_id: opts.routeId ?? null,
+      p_target_place_id: opts.targetPlaceId ?? null
+    });
+    if (!error) load();
+    return { error: error?.message ?? data?.error ?? null, data };
   }
 
-  return { positions, myPosition, myUserId, loading, setPosition, clearPosition, reload: load };
+  async function setCurrentBuilding(buildingId: string | null) {
+    const { data, error } = await supabase.rpc('set_current_building', { p_building_id: buildingId });
+    if (!error) load();
+    return { error: error?.message ?? data?.error ?? null };
+  }
+
+  async function setStatus(status: string, visible?: boolean) {
+    const { data, error } = await supabase.rpc('set_character_status', {
+      p_status: status,
+      p_visible: visible ?? null
+    });
+    if (!error) load();
+    return { error: error?.message ?? data?.error ?? null };
+  }
+
+  async function rentMount(rentalId: string) {
+    const { data, error } = await supabase.rpc('rent_mount', { p_rental_id: rentalId });
+    if (!error) load();
+    return { error: error?.message ?? data?.error ?? null, data };
+  }
+
+  async function checkQuestArrival() {
+    const { data } = await supabase.rpc('check_quest_arrival');
+    return data as { quest_id: string; validated: boolean; error?: string }[] | null;
+  }
+
+  return {
+    positions,
+    myPosition,
+    myUserId,
+    loading,
+    setInitialPlace,
+    startJourney,
+    setCurrentBuilding,
+    setStatus,
+    rentMount,
+    checkQuestArrival,
+    reload: load
+  };
 }

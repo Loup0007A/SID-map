@@ -38,6 +38,7 @@ export interface MapPlace {
   width: number | null;
   height: number | null;
   controlling_group_id: string | null;
+  is_building: boolean;
 }
 
 export interface CityDistrict {
@@ -74,11 +75,13 @@ export interface Room {
   y: number;
   w: number;
   h: number;
+  connectsToFloor?: number; // pour un escalier : le numéro d'étage relié
 }
 
 export interface BuildingFloor {
   id: string;
-  building_id: string;
+  building_id: string | null;
+  place_id: string | null;
   floor_number: number;
   name: string | null;
   plan_data: Room[];
@@ -111,14 +114,77 @@ export interface CharacterPosition {
   place_id: string | null;
   building_id: string | null;
   route_id: string | null;
-  route_progress: number | null;
-  note: string | null;
+  flight_target_place_id: string | null;
+  travel_started_at: string | null;
+  travel_duration_minutes: number | null;
+  arrived_at: string | null;
+  active_mount_id: string | null;
+  status: string | null;
   is_visible: boolean;
   updated_at: string;
   nickname: string | null;
   avatar_url: string | null;
   member_rank: string | null;
 }
+
+export interface MountType {
+  id: string;
+  name: string;
+  icon: string;
+  speed_multiplier: number;
+  can_fly: boolean;
+  rental_price: number;
+  created_by: string | null;
+}
+
+export interface MountRental {
+  id: string;
+  place_id: string;
+  mount_type_id: string;
+  price_override: number | null;
+  stock: number | null;
+  created_by: string | null;
+}
+
+export interface MapRelief {
+  id: string;
+  path_points: Point[];
+  elevation: number;
+  is_published: boolean;
+}
+
+export type BiomeType =
+  | 'plaine' | 'foret_dense' | 'jungle' | 'desert_aride' | 'toundra' | 'marecage' | 'montagneux' | 'volcanique';
+
+export interface MapBiome {
+  id: string;
+  path_points: Point[];
+  biome_type: BiomeType | string;
+  color: string;
+  is_published: boolean;
+}
+
+export const BIOME_LABELS: Record<string, string> = {
+  plaine: 'Plaine',
+  foret_dense: 'Forêt dense',
+  jungle: 'Jungle',
+  desert_aride: 'Désert aride',
+  toundra: 'Toundra',
+  marecage: 'Marécage',
+  montagneux: 'Montagneux',
+  volcanique: 'Volcanique'
+};
+
+export const BIOME_COLORS: Record<string, string> = {
+  plaine: '#7ba05b',
+  foret_dense: '#2f5233',
+  jungle: '#1e6b3a',
+  desert_aride: '#d9b26f',
+  toundra: '#a8c3d0',
+  marecage: '#4a5d3a',
+  montagneux: '#8a7f6b',
+  volcanique: '#7a2e2e'
+};
 
 export interface MapGroup {
   id: string;

@@ -6,21 +6,25 @@ import { createClient } from '@/lib/supabase/client';
 import { usePermission } from '@/lib/hooks/usePermission';
 import CommentsBox from './CommentsBox';
 import IconPicker from './IconPicker';
+import MountRentalSection from './MountRentalSection';
 import type { MapPlace, MapZone } from '@/lib/types';
 import { PLACE_LABELS, ZONE_LABELS } from '@/lib/types';
 import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
 import { useGroups } from '@/lib/hooks/useGroups';
+import type { usePositions } from '@/lib/hooks/usePositions';
 
 export default function DetailPanel({
   entity,
   kind,
   onClose,
-  onDeleted
+  onDeleted,
+  positionsHook
 }: {
   entity: MapZone | MapPlace;
   kind: 'zone' | 'place';
   onClose: () => void;
   onDeleted?: () => void;
+  positionsHook?: ReturnType<typeof usePositions>;
 }) {
   const supabase = createClient();
   const { allowed: canEdit } = usePermission('manage_map');
@@ -31,6 +35,7 @@ export default function DetailPanel({
     kind === 'place' ? (entity as MapPlace).icon || null : null
   );
   const [controllingGroupId, setControllingGroupId] = useState(entity.controlling_group_id);
+  const [isBuilding, setIsBuilding] = useState(kind === 'place' ? (entity as MapPlace).is_building : false);
 
   const label =
     kind === 'zone' ? ZONE_LABELS[(entity as MapZone).type] : PLACE_LABELS[(entity as MapPlace).type];
@@ -144,6 +149,42 @@ export default function DetailPanel({
         >
           Entrer dans la ville →
         </Link>
+      )}
+
+      {kind === 'place' && !isCity && (
+        <>
+          {canEdit && (
+            <label className="mt-3 flex items-center gap-2 text-xs text-paper/70">
+              <input
+                type="checkbox"
+                checked={isBuilding}
+                onChange={async (e) => {
+                  setIsBuilding(e.target.checked);
+                  await supabase.from('map_places').update({ is_building: e.target.checked }).eq('id', entity.id);
+                }}
+                className="h-4 w-4 accent-[#b3261e]"
+              />
+              🏗️ Ce lieu est un bâtiment éditable (étages, sous-sols…)
+            </label>
+          )}
+          {isBuilding && (
+            <Link
+              href={`/lieu/${entity.id}`}
+              className="btn-accent mt-3 inline-block rounded-lg px-4 py-2 text-sm font-semibold text-paper"
+            >
+              Voir l'intérieur →
+            </Link>
+          )}
+        </>
+      )}
+
+      {kind === 'place' && positionsHook && (
+        <MountRentalSection
+          placeId={entity.id}
+          canEdit={canEdit}
+          activeMountId={positionsHook.myPosition?.active_mount_id ?? null}
+          onRent={positionsHook.rentMount}
+        />
       )}
 
       <div className="mt-6 border-t border-white/10 pt-4">

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import type { CharacterPosition, MapPlace, MapRoute } from '@/lib/types';
-import { pointAtProgress } from '@/lib/routeGeometry';
+import { useNow } from '@/lib/hooks/useNow';
+import { travelerScreenPosition } from '@/lib/travel';
 
 export default function PresenceMarkers({
   positions,
@@ -14,12 +15,13 @@ export default function PresenceMarkers({
   routes: MapRoute[];
 }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const now = useNow();
 
   const byPlace = new Map<string, CharacterPosition[]>();
-  const travelers = positions.filter((p) => p.route_id && p.route_progress != null);
+  const travelers = positions.filter((p) => p.travel_started_at);
 
   positions
-    .filter((p) => p.place_id && !p.route_id)
+    .filter((p) => p.place_id && !p.travel_started_at)
     .forEach((p) => {
       const list = byPlace.get(p.place_id!) ?? [];
       list.push(p);
@@ -56,11 +58,12 @@ export default function PresenceMarkers({
               )}
             </g>
             {openGroup === placeId && (
-              <foreignObject x={-40} y={3} width={80} height={Math.min(60, 14 * people.length + 8)}>
+              <foreignObject x={-40} y={3} width={80} height={Math.min(70, 14 * people.length + 8)}>
                 <div className="glass-strong rounded-lg p-1.5 text-[7px] leading-tight text-paper">
                   {people.map((p) => (
                     <p key={p.user_id} className="truncate">
                       {p.nickname ?? 'Membre'}
+                      {p.status && <span className="text-paper/50"> — {p.status}</span>}
                     </p>
                   ))}
                 </div>
@@ -71,14 +74,13 @@ export default function PresenceMarkers({
       })}
 
       {travelers.map((p) => {
-        const route = routes.find((r) => r.id === p.route_id);
-        if (!route || route.path_points.length === 0) return null;
-        const pos = pointAtProgress(route.path_points, p.route_progress ?? 0);
+        const pos = travelerScreenPosition(p, places, routes, now);
+        if (!pos) return null;
         return (
           <g key={p.user_id} transform={`translate(${pos.x}, ${pos.y})`}>
             <circle r={1.4} fill="#e7c34a" stroke="#0c1a2e" strokeWidth={0.2} />
             <text textAnchor="middle" dy="0.55" fontSize="1.5">
-              🚶
+              {p.active_mount_id ? '🐎' : '🚶'}
             </text>
           </g>
         );
