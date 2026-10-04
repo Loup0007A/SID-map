@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import type { CharacterPosition, MapPlace, MapRoute } from '@/lib/types';
 import { useNow } from '@/lib/hooks/useNow';
 import { travelerScreenPosition } from '@/lib/travel';
@@ -8,13 +7,16 @@ import { travelerScreenPosition } from '@/lib/travel';
 export default function PresenceMarkers({
   positions,
   places,
-  routes
+  routes,
+  openGroup,
+  onToggle
 }: {
   positions: CharacterPosition[];
   places: MapPlace[];
   routes: MapRoute[];
+  openGroup: string | null;
+  onToggle: (placeId: string) => void;
 }) {
-  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const now = useNow();
 
   const byPlace = new Map<string, CharacterPosition[]>();
@@ -41,7 +43,7 @@ export default function PresenceMarkers({
               className="cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                setOpenGroup(openGroup === placeId ? null : placeId);
+                onToggle(placeId);
               }}
             >
               <circle r={1.6} fill="#1e9e5a" stroke="#0c1a2e" strokeWidth={0.2} />
@@ -57,18 +59,6 @@ export default function PresenceMarkers({
                 </>
               )}
             </g>
-            {openGroup === placeId && (
-              <foreignObject x={-40} y={3} width={80} height={Math.min(70, 14 * people.length + 8)}>
-                <div className="glass-strong rounded-lg p-1.5 text-[7px] leading-tight text-paper">
-                  {people.map((p) => (
-                    <p key={p.user_id} className="truncate">
-                      {p.nickname ?? 'Membre'}
-                      {p.status && <span className="text-paper/50"> — {p.status}</span>}
-                    </p>
-                  ))}
-                </div>
-              </foreignObject>
-            )}
           </g>
         );
       })}

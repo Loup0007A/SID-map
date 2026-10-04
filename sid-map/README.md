@@ -238,3 +238,10 @@ src/
     types.ts             types partagés
 supabase/migrations/     schéma SQL additif
 ```
+
+## Migration 0106 — quêtes terminées, marchés noirs, cristaux
+
+- `quest_is_finished(status)` : les quêtes dont le statut est « validée / terminée / annulée… » disparaissent de la carte et ne sont plus revalidées. **Vérifie/ajuste la liste des statuts** dans cette fonction (et `FINISHED_STATUSES` dans `src/lib/types.ts`) selon les vraies valeurs de `quests.status`.
+- Marchés noirs : les admins cochent « Autoriser les marchés noirs » sur un lieu ; les joueurs présents sur place ouvrent un étal, y mettent des articles (prix, stock). L'achat passe par `buy_black_market_item` : 10 % de commission, répartis entre fondateurs / `manage_map`. Seul `wallets.balance` est modifié (UPDATE).
+- Cristaux de téléportation : bouton « 💎 Cristaux » sur la carte. Les admins en donnent (départ → arrivée, usage unique ou continu) ; le joueur l'utilise uniquement depuis le lieu de départ (`use_teleport_crystal`).
+- Les infobulles de quêtes et de présence sont maintenant des panneaux HTML de taille fixe ; la modale « Ma position » est plus étroite (`max-w-sm`).

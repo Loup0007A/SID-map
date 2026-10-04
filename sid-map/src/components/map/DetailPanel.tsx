@@ -7,6 +7,7 @@ import { usePermission } from '@/lib/hooks/usePermission';
 import CommentsBox from './CommentsBox';
 import IconPicker from './IconPicker';
 import MountRentalSection from './MountRentalSection';
+import BlackMarketSection from './BlackMarketSection';
 import type { MapPlace, MapZone } from '@/lib/types';
 import { PLACE_LABELS, ZONE_LABELS } from '@/lib/types';
 import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
@@ -35,6 +36,7 @@ export default function DetailPanel({
     kind === 'place' ? (entity as MapPlace).icon || null : null
   );
   const [controllingGroupId, setControllingGroupId] = useState(entity.controlling_group_id);
+  const [allowsBM, setAllowsBM] = useState(kind === 'place' ? !!(entity as MapPlace).allows_black_market : false);
   const [isBuilding, setIsBuilding] = useState(kind === 'place' ? (entity as MapPlace).is_building : false);
 
   const label =
@@ -184,6 +186,19 @@ export default function DetailPanel({
           canEdit={canEdit}
           activeMountId={positionsHook.myPosition?.active_mount_id ?? null}
           onRent={positionsHook.rentMount}
+        />
+      )}
+
+      {kind === 'place' && positionsHook && (
+        <BlackMarketSection
+          placeId={entity.id}
+          canEdit={canEdit}
+          allows={allowsBM}
+          myUserId={positionsHook.myUserId}
+          isHere={
+            positionsHook.myPosition?.place_id === entity.id && !positionsHook.myPosition?.travel_started_at
+          }
+          onAllowChange={setAllowsBM}
         />
       )}
 

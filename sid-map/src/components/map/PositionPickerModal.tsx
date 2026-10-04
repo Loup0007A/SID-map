@@ -90,7 +90,7 @@ export default function PositionPickerModal({
       : null;
 
     return (
-      <Modal title="En voyage…" onClose={onClose}>
+      <Modal title="En voyage…" onClose={onClose} maxWidth="max-w-sm">
         <div className="space-y-3 text-center">
           <p className="text-3xl">{myPosition.flight_target_place_id ? '🕊️' : activeMount ? activeMount.icon : '🚶'}</p>
           <p className="text-sm text-paper/80">
@@ -156,7 +156,7 @@ export default function PositionPickerModal({
     : [];
 
   return (
-    <Modal title="Ma position" onClose={onClose}>
+    <Modal title="Ma position" onClose={onClose} maxWidth="max-w-sm">
       <div className="space-y-4">
         <div className="rounded-lg border border-white/10 bg-white/5 p-2.5 text-sm">
           <p className="text-paper/50 text-[10px] uppercase tracking-wide">Actuellement</p>

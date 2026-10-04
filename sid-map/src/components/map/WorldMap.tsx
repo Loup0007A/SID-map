@@ -46,6 +46,9 @@ import RouteInfoModal from './RouteInfoModal';
 import ReliefFormModal from './ReliefFormModal';
 import BiomeFormModal from './BiomeFormModal';
 import QuestMarkers from './QuestMarkers';
+import QuestPopup from './QuestPopup';
+import CrystalsModal from './CrystalsModal';
+import { isQuestFinished } from '@/lib/types';
 import TerritoryFlag from './TerritoryFlag';
 import PlaceSearch from './PlaceSearch';
 import RoutePlannerPanel from './RoutePlannerPanel';
@@ -77,6 +80,8 @@ export default function WorldMap() {
   const [places, setPlaces] = useState<MapPlace[]>([]);
   const [routes, setRoutes] = useState<MapRoute[]>([]);
   const [quests, setQuests] = useState<MapQuest[]>([]);
+  const [openPresenceId, setOpenPresenceId] = useState<string | null>(null);
+  const [openQuestId, setOpenQuestId] = useState<string | null>(null);
   const [relief, setRelief] = useState<MapRelief[]>([]);
   const [biomes, setBiomes] = useState<MapBiome[]>([]);
   const [showRelief, setShowRelief] = useState(false);
@@ -90,6 +95,7 @@ export default function WorldMap() {
   );
   const [selectedRoute, setSelectedRoute] = useState<MapRoute | null>(null);
   const [showPositionPicker, setShowPositionPicker] = useState(false);
+  const [showCrystals, setShowCrystals] = useState(false);
   const [showPlanner, setShowPlanner] = useState(false);
   const [highlightedPlan, setHighlightedPlan] = useState<RoutePlan | null>(null);
 
@@ -126,7 +132,7 @@ export default function WorldMap() {
       setPlaces(data.places ?? []);
     }
     setRoutes((routeData as MapRoute[]) ?? []);
-    setQuests((questData as MapQuest[]) ?? []);
+    setQuests(((questData as MapQuest[]) ?? []).filter((q) => !isQuestFinished(q.status)));
     setRelief((reliefData as MapRelief[]) ?? []);
     setBiomes((biomeData as MapBiome[]) ?? []);
     setLoading(false);
@@ -813,10 +819,35 @@ export default function WorldMap() {
           return <TerritoryFlag key={`flag-${p.id}`} x={p.x} y={p.y - offset} label={label} />;
         })}
 
-        <QuestMarkers quests={quests} places={places} />
+        <QuestMarkers quests={quests} places={places} openId={openQuestId} onToggle={(id) => setOpenQuestId((c) => (c === id ? null : id))} />
 
-        <PresenceMarkers positions={positionsHook.positions} places={places} routes={routes} />
+        <PresenceMarkers positions={positionsHook.positions} places={places} routes={routes} openGroup={openPresenceId} onToggle={(id) => setOpenPresenceId((c) => (c === id ? null : id))} />
       </svg>
+
+      {openPresenceId && (
+        <div className="glass-strong absolute bottom-20 right-3 z-30 w-56 max-w-[calc(100%-1.5rem)] rounded-xl p-3 text-xs text-paper md:bottom-6">
+          <div className="mb-1 flex items-center justify-between">
+            <p className="font-semibold text-accent">
+              👤 {places.find((p) => p.id === openPresenceId)?.name ?? 'Lieu'}
+            </p>
+            <button onClick={() => setOpenPresenceId(null)} className="text-paper/50 hover:text-accent">
+              ✕
+            </button>
+          </div>
+          {positionsHook.positions
+            .filter((p) => p.place_id === openPresenceId && !p.travel_started_at)
+            .map((p) => (
+              <p key={p.user_id} className="truncate">
+                {p.nickname ?? 'Membre'}
+                {p.status && <span className="text-paper/50"> — {p.status}</span>}
+              </p>
+            ))}
+        </div>
+      )}
+
+      {openQuestId && quests.find((q) => q.id === openQuestId) && (
+        <QuestPopup quest={quests.find((q) => q.id === openQuestId)!} onClose={() => setOpenQuestId(null)} />
+      )}
 
       {selected && (
         <DetailPanel
@@ -897,6 +928,10 @@ export default function WorldMap() {
         />
       )}
 
+      {showCrystals && (
+        <CrystalsModal places={places} positionsHook={positionsHook} onClose={() => setShowCrystals(false)} />
+      )}
+
       {showPositionPicker && (
         <PositionPickerModal
           places={places}
@@ -957,6 +992,12 @@ export default function WorldMap() {
           className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/70 hover:text-accent"
         >
           📍 Ma position
+        </button>
+        <button
+          onClick={() => setShowCrystals(true)}
+          className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/70 hover:text-accent"
+        >
+          💎 Cristaux
         </button>
         <button
           onClick={() => setShowPlanner((v) => !v)}

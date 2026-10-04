@@ -39,6 +39,7 @@ export interface MapPlace {
   height: number | null;
   controlling_group_id: string | null;
   is_building: boolean;
+  allows_black_market?: boolean;
 }
 
 export interface CityDistrict {
@@ -226,3 +227,41 @@ export const BUILDING_LABELS: Record<string, string> = {
   commerce: 'Commerce',
   autre: 'Autre'
 };
+
+export interface BlackMarketStall {
+  id: string;
+  place_id: string;
+  owner_id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+}
+
+export interface BlackMarketItem {
+  id: string;
+  stall_id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  stock: number | null;
+}
+
+export interface TeleportCrystal {
+  id: string;
+  label: string;
+  from_place_id: string;
+  to_place_id: string;
+  holder_id: string;
+  is_single_use: boolean;
+  used_at: string | null;
+}
+
+const FINISHED_STATUSES = [
+  'validated','validee','validée','valide','validé','completed','complete','complétée','completee',
+  'terminee','terminée','termine','terminé','done','finished','closed','cloturee','clôturée',
+  'archived','archivee','archivée','cancelled','canceled','annulee','annulée','expired','expiree',
+  'expirée','failed','echouee','échouée'
+];
+export function isQuestFinished(status: string | null | undefined): boolean {
+  return FINISHED_STATUSES.includes((status ?? '').toLowerCase());
+}
