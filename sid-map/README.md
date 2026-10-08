@@ -251,3 +251,9 @@ supabase/migrations/     schéma SQL additif
 - Table `map_textures` (motif, couleur, fond, taille, opacité, rotation, quinconce) + colonne `texture_id` (texte) sur `map_biomes`, `map_relief`, `map_zones`. `texture_id` vaut `NULL` (auto selon le type), `'none'`, `'builtin:xxx'` (12 préréglages intégrés) ou l'uuid d'une texture personnalisée.
 - Les admins créent des textures depuis le sélecteur de texture (formulaires Biome/Relief) : 12 motifs (montagne, sapin, arbre, vagues, herbe, cactus, flocon…) ou n'importe quel emoji. En mode édition, un clic sur un biome/relief existant permet de changer sa texture.
 - Optimisations : rendu par `<pattern>` SVG (une tuile répétée par le navigateur, aucune image), motifs définis seulement s'ils sont utilisés, calque mémoïsé (pas recalculé pendant zoom/déplacement), textures personnalisées mises en cache à la session, éditeur chargé à la demande (`next/dynamic`), colonnes ciblées dans les requêtes, tracés simplifiés + arrondis à 2 décimales à l'enregistrement (moins de stockage).
+
+## Migration 0108 — textures dessinées + fond
+
+- Les textures peuvent être **dessinées à la main** (motif « ✏️ Dessin libre » : traits, formes pleines, gomme, annuler) dans une tuile qui se répète sur le terrain.
+- Une texture porte aussi la **couleur de fond** (et son opacité) : quand un biome/relief a une texture avec fond, elle remplace entièrement sa couleur. Les préréglages ont tous un fond.
+- Les textures personnalisées sont modifiables/supprimables ; un préréglage peut être dupliqué (✎) puis modifié.

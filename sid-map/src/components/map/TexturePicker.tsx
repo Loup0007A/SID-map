@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { createClient } from '@/lib/supabase/client';
+import type { MapTexture } from '@/lib/textures';
 import { useTextures } from '@/lib/hooks/useTextures';
 import { usePermission } from '@/lib/hooks/usePermission';
 import { TexturePreview } from './TextureDefs';
@@ -20,6 +22,15 @@ export default function TexturePicker({
   const { all, reload } = useTextures();
   const { allowed: canEdit } = usePermission('manage_map');
   const [showEditor, setShowEditor] = useState(false);
+  const [editorSeed, setEditorSeed] = useState<MapTexture | undefined>(undefined);
+  const supabase = createClient();
+
+  async function remove(t: MapTexture) {
+    if (!confirm(`Supprimer la texture « ${t.name} » ?`)) return;
+    await supabase.from('map_textures').delete().eq('id', t.id);
+    if (value === t.id) onChange(null);
+    reload();
+  }
 
   const base = 'flex flex-col items-center gap-1 rounded-lg border p-1.5 text-[10px] transition';
   const on = 'border-accent bg-accent/10 text-paper';
@@ -38,23 +49,54 @@ export default function TexturePicker({
           Aucune
         </button>
         {all.map((t) => (
-          <button key={t.id} type="button" onClick={() => onChange(t.id)} className={`${base} ${value === t.id ? on : off}`}>
-            <TexturePreview t={t} uid={t.id} />
-            <span className="w-full truncate text-center">{t.name}</span>
-          </button>
+          <div key={t.id} className="relative">
+            <button type="button" onClick={() => onChange(t.id)} className={`${base} w-full ${value === t.id ? on : off}`}>
+              <TexturePreview t={t} uid={t.id} />
+              <span className="w-full truncate text-center">{t.name}</span>
+            </button>
+            {canEdit && (
+              <span className="absolute right-0.5 top-0.5 flex gap-0.5">
+                <button
+                  type="button"
+                  title={t.id.startsWith('builtin:') ? 'Dupliquer et modifier' : 'Modifier'}
+                  onClick={() => {
+                    setEditorSeed(t);
+                    setShowEditor(true);
+                  }}
+                  className="rounded bg-black/50 px-1 text-[10px] text-paper/80 hover:text-accent"
+                >
+                  ✎
+                </button>
+                {!t.id.startsWith('builtin:') && (
+                  <button
+                    type="button"
+                    title="Supprimer"
+                    onClick={() => remove(t)}
+                    className="rounded bg-black/50 px-1 text-[10px] text-paper/80 hover:text-accent"
+                  >
+                    🗑
+                  </button>
+                )}
+              </span>
+            )}
+          </div>
         ))}
       </div>
       {canEdit && (
         <button
           type="button"
-          onClick={() => setShowEditor(true)}
+          onClick={() => {
+            setEditorSeed(undefined);
+            setShowEditor(true);
+          }}
           className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-paper/70 hover:border-accent hover:text-accent"
         >
-          ➕ Créer une texture
+          ➕ Créer / dessiner une texture
         </button>
       )}
       {showEditor && (
         <TextureEditorModal
+          initial={editorSeed}
           onClose={() => setShowEditor(false)}
           onSaved={async (id) => {
             await reload();

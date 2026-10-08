@@ -16,9 +16,16 @@ async function fetchTextures(force = false): Promise<MapTexture[]> {
   inflight = (async () => {
     const { data } = await supabase
       .from('map_textures')
-      .select('id,name,motif,glyph,color,bg,size,opacity,rotation,stagger')
+      .select('id,name,motif,glyph,color,bg,bg_opacity,drawing,size,opacity,rotation,stagger')
       .order('created_at');
-    cache = ((data as MapTexture[]) ?? []).map((t) => ({ ...t, size: Number(t.size), opacity: Number(t.opacity), rotation: Number(t.rotation) }));
+    cache = ((data as any[]) ?? []).map((t) => ({
+      ...t,
+      bgOpacity: Number(t.bg_opacity ?? 1),
+      drawing: t.drawing ?? null,
+      size: Number(t.size),
+      opacity: Number(t.opacity),
+      rotation: Number(t.rotation)
+    })) as MapTexture[];
     inflight = null;
     return cache;
   })();

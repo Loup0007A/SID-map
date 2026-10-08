@@ -5,6 +5,14 @@ import { MOTIFS, patternId, type MapTexture } from '@/lib/textures';
 
 // Définit UNE fois chaque motif utilisé (<pattern> SVG) : peu importe
 // le nombre de polygones, le navigateur ne répète qu'une petite tuile.
+export function strokePath(pts: { x: number; y: number }[], close: boolean) {
+  if (pts.length === 0) return '';
+  if (pts.length === 1) return `M${pts[0].x} ${pts[0].y} l0.01 0`;
+  let d = `M${pts[0].x} ${pts[0].y}`;
+  for (let i = 1; i < pts.length; i++) d += `L${pts[i].x} ${pts[i].y}`;
+  return close ? d + 'Z' : d;
+}
+
 export function TexturePatternDef({ t, idOverride }: { t: MapTexture; idOverride?: string }) {
   const s = t.size;
   const m = MOTIFS[t.motif] ?? MOTIFS.triangle;
@@ -19,10 +27,22 @@ export function TexturePatternDef({ t, idOverride }: { t: MapTexture; idOverride
       patternUnits="userSpaceOnUse"
       patternTransform={t.rotation ? `rotate(${t.rotation})` : undefined}
     >
-      {t.bg && <rect width={s} height={s} fill={t.bg} />}
+      {t.bg && <rect width={s} height={s} fill={t.bg} fillOpacity={t.bgOpacity} />}
       {cells.map(([cx, cy], i) => (
         <g key={i} transform={`translate(${cx} ${cy}) scale(${half / 10})`} opacity={t.opacity}>
-          {t.motif === 'glyph' ? (
+          {t.motif === 'custom' ? (
+            (t.drawing ?? []).map((st, j) => (
+              <path
+                key={j}
+                d={strokePath(st.pts, st.fill)}
+                fill={st.fill ? st.color : 'none'}
+                stroke={st.color}
+                strokeWidth={st.width}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            ))
+          ) : t.motif === 'glyph' ? (
             <text x={5} y={5} textAnchor="middle" dominantBaseline="central" fontSize={9}>
               {t.glyph || '•'}
             </text>

@@ -49,6 +49,7 @@ import QuestMarkers from './QuestMarkers';
 import QuestPopup from './QuestPopup';
 import TextureOverlays from './TextureOverlays';
 import TexturePicker from './TexturePicker';
+import { biomeTextureId, reliefTextureId, findTexture } from '@/lib/textures';
 import Modal from '@/components/ui/Modal';
 import { useTextures } from '@/lib/hooks/useTextures';
 import CrystalsModal from './CrystalsModal';
@@ -642,7 +643,7 @@ export default function WorldMap() {
               key={b.id}
               points={pointsToSvg(b.path_points)}
               fill={b.color}
-              fillOpacity={0.55}
+              fillOpacity={showTextures && findTexture(biomeTextureId(b), customTextures)?.bg ? 0 : 0.55}
               stroke={deleteMode && editLayer === 'biome' ? '#b3261e' : '#00000033'}
               strokeWidth={deleteMode && editLayer === 'biome' ? 0.3 : 0.1}
               className={editLayer === 'biome' ? 'cursor-pointer' : ''}
@@ -661,7 +662,7 @@ export default function WorldMap() {
               key={r.id}
               points={pointsToSvg(r.path_points)}
               fill={reliefColor(r.elevation)}
-              fillOpacity={0.4}
+              fillOpacity={showTextures && findTexture(reliefTextureId(r), customTextures)?.bg ? 0 : 0.4}
               stroke={deleteMode && editLayer === 'relief' ? '#b3261e' : '#00000022'}
               strokeWidth={deleteMode && editLayer === 'relief' ? 0.3 : 0.1}
               className={editLayer === 'relief' ? 'cursor-pointer' : ''}

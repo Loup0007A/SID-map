@@ -1,10 +1,20 @@
+// Un trait dessiné à la main dans une tuile 10×10.
+export interface DrawnStroke {
+  pts: { x: number; y: number }[];
+  color: string;
+  width: number;
+  fill: boolean;
+}
+
 export interface MapTexture {
   id: string;
   name: string;
-  motif: string;
+  motif: string; // 'custom' = dessin libre (drawing)
   glyph: string | null;
   color: string;
   bg: string | null;
+  bgOpacity: number; // opacité du fond (la texture remplace la couleur du biome/relief)
+  drawing: DrawnStroke[] | null;
   size: number;
   opacity: number;
   rotation: number;
@@ -25,22 +35,23 @@ export const MOTIFS: Record<string, { label: string; d: string; fill?: boolean; 
   reed: { label: '🌾 Roseaux', d: 'M3 9 V3 M3 3 Q4.5 1 3 0.5 M7 9 V4 M2 6 H4 M6 7 H8', stroke: true },
   cactus: { label: '🌵 Cactus', d: 'M5 9 V2 M5 6 H2.5 V4 M5 5 H7.5 V3', stroke: true },
   flake: { label: '❄ Flocon', d: 'M5 1 V9 M1.5 3 L8.5 7 M8.5 3 L1.5 7', stroke: true },
-  glyph: { label: '😀 Caractère / emoji', d: '' }
+  glyph: { label: '😀 Caractère / emoji', d: '' },
+  custom: { label: '✏️ Dessin libre', d: '' }
 };
 
 export const BUILTIN_TEXTURES: MapTexture[] = [
-  { id: 'builtin:mountain', name: 'Montagnes', motif: 'mountain', glyph: null, color: '#3b2f2a', bg: null, size: 3.2, opacity: 0.75, rotation: 0, stagger: true },
-  { id: 'builtin:triangle', name: 'Triangles', motif: 'triangle', glyph: null, color: '#2e2622', bg: null, size: 2.6, opacity: 0.6, rotation: 0, stagger: true },
-  { id: 'builtin:pine', name: 'Forêt de sapins', motif: 'pine', glyph: null, color: '#14391f', bg: null, size: 2.4, opacity: 0.8, rotation: 0, stagger: true },
-  { id: 'builtin:tree', name: 'Forêt', motif: 'tree', glyph: null, color: '#1d5a2a', bg: null, size: 2.4, opacity: 0.8, rotation: 0, stagger: true },
-  { id: 'builtin:jungle', name: 'Jungle', motif: 'tree', glyph: null, color: '#0e6b3a', bg: null, size: 1.9, opacity: 0.85, rotation: 0, stagger: true },
-  { id: 'builtin:grass', name: 'Herbe', motif: 'grass', glyph: null, color: '#2f6b2a', bg: null, size: 2, opacity: 0.6, rotation: 0, stagger: true },
-  { id: 'builtin:sand', name: 'Sable', motif: 'dots', glyph: null, color: '#7a5a22', bg: null, size: 1.4, opacity: 0.6, rotation: 0, stagger: true },
-  { id: 'builtin:cactus', name: 'Cactus', motif: 'cactus', glyph: null, color: '#3f6b2a', bg: null, size: 3, opacity: 0.8, rotation: 0, stagger: true },
-  { id: 'builtin:reed', name: 'Marais', motif: 'reed', glyph: null, color: '#36502a', bg: null, size: 2.4, opacity: 0.7, rotation: 0, stagger: true },
-  { id: 'builtin:snow', name: 'Neige', motif: 'flake', glyph: null, color: '#ffffff', bg: null, size: 2, opacity: 0.7, rotation: 0, stagger: true },
-  { id: 'builtin:wave', name: 'Vagues', motif: 'wave', glyph: null, color: '#cfe8ff', bg: null, size: 2.6, opacity: 0.5, rotation: 0, stagger: true },
-  { id: 'builtin:hatch', name: 'Hachures', motif: 'hatch', glyph: null, color: '#000000', bg: null, size: 1.6, opacity: 0.35, rotation: 0, stagger: false }
+  { id: 'builtin:mountain', name: 'Montagnes', motif: 'mountain', glyph: null, color: '#3b2f2a', bg: '#8a7a68', bgOpacity: 0.9, drawing: null, size: 3.2, opacity: 0.75, rotation: 0, stagger: true },
+  { id: 'builtin:triangle', name: 'Triangles', motif: 'triangle', glyph: null, color: '#2e2622', bg: '#6b4a3a', bgOpacity: 0.9, drawing: null, size: 2.6, opacity: 0.6, rotation: 0, stagger: true },
+  { id: 'builtin:pine', name: 'Forêt de sapins', motif: 'pine', glyph: null, color: '#14391f', bg: '#2f5a3a', bgOpacity: 0.9, drawing: null, size: 2.4, opacity: 0.8, rotation: 0, stagger: true },
+  { id: 'builtin:tree', name: 'Forêt', motif: 'tree', glyph: null, color: '#1d5a2a', bg: '#4f8a45', bgOpacity: 0.9, drawing: null, size: 2.4, opacity: 0.8, rotation: 0, stagger: true },
+  { id: 'builtin:jungle', name: 'Jungle', motif: 'tree', glyph: null, color: '#0e6b3a', bg: '#1f7a46', bgOpacity: 0.9, drawing: null, size: 1.9, opacity: 0.85, rotation: 0, stagger: true },
+  { id: 'builtin:grass', name: 'Herbe', motif: 'grass', glyph: null, color: '#2f6b2a', bg: '#7fae5b', bgOpacity: 0.9, drawing: null, size: 2, opacity: 0.6, rotation: 0, stagger: true },
+  { id: 'builtin:sand', name: 'Sable', motif: 'dots', glyph: null, color: '#7a5a22', bg: '#d9bd7a', bgOpacity: 0.9, drawing: null, size: 1.4, opacity: 0.6, rotation: 0, stagger: true },
+  { id: 'builtin:cactus', name: 'Cactus', motif: 'cactus', glyph: null, color: '#3f6b2a', bg: '#cfae6a', bgOpacity: 0.9, drawing: null, size: 3, opacity: 0.8, rotation: 0, stagger: true },
+  { id: 'builtin:reed', name: 'Marais', motif: 'reed', glyph: null, color: '#36502a', bg: '#5f7f55', bgOpacity: 0.9, drawing: null, size: 2.4, opacity: 0.7, rotation: 0, stagger: true },
+  { id: 'builtin:snow', name: 'Neige', motif: 'flake', glyph: null, color: '#ffffff', bg: '#dfe9f2', bgOpacity: 0.9, drawing: null, size: 2, opacity: 0.7, rotation: 0, stagger: true },
+  { id: 'builtin:wave', name: 'Vagues', motif: 'wave', glyph: null, color: '#cfe8ff', bg: '#2c6f9c', bgOpacity: 0.9, drawing: null, size: 2.6, opacity: 0.5, rotation: 0, stagger: true },
+  { id: 'builtin:hatch', name: 'Hachures', motif: 'hatch', glyph: null, color: '#000000', bg: '#9a9a8a', bgOpacity: 0.9, drawing: null, size: 1.6, opacity: 0.35, rotation: 0, stagger: false }
 ];
 
 const BUILTIN_BY_ID = new Map(BUILTIN_TEXTURES.map((t) => [t.id, t]));
@@ -61,6 +72,16 @@ export function reliefDefaultTexture(elevation: number): string | null {
   if (elevation >= 50) return 'builtin:mountain';
   if (elevation >= 25) return 'builtin:triangle';
   return null;
+}
+
+// Texture effective d'un biome / relief (null = aucune).
+export function biomeTextureId(b: { texture_id?: string | null; biome_type: string }): string | null {
+  if (b.texture_id === 'none') return null;
+  return b.texture_id ?? BIOME_DEFAULT_TEXTURE[b.biome_type] ?? null;
+}
+export function reliefTextureId(r: { texture_id?: string | null; elevation: number }): string | null {
+  if (r.texture_id === 'none') return null;
+  return r.texture_id ?? reliefDefaultTexture(r.elevation);
 }
 
 export function findTexture(id: string | null | undefined, custom: MapTexture[]): MapTexture | null {

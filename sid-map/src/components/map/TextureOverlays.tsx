@@ -2,13 +2,7 @@
 
 import { memo, useMemo } from 'react';
 import type { MapBiome, MapRelief, Point } from '@/lib/types';
-import {
-  BIOME_DEFAULT_TEXTURE,
-  findTexture,
-  patternId,
-  reliefDefaultTexture,
-  type MapTexture
-} from '@/lib/textures';
+import { biomeTextureId, findTexture, patternId, reliefTextureId, type MapTexture } from '@/lib/textures';
 import TextureDefs from './TextureDefs';
 
 const toSvg = (pts: Point[]) => pts.map((p) => `${p.x},${p.y}`).join(' ');
@@ -42,11 +36,11 @@ const TextureOverlays = memo(function TextureOverlays({
 
     if (showBiomes)
       biomes.forEach((b) =>
-        add('b' + b.id, b.path_points, b.texture_id === 'none' ? null : b.texture_id ?? BIOME_DEFAULT_TEXTURE[b.biome_type] ?? null)
+        add('b' + b.id, b.path_points, biomeTextureId(b))
       );
     if (showRelief)
       relief.forEach((r) =>
-        add('r' + r.id, r.path_points, r.texture_id === 'none' ? null : r.texture_id ?? reliefDefaultTexture(r.elevation))
+        add('r' + r.id, r.path_points, reliefTextureId(r))
       );
 
     return { items, used: Array.from(usedMap.values()) };
