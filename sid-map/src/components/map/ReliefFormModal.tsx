@@ -5,6 +5,8 @@ import Modal from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import type { Point } from '@/lib/types';
+import { simplifyPath } from '@/lib/geometry';
+import TexturePicker from './TexturePicker';
 
 export default function ReliefFormModal({
   points,
@@ -18,6 +20,7 @@ export default function ReliefFormModal({
   const supabase = createClient();
   const { showToast } = useToast();
   const [elevation, setElevation] = useState(50);
+  const [textureId, setTextureId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   async function save() {
@@ -27,7 +30,8 @@ export default function ReliefFormModal({
     } = await supabase.auth.getUser();
 
     const { error } = await supabase.from('map_relief').insert({
-      path_points: points,
+      path_points: simplifyPath(points),
+      texture_id: textureId,
       elevation,
       created_by: user?.id ?? null
     });
@@ -59,6 +63,7 @@ export default function ReliefFormModal({
             className="w-full accent-[#b3261e]"
           />
         </div>
+        <TexturePicker value={textureId} onChange={setTextureId} />
         <button
           onClick={save}
           disabled={saving}

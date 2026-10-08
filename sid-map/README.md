@@ -245,3 +245,9 @@ supabase/migrations/     schéma SQL additif
 - Marchés noirs : les admins cochent « Autoriser les marchés noirs » sur un lieu ; les joueurs présents sur place ouvrent un étal, y mettent des articles (prix, stock). L'achat passe par `buy_black_market_item` : 10 % de commission, répartis entre fondateurs / `manage_map`. Seul `wallets.balance` est modifié (UPDATE).
 - Cristaux de téléportation : bouton « 💎 Cristaux » sur la carte. Les admins en donnent (départ → arrivée, usage unique ou continu) ; le joueur l'utilise uniquement depuis le lieu de départ (`use_teleport_crystal`).
 - Les infobulles de quêtes et de présence sont maintenant des panneaux HTML de taille fixe ; la modale « Ma position » est plus étroite (`max-w-sm`).
+
+## Migration 0107 — textures de carte
+
+- Table `map_textures` (motif, couleur, fond, taille, opacité, rotation, quinconce) + colonne `texture_id` (texte) sur `map_biomes`, `map_relief`, `map_zones`. `texture_id` vaut `NULL` (auto selon le type), `'none'`, `'builtin:xxx'` (12 préréglages intégrés) ou l'uuid d'une texture personnalisée.
+- Les admins créent des textures depuis le sélecteur de texture (formulaires Biome/Relief) : 12 motifs (montagne, sapin, arbre, vagues, herbe, cactus, flocon…) ou n'importe quel emoji. En mode édition, un clic sur un biome/relief existant permet de changer sa texture.
+- Optimisations : rendu par `<pattern>` SVG (une tuile répétée par le navigateur, aucune image), motifs définis seulement s'ils sont utilisés, calque mémoïsé (pas recalculé pendant zoom/déplacement), textures personnalisées mises en cache à la session, éditeur chargé à la demande (`next/dynamic`), colonnes ciblées dans les requêtes, tracés simplifiés + arrondis à 2 décimales à l'enregistrement (moins de stockage).

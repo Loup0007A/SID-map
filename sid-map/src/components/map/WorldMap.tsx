@@ -47,6 +47,10 @@ import ReliefFormModal from './ReliefFormModal';
 import BiomeFormModal from './BiomeFormModal';
 import QuestMarkers from './QuestMarkers';
 import QuestPopup from './QuestPopup';
+import TextureOverlays from './TextureOverlays';
+import TexturePicker from './TexturePicker';
+import Modal from '@/components/ui/Modal';
+import { useTextures } from '@/lib/hooks/useTextures';
 import CrystalsModal from './CrystalsModal';
 import { isQuestFinished } from '@/lib/types';
 import TerritoryFlag from './TerritoryFlag';
@@ -69,6 +73,9 @@ export default function WorldMap() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { allowed: canEdit } = usePermission('manage_map');
+  const { custom: customTextures } = useTextures();
+  const [showTextures, setShowTextures] = useState(true);
+  const [retexture, setRetexture] = useState<{ table: 'map_biomes' | 'map_relief'; id: string; value: string | null } | null>(null);
   const vp = useSvgViewport();
   const placeTypes = useTypeConfig('place');
   const positionsHook = usePositions();
@@ -124,8 +131,8 @@ export default function WorldMap() {
         supabase.rpc('get_world_map'),
         supabase.from('map_routes').select('*'),
         supabase.rpc('list_map_quests'),
-        supabase.from('map_relief').select('*'),
-        supabase.from('map_biomes').select('*')
+        supabase.from('map_relief').select('id,path_points,elevation,is_published,texture_id'),
+        supabase.from('map_biomes').select('id,path_points,biome_type,color,is_published,texture_id')
       ]);
     if (!error && data) {
       setZones(data.zones ?? []);
@@ -643,6 +650,7 @@ export default function WorldMap() {
                 if (editLayer !== 'biome') return;
                 e.stopPropagation();
                 if (deleteMode) deleteBiome(b);
+                else if (editMode && !activeTool) setRetexture({ table: 'map_biomes', id: b.id, value: b.texture_id ?? null });
               }}
             />
           ))}
@@ -661,9 +669,20 @@ export default function WorldMap() {
                 if (editLayer !== 'relief') return;
                 e.stopPropagation();
                 if (deleteMode) deleteRelief(r);
+                else if (editMode && !activeTool) setRetexture({ table: 'map_relief', id: r.id, value: r.texture_id ?? null });
               }}
             />
           ))}
+
+        {showTextures && (
+          <TextureOverlays
+            biomes={biomes}
+            relief={relief}
+            custom={customTextures}
+            showBiomes={showBiomes}
+            showRelief={showRelief}
+          />
+        )}
 
         {zones.map((z) => (
           <polygon
@@ -928,6 +947,19 @@ export default function WorldMap() {
         />
       )}
 
+      {retexture && (
+        <Modal title="Changer la texture" onClose={() => setRetexture(null)} maxWidth="max-w-sm">
+          <TexturePicker
+            value={retexture.value}
+            onChange={async (v) => {
+              await supabase.from(retexture.table).update({ texture_id: v }).eq('id', retexture.id);
+              setRetexture(null);
+              load();
+            }}
+          />
+        </Modal>
+      )}
+
       {showCrystals && (
         <CrystalsModal places={places} positionsHook={positionsHook} onClose={() => setShowCrystals(false)} />
       )}
@@ -958,6 +990,14 @@ export default function WorldMap() {
             }`}
           >
             🌿 Biomes
+          </button>
+          <button
+            onClick={() => setShowTextures((v) => !v)}
+            className={`rounded-full px-2.5 py-1 font-display text-[10px] uppercase tracking-wide transition ${
+              showTextures ? 'bg-accent text-paper' : 'text-paper/60'
+            }`}
+          >
+            🎨 Textures
           </button>
         </div>
         <MapLegend

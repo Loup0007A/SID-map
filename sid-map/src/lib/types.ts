@@ -152,6 +152,7 @@ export interface MapRelief {
   path_points: Point[];
   elevation: number;
   is_published: boolean;
+  texture_id?: string | null;
 }
 
 export type BiomeType =
@@ -163,6 +164,7 @@ export interface MapBiome {
   biome_type: BiomeType | string;
   color: string;
   is_published: boolean;
+  texture_id?: string | null;
 }
 
 export const BIOME_LABELS: Record<string, string> = {

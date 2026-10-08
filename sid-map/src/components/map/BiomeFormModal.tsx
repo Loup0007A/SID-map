@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import { BIOME_COLORS, BIOME_LABELS } from '@/lib/types';
 import type { Point } from '@/lib/types';
+import { simplifyPath } from '@/lib/geometry';
+import TexturePicker from './TexturePicker';
 
 export default function BiomeFormModal({
   points,
@@ -19,6 +21,7 @@ export default function BiomeFormModal({
   const supabase = createClient();
   const { showToast } = useToast();
   const [biomeType, setBiomeType] = useState('plaine');
+  const [textureId, setTextureId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   async function save() {
@@ -28,7 +31,8 @@ export default function BiomeFormModal({
     } = await supabase.auth.getUser();
 
     const { error } = await supabase.from('map_biomes').insert({
-      path_points: points,
+      path_points: simplifyPath(points),
+      texture_id: textureId,
       biome_type: biomeType,
       color: BIOME_COLORS[biomeType] ?? '#7ba05b',
       created_by: user?.id ?? null
@@ -61,6 +65,7 @@ export default function BiomeFormModal({
           <span className="text-xs text-paper/60">Aperçu</span>
           <span className="h-4 w-4 rounded border border-white/20" style={{ backgroundColor: BIOME_COLORS[biomeType] }} />
         </div>
+        <TexturePicker value={textureId} onChange={setTextureId} />
         <button
           onClick={save}
           disabled={saving}
