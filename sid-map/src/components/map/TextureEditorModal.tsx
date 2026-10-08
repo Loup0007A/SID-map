@@ -134,7 +134,20 @@ export default function TextureEditorModal({
   );
 
   return (
-    <Modal title={editing ? 'Modifier la texture' : 'Nouvelle texture'} onClose={onClose} maxWidth="max-w-sm">
+    <Modal
+      title={editing ? 'Modifier la texture' : 'Nouvelle texture'}
+      onClose={onClose}
+      maxWidth="max-w-sm"
+      footer={
+        <button
+    onClick={save}
+    disabled={saving}
+    className="btn-accent w-full rounded-lg py-2.5 text-sm font-semibold text-paper disabled:opacity-50"
+  >
+    {saving ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Créer la texture'}
+  </button>
+      }
+    >
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           <TexturePreview t={draft} uid="draft" className="h-20 w-20" />
@@ -180,7 +193,7 @@ export default function TextureEditorModal({
               ref={svgRef}
               viewBox="0 0 10 10"
               style={{ touchAction: 'none' }}
-              className={`aspect-square w-full rounded-lg border border-white/20 ${tool === 'erase' ? 'cursor-pointer' : 'cursor-crosshair'}`}
+              className={`mx-auto aspect-square max-h-[40vh] w-full rounded-lg border border-white/20 ${tool === 'erase' ? 'cursor-pointer' : 'cursor-crosshair'}`}
               onPointerDown={down}
               onPointerMove={move}
               onPointerUp={up}
@@ -325,13 +338,6 @@ export default function TextureEditorModal({
           Quinconce (deux motifs par tuile)
         </label>
 
-        <button
-          onClick={save}
-          disabled={saving}
-          className="btn-accent w-full rounded-lg py-2.5 text-sm font-semibold text-paper disabled:opacity-50"
-        >
-          {saving ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Créer la texture'}
-        </button>
       </div>
     </Modal>
   );
