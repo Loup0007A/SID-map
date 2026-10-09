@@ -1,0 +1,33 @@
+ICÔNES PERSONNALISÉES DU WIKI
+=============================
+
+Dépose tes images dans ce dossier (public/icons/) avec EXACTEMENT ces noms.
+Format : PNG à fond transparent, carré, 128 x 128 px (256 x 256 si tu veux de la netteté sur écran Retina).
+Un fichier absent = l'emoji par défaut est utilisé. Tu peux donc en faire quelques-unes seulement.
+
+Catégories
+  lieux.png      Lieux
+  armes.png      Armes
+  mobs.png       Mobs
+  objets.png     Objets
+  skills.png     Skills
+
+Interface
+  logo.png       Logo à gauche de « Wiki du S.I.D. » (carré, ou haut de 64 px max si large)
+  accueil.png    Onglet Accueil (téléphone)
+  chercher.png   Onglet Chercher (téléphone)
+  favoris.png    Favoris
+  hasard.png     Fiche au hasard
+  tags.png       Tags
+  aide.png       Aide
+  admin.png      Dashboard admin
+  menu.png       Bouton Menu (téléphone)
+
+Application installée (PWA) et onglet du navigateur — déjà présents, remplace-les si tu veux :
+  icon-192.png            192 x 192
+  icon-512.png            512 x 512
+  icon-maskable-512.png   512 x 512, sujet dans le cercle central (80 %), fond plein
+  apple-touch-icon.png    180 x 180, fond plein (iPhone)
+
+Astuce : après avoir ajouté un fichier, fais un rafraîchissement forcé (Ctrl+F5) ; sur l'appli installée,
+désinstalle puis réinstalle pour voir la nouvelle icône d'écran d'accueil.
