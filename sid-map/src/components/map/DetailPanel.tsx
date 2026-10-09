@@ -186,6 +186,7 @@ export default function DetailPanel({
           canEdit={canEdit}
           activeMountId={positionsHook.myPosition?.active_mount_id ?? null}
           onRent={positionsHook.rentMount}
+          onUnequip={positionsHook.unequipMount}
         />
       )}
 

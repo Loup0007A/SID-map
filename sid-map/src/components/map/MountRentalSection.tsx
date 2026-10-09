@@ -11,12 +11,14 @@ export default function MountRentalSection({
   placeId,
   canEdit,
   activeMountId,
-  onRent
+  onRent,
+  onUnequip
 }: {
   placeId: string;
   canEdit: boolean;
   activeMountId: string | null;
   onRent: (rentalId: string) => Promise<{ error: string | null; data?: any }>;
+  onUnequip?: () => Promise<{ error: string | null }>;
 }) {
   const supabase = createClient();
   const { showToast } = useToast();
@@ -106,7 +108,8 @@ export default function MountRentalSection({
     setRenting(null);
     if (error === 'insufficient_funds') showToast('Fonds insuffisants.', 'error');
     else if (error === 'not_at_location') showToast('Tu dois être sur place pour louer.', 'error');
-    else if (error) showToast('Location impossible.', 'error');
+    else if (error === 'currently_traveling') showToast('Tu es en voyage.', 'error');
+    else if (error) showToast(`Location impossible (${error}).`, 'error');
     else showToast(`Monture louée pour ${data?.price ?? '?'} pièces.`);
   }
 
@@ -136,7 +139,20 @@ export default function MountRentalSection({
             </span>
             <div className="flex items-center gap-1.5">
               {isActive ? (
-                <span className="text-xs text-accent">Équipée</span>
+                <>
+                  <span className="text-xs text-accent">Équipée</span>
+                  {onUnequip && (
+                    <button
+                      onClick={async () => {
+                        const { error } = await onUnequip();
+                        showToast(error ? 'Impossible de descendre.' : 'Monture rendue.', error ? 'error' : 'success');
+                      }}
+                      className="rounded-lg border border-white/15 px-2 py-1 text-xs text-paper/70 hover:text-accent"
+                    >
+                      Descendre
+                    </button>
+                  )}
+                </>
               ) : (
                 <button
                   onClick={() => handleRent(r.id)}

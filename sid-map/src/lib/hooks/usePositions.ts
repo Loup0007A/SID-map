@@ -92,6 +92,12 @@ export function usePositions() {
     return { error: error?.message ?? data?.error ?? null, data };
   }
 
+  async function unequipMount() {
+    const { data, error } = await supabase.rpc('unequip_mount');
+    if (!error) load();
+    return { error: error?.message ?? data?.error ?? null };
+  }
+
   async function checkQuestArrival() {
     const { data } = await supabase.rpc('check_quest_arrival');
     return data as { quest_id: string; validated: boolean; error?: string }[] | null;
@@ -107,6 +113,7 @@ export function usePositions() {
     setCurrentBuilding,
     setStatus,
     rentMount,
+    unequipMount,
     checkQuestArrival,
     reload: load
   };

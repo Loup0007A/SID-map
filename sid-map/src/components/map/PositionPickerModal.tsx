@@ -30,6 +30,7 @@ export default function PositionPickerModal({
   const { showToast } = useToast();
   const now = useNow(1000);
   const mounts = useMountTypes();
+  const { unequipMount } = positionsHook;
   const { myPosition, setInitialPlace, startJourney, setCurrentBuilding, setStatus } = positionsHook;
 
   const [statusText, setStatusText] = useState(myPosition?.status ?? '');
@@ -169,6 +170,15 @@ export default function PositionPickerModal({
             {activeMount && (
               <span className="ml-2 text-accent">
                 {activeMount.icon} {activeMount.name}
+                <button
+                  onClick={async () => {
+                    const { error } = await unequipMount();
+                    showToast(error ? 'Impossible de descendre.' : 'Monture rendue.', error ? 'error' : 'success');
+                  }}
+                  className="ml-2 text-[11px] text-paper/50 underline hover:text-accent"
+                >
+                  descendre
+                </button>
               </span>
             )}
           </p>

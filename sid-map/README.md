@@ -264,3 +264,7 @@ supabase/migrations/     schéma SQL additif
 - Les montures qui volent peuvent avoir une **vitesse de vol (km/h)** et une **portée maximale (km)** (facultatives). Temps de vol = distance ÷ vitesse, calculé côté serveur dans `start_journey`.
 - « Ma position » affiche la distance et la durée vers chaque destination, et grise celles hors de portée.
 - Hauteur d'écran : `100dvh` (la barre du navigateur ne masque plus le haut/bas) et les fenêtres modales s'adaptent à l'écran.
+
+## Migration 0110 — correctif montures / voyages
+
+`list_active_positions` (0103) ne renvoyait pas `active_mount_id`, `travel_*`, `status`, `arrived_at`, `flight_target_place_id` : la monture louée n'apparaissait donc jamais comme équipée. Redéfinie complète. Ajout de `unequip_mount()` (bouton « Descendre »).
