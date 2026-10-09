@@ -5,13 +5,15 @@ export default function Modal({
   onClose,
   children,
   maxWidth = 'max-w-md',
-  footer
+  footer,
+  top
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
   maxWidth?: string;
   footer?: React.ReactNode;
+  top?: React.ReactNode; // zone fixe sous le titre (toujours visible)
 }) {
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
@@ -26,7 +28,8 @@ export default function Modal({
             ✕
           </button>
         </div>
-        <div className="min-h-0 overflow-y-auto scrollbar-thin px-5 pb-5">{children}</div>
+        {top && <div className="shrink-0 px-5 pb-3">{top}</div>}
+        <div className="min-h-0 overscroll-contain overflow-y-auto scrollbar-thin px-5 pb-5">{children}</div>
         {footer && <div className="shrink-0 border-t border-white/10 px-5 py-3">{footer}</div>}
       </div>
     </div>

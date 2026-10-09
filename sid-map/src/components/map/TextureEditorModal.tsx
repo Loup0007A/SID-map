@@ -138,6 +138,18 @@ export default function TextureEditorModal({
       title={editing ? 'Modifier la texture' : 'Nouvelle texture'}
       onClose={onClose}
       maxWidth="max-w-sm"
+      top={
+        <div className="flex items-center gap-3">
+    <TexturePreview t={draft} uid="draft" className="h-20 w-20" />
+    <input
+      value={name}
+      onChange={(e) => setName(e.target.value)}
+      placeholder="Nom (ex : Collines)"
+      maxLength={40}
+      className="w-full glass-input rounded-lg px-3 py-2 text-sm outline-none"
+    />
+  </div>
+      }
       footer={
         <button
     onClick={save}
@@ -149,16 +161,6 @@ export default function TextureEditorModal({
       }
     >
       <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <TexturePreview t={draft} uid="draft" className="h-20 w-20" />
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nom (ex : Collines)"
-            maxLength={40}
-            className="w-full glass-input rounded-lg px-3 py-2 text-sm outline-none"
-          />
-        </div>
 
         <select
           value={motif}
