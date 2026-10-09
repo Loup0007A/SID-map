@@ -56,11 +56,14 @@ import Modal from '@/components/ui/Modal';
 import { useTextures } from '@/lib/hooks/useTextures';
 import CrystalsModal from './CrystalsModal';
 import MountsModal from './MountsModal';
+import FlightPanel from './FlightPanel';
+import { APP_EVENT } from '@/lib/apps';
+import { exportMapPng } from '@/lib/exportMap';
+import { useMountTypes } from '@/lib/hooks/useMountTypes';
 import { isQuestFinished } from '@/lib/types';
 import TerritoryFlag from './TerritoryFlag';
 import PlaceSearch from './PlaceSearch';
 import RoutePlannerPanel from './RoutePlannerPanel';
-import ExportMapButton from './ExportMapButton';
 import Navbar from '@/components/layout/Navbar';
 import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
 import { usePositions } from '@/lib/hooks/usePositions';
@@ -109,6 +112,12 @@ export default function WorldMap() {
   const [showPositionPicker, setShowPositionPicker] = useState(false);
   const [showCrystals, setShowCrystals] = useState(false);
   const [showMounts, setShowMounts] = useState(false);
+  const [showLayers, setShowLayers] = useState(false);
+  const [showBlackMarkets, setShowBlackMarkets] = useState(false);
+  const [flightMode, setFlightMode] = useState(false);
+  const [flightTarget, setFlightTarget] = useState<MapPlace | null>(null);
+  const [flightBusy, setFlightBusy] = useState(false);
+  const mountTypes = useMountTypes();
   const [showPlanner, setShowPlanner] = useState(false);
   const [highlightedPlan, setHighlightedPlan] = useState<RoutePlan | null>(null);
 
@@ -173,11 +182,100 @@ export default function WorldMap() {
   }, [loading, places]);
 
   function selectPlaceAndShare(p: MapPlace) {
+    if (flightMode) {
+      setFlightTarget(p);
+      return;
+    }
     setSelected({ kind: 'place', entity: p });
     vp.panTo(p.x, p.y, 30);
     const params = new URLSearchParams(searchParams.toString());
     params.set('lieu', p.id);
     router.replace(`/carte?${params.toString()}`, { scroll: false });
+  }
+
+  // --- Applications (lanceur de la barre du haut) ---
+  const myPlaceForFlight = places.find((p) => p.id === positionsHook.myPosition?.place_id) ?? null;
+  const activeMountForFlight = mountTypes.byId(positionsHook.myPosition?.active_mount_id ?? null);
+
+  function runApp(id: string) {
+    switch (id) {
+      case 'position':
+        setShowPositionPicker(true);
+        break;
+      case 'mounts':
+        setShowMounts(true);
+        break;
+      case 'crystals':
+        setShowCrystals(true);
+        break;
+      case 'itinerary':
+        setShowPlanner(true);
+        break;
+      case 'layers':
+        setShowLayers(true);
+        break;
+      case 'blackmarket':
+        setShowBlackMarkets(true);
+        break;
+      case 'export':
+        exportMapPng(vp.svgRef.current, 'carte-du-monde-sid').then((ok) =>
+          showToast(ok ? 'Image exportée.' : 'Export impossible depuis ce navigateur.', ok ? 'success' : 'error')
+        );
+        break;
+      case 'edit':
+        if (canEdit) {
+          setToolbarOpen(true);
+          setEditMode(true);
+        }
+        break;
+      case 'scale':
+        window.dispatchEvent(new Event('sid-scale-open'));
+        break;
+      case 'flight': {
+        const pos = positionsHook.myPosition;
+        if (!pos?.place_id) return showToast("Fixe d'abord ta position (application « Ma position »).", 'error');
+        if (pos.travel_started_at) return showToast('Tu es déjà en voyage.', 'error');
+        if (!activeMountForFlight?.can_fly)
+          return showToast("Il te faut une monture volante équipée (application « Montures »).", 'error');
+        setFlightTarget(null);
+        setFlightMode(true);
+        break;
+      }
+    }
+  }
+  const runAppRef = useRef(runApp);
+  runAppRef.current = runApp;
+
+  useEffect(() => {
+    const h = (e: Event) => runAppRef.current((e as CustomEvent<string>).detail);
+    window.addEventListener(APP_EVENT, h);
+    return () => window.removeEventListener(APP_EVENT, h);
+  }, []);
+
+  // Application demandée depuis une autre page (?app=…)
+  useEffect(() => {
+    const id = searchParams.get('app');
+    if (!id || loading) return;
+    runAppRef.current(id);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('app');
+    router.replace(params.toString() ? `/carte?${params.toString()}` : '/carte', { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, searchParams]);
+
+  async function confirmFlight() {
+    if (!flightTarget) return;
+    setFlightBusy(true);
+    const { error } = await positionsHook.startJourney({ targetPlaceId: flightTarget.id });
+    setFlightBusy(false);
+    if (error === 'out_of_range') showToast('Trop loin pour cette monture.', 'error');
+    else if (error === 'forbidden_biome') showToast('Cette monture ne peut pas traverser ce biome.', 'error');
+    else if (error) showToast('Vol impossible.', 'error');
+    else {
+      showToast('Envol !');
+      setFlightMode(false);
+      setFlightTarget(null);
+    }
   }
 
   // Vérifie périodiquement si la présence prolongée (1h) sur le lieu
@@ -854,6 +952,20 @@ export default function WorldMap() {
 
         <QuestMarkers quests={quests} places={places} openId={openQuestId} onToggle={(id) => setOpenQuestId((c) => (c === id ? null : id))} />
 
+        {flightMode && flightTarget && myPlaceForFlight && (
+          <line
+            x1={myPlaceForFlight.x}
+            y1={myPlaceForFlight.y}
+            x2={flightTarget.x}
+            y2={flightTarget.y}
+            stroke="#e7c34a"
+            strokeWidth={0.4}
+            strokeDasharray="1.2 1"
+            strokeLinecap="round"
+            style={{ pointerEvents: 'none' }}
+          />
+        )}
+
         <PresenceMarkers positions={positionsHook.positions} places={places} routes={routes} openGroup={openPresenceId} onToggle={(id) => setOpenPresenceId((c) => (c === id ? null : id))} />
       </svg>
 
@@ -974,6 +1086,75 @@ export default function WorldMap() {
         </Modal>
       )}
 
+      {flightMode && (
+        <div className="glass absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-accent">
+          🕊️ Vol libre — clique un lieu de destination
+          <button
+            onClick={() => {
+              setFlightMode(false);
+              setFlightTarget(null);
+            }}
+            className="rounded-full border border-white/20 px-2 py-0.5 text-paper/70 hover:text-accent"
+          >
+            Quitter
+          </button>
+        </div>
+      )}
+
+      {flightMode && flightTarget && myPlaceForFlight && activeMountForFlight && (
+        <FlightPanel
+          from={myPlaceForFlight}
+          to={flightTarget}
+          mount={activeMountForFlight}
+          settings={mapSettings.settings}
+          biomes={biomes}
+          busy={flightBusy}
+          onConfirm={confirmFlight}
+          onCancel={() => setFlightTarget(null)}
+        />
+      )}
+
+      {showLayers && (
+        <Modal title="🗂️ Calques" onClose={() => setShowLayers(false)} maxWidth="max-w-xs">
+          <div className="space-y-2">
+            {[
+              { label: '🏔 Relief', v: showRelief, set: setShowRelief },
+              { label: '🌿 Biomes', v: showBiomes, set: setShowBiomes },
+              { label: '🎨 Textures', v: showTextures, set: setShowTextures }
+            ].map((l) => (
+              <label key={l.label} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-paper/80">
+                {l.label}
+                <input type="checkbox" checked={l.v} onChange={(e) => l.set(e.target.checked)} className="h-4 w-4 accent-[#b3261e]" />
+              </label>
+            ))}
+          </div>
+        </Modal>
+      )}
+
+      {showBlackMarkets && (
+        <Modal title="🕶️ Marchés noirs" onClose={() => setShowBlackMarkets(false)} maxWidth="max-w-xs">
+          <div className="space-y-1.5">
+            {places.filter((p) => p.allows_black_market).length === 0 && (
+              <p className="text-xs text-paper/50">Aucun lieu n'autorise de marché noir pour l'instant.</p>
+            )}
+            {places
+              .filter((p) => p.allows_black_market)
+              .map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    setShowBlackMarkets(false);
+                    selectPlaceAndShare(p);
+                  }}
+                  className="block w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left text-sm text-paper/80 hover:border-accent"
+                >
+                  {p.icon ?? '📍'} {p.name}
+                </button>
+              ))}
+          </div>
+        </Modal>
+      )}
+
       {showMounts && (
         <MountsModal settings={mapSettings.settings} myPosition={positionsHook.myPosition} onClose={() => setShowMounts(false)} />
       )}
@@ -1047,31 +1228,6 @@ export default function WorldMap() {
             if (p) selectPlaceAndShare(p);
           }}
         />
-        <button
-          onClick={() => setShowPositionPicker(true)}
-          className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/70 hover:text-accent"
-        >
-          📍 Ma position
-        </button>
-        <button
-          onClick={() => setShowCrystals(true)}
-          className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/70 hover:text-accent"
-        >
-          💎 Cristaux
-        </button>
-        <button
-          onClick={() => setShowMounts(true)}
-          className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/70 hover:text-accent"
-        >
-          🐎 Montures
-        </button>
-        <button
-          onClick={() => setShowPlanner((v) => !v)}
-          className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/70 hover:text-accent"
-        >
-          🧭 Itinéraire
-        </button>
-        <ExportMapButton svgRef={vp.svgRef} filename="carte-du-monde-sid" />
       </MapActionStack>
 
       {showPlanner && (

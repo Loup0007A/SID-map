@@ -27,6 +27,17 @@ export default function ScaleBar({
   const [walk, setWalk] = useState(String(settings.walk_kmh));
 
   useEffect(() => {
+    const h = () => {
+      if (!canEdit) return;
+      setKm(String(settings.km_per_unit));
+      setWalk(String(settings.walk_kmh));
+      setOpen(true);
+    };
+    window.addEventListener('sid-scale-open', h);
+    return () => window.removeEventListener('sid-scale-open', h);
+  }, [canEdit, settings.km_per_unit, settings.walk_kmh]);
+
+  useEffect(() => {
     const el = svgRef.current;
     if (!el) return;
     const measure = () => setPxWidth(el.getBoundingClientRect().width);

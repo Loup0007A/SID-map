@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import AppsLauncher from './AppsLauncher';
 
 const LINKS = [{ href: '/carte', label: 'Carte du monde' }];
 const STORAGE_KEY = 'sid-navbar-collapsed';
@@ -13,6 +14,7 @@ export default function Navbar() {
   const router = useRouter();
   const supabase = createClient();
   const [collapsed, setCollapsed] = useState(false);
+  const [appsOpen, setAppsOpen] = useState(false);
 
   useEffect(() => {
     setCollapsed(localStorage.getItem(STORAGE_KEY) === '1');
@@ -47,6 +49,7 @@ export default function Navbar() {
   }
 
   return (
+    <>
     <nav className="relative z-40 flex h-14 shrink-0 items-center justify-between gap-2 glass-strong px-3 md:px-4">
       <div className="stamp-bar absolute bottom-0 left-0 h-[2px] w-full" />
 
@@ -56,6 +59,12 @@ export default function Navbar() {
       </Link>
 
       <div className="flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-1.5">
+        <button
+          onClick={() => setAppsOpen(true)}
+          className="btn-accent shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 font-display text-[11px] uppercase tracking-wide text-paper md:px-3 md:text-xs"
+        >
+          ▦ Applications
+        </button>
         {LINKS.map((l) => (
           <Link
             key={l.href}
@@ -84,5 +93,7 @@ export default function Navbar() {
         </button>
       </div>
     </nav>
+    {appsOpen && <AppsLauncher onClose={() => setAppsOpen(false)} />}
+    </>
   );
 }

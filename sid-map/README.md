@@ -275,3 +275,12 @@ supabase/migrations/     schéma SQL additif
 - Bouton « 🐎 Montures » : onglet « Ma monture » (temps restant) et « 📊 Stats » (vitesse, portée, prix, durée, biomes, nombre de locations ; les admins voient aussi les revenus et peuvent créer/modifier/supprimer).
 - Monture volante = vol libre vers n'importe quel lieu, sans chemin (liste triée par distance).
 - Biomes traversables (optionnel, par monture) : vérifié côté serveur sur les routes et les vols en ligne droite ; l'interface grise les trajets interdits.
+
+## Applications (nouvelle interface)
+
+- Bouton **▦ Applications** dans la barre du haut : panneau avec recherche et tri par catégorie (Voyage, Personnage, Économie, Carte, Administration — cette dernière visible seulement avec `manage_map`).
+- **Icônes** : dépose `public/apps/<id>.png` (carré, ~256×256, fond transparent). Sans fichier, un emoji s'affiche. Fichiers attendus :
+  `position.png`, `flight.png`, `itinerary.png`, `mounts.png`, `crystals.png`, `blackmarket.png`, `layers.png`, `export.png`, `edit.png`, `scale.png`.
+- **Ajouter une application** : une entrée dans `APPS` (`src/lib/apps.ts`) + un `case` dans `runApp()` de `WorldMap.tsx`. Depuis une autre page, le lanceur redirige vers `/carte?app=<id>`.
+- Les anciens boutons flottants (position, cristaux, montures, itinéraire, export) sont devenus des applications.
+- **Vol libre** : application « Vol libre » (monture volante équipée requise) → clique n'importe quel lieu : trait pointillé, distance, durée, portée et biomes, puis « Décoller ».
