@@ -257,3 +257,10 @@ supabase/migrations/     schéma SQL additif
 - Les textures peuvent être **dessinées à la main** (motif « ✏️ Dessin libre » : traits, formes pleines, gomme, annuler) dans une tuile qui se répète sur le terrain.
 - Une texture porte aussi la **couleur de fond** (et son opacité) : quand un biome/relief a une texture avec fond, elle remplace entièrement sa couleur. Les préréglages ont tous un fond.
 - Les textures personnalisées sont modifiables/supprimables ; un préréglage peut être dupliqué (✎) puis modifié.
+
+## Migration 0109 — échelle de la carte et vol
+
+- Table `map_settings` (1 unité de carte = X km, vitesse de marche). L'échelle graphique en bas à gauche suit le zoom ; les admins cliquent dessus pour la régler.
+- Les montures qui volent peuvent avoir une **vitesse de vol (km/h)** et une **portée maximale (km)** (facultatives). Temps de vol = distance ÷ vitesse, calculé côté serveur dans `start_journey`.
+- « Ma position » affiche la distance et la durée vers chaque destination, et grise celles hors de portée.
+- Hauteur d'écran : `100dvh` (la barre du navigateur ne masque plus le haut/bas) et les fenêtres modales s'adaptent à l'écran.

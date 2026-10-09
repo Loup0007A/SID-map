@@ -49,6 +49,8 @@ import QuestMarkers from './QuestMarkers';
 import QuestPopup from './QuestPopup';
 import TextureOverlays from './TextureOverlays';
 import TexturePicker from './TexturePicker';
+import ScaleBar from './ScaleBar';
+import { useMapSettings } from '@/lib/hooks/useMapSettings';
 import { biomeTextureId, reliefTextureId, findTexture } from '@/lib/textures';
 import Modal from '@/components/ui/Modal';
 import { useTextures } from '@/lib/hooks/useTextures';
@@ -75,6 +77,7 @@ export default function WorldMap() {
   const searchParams = useSearchParams();
   const { allowed: canEdit } = usePermission('manage_map');
   const { custom: customTextures } = useTextures();
+  const mapSettings = useMapSettings();
   const [showTextures, setShowTextures] = useState(true);
   const [retexture, setRetexture] = useState<{ table: 'map_biomes' | 'map_relief'; id: string; value: string | null } | null>(null);
   const vp = useSvgViewport();
@@ -472,7 +475,7 @@ export default function WorldMap() {
   const closeSnapReady = activeTool === 'polygon' && tempPoints.length >= 3;
 
   return (
-    <div className="flex h-screen w-full flex-col overflow-hidden">
+    <div className="flex h-[100dvh] w-full flex-col overflow-hidden">
       <Navbar />
       <div className="relative flex-1 overflow-hidden">
       {canEdit && (
@@ -602,6 +605,14 @@ export default function WorldMap() {
           )}
         </div>
       )}
+
+      <ScaleBar
+        svgRef={vp.svgRef}
+        viewBoxW={vp.viewBox.w}
+        settings={mapSettings.settings}
+        canEdit={canEdit}
+        onSave={mapSettings.save}
+      />
 
       <div className="absolute right-4 top-6 z-20">
         <ZoomControls onZoomIn={vp.zoomIn} onZoomOut={vp.zoomOut} onReset={vp.resetView} />
@@ -967,6 +978,7 @@ export default function WorldMap() {
 
       {showPositionPicker && (
         <PositionPickerModal
+          settings={mapSettings.settings}
           places={places}
           routes={routes}
           positionsHook={positionsHook}

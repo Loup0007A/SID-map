@@ -8,8 +8,10 @@ import { useMountTypes } from '@/lib/hooks/useMountTypes';
 import { usePositions } from '@/lib/hooks/usePositions';
 import { computeRemainingMinutes, formatMinutes } from '@/lib/travel';
 import type { CityBuilding, MapPlace, MapRoute } from '@/lib/types';
+import { distanceKm, flightMinutes, formatDistance, type MapSettings } from '@/lib/mapScale';
 
 export default function PositionPickerModal({
+  settings,
   places,
   routes,
   buildings,
@@ -17,6 +19,7 @@ export default function PositionPickerModal({
   positionsHook,
   onClose
 }: {
+  settings: MapSettings;
   places: MapPlace[];
   routes: MapRoute[];
   buildings?: CityBuilding[];
@@ -70,7 +73,8 @@ export default function PositionPickerModal({
     setBusy(true);
     const { error } = await startJourney({ targetPlaceId: placeId });
     setBusy(false);
-    if (error) showToast('Vol impossible.', 'error');
+    if (error === 'out_of_range') showToast('Trop loin pour cette monture.', 'error');
+    else if (error) showToast('Vol impossible.', 'error');
     else showToast('Envol !');
   }
 
@@ -243,7 +247,7 @@ export default function PositionPickerModal({
 
         {activeMount?.can_fly && (
           <div className="border-t border-white/10 pt-3">
-            <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50">🕊️ Voler directement</p>
+            <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50">🕊️ Voler directement{activeMount?.flight_range_km ? ` (portée ${activeMount.flight_range_km} ${settings.unit_label})` : ''}</p>
             <input
               value={flightQuery}
               onChange={(e) => setFlightQuery(e.target.value)}
@@ -252,16 +256,28 @@ export default function PositionPickerModal({
             />
             {flightResults.length > 0 && (
               <div className="mt-1 max-h-32 space-y-1 overflow-y-auto scrollbar-thin pr-1">
-                {flightResults.slice(0, 8).map((p) => (
-                  <button
-                    key={p.id}
-                    disabled={busy}
-                    onClick={() => flyTo(p.id)}
-                    className="block w-full rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10 disabled:opacity-50"
-                  >
-                    {p.icon ?? '📍'} {p.name}
-                  </button>
-                ))}
+                {flightResults.slice(0, 8).map((p) => {
+                  const km = currentPlace ? distanceKm(currentPlace, p, settings) : 0;
+                  const tooFar = activeMount.flight_range_km != null && km > activeMount.flight_range_km;
+                  return (
+                    <button
+                      key={p.id}
+                      disabled={busy || tooFar}
+                      onClick={() => flyTo(p.id)}
+                      className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10 disabled:opacity-40"
+                    >
+                      <span>
+                        {p.icon ?? '📍'} {p.name}
+                      </span>
+                      <span className="text-right text-[11px] text-accent">
+                        {formatDistance(km, settings.unit_label)}
+                        <span className="block text-paper/50">
+                          {tooFar ? 'hors de portée' : formatMinutes(flightMinutes(km, activeMount, settings))}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

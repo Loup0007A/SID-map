@@ -29,6 +29,7 @@ import PositionPickerModal from '@/components/map/PositionPickerModal';
 import Navbar from '@/components/layout/Navbar';
 import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
 import { usePositions } from '@/lib/hooks/usePositions';
+import { useMapSettings } from '@/lib/hooks/useMapSettings';
 import { useToast } from '@/components/ui/Toast';
 
 const CLOSE_SNAP_PX = 14;
@@ -41,6 +42,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
   const vp = useSvgViewport();
   const buildingTypes = useTypeConfig('building');
   const positionsHook = usePositions();
+  const mapSettings = useMapSettings();
   const { showToast } = useToast();
   const [showPositionPicker, setShowPositionPicker] = useState(false);
   const [openBuildingPresence, setOpenBuildingPresence] = useState<string | null>(null);
@@ -319,7 +321,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
   const closeSnapReady = activeTool === 'polygon' && tempPoints.length >= 3;
 
   return (
-    <div className="flex h-screen w-full flex-col overflow-hidden">
+    <div className="flex h-[100dvh] w-full flex-col overflow-hidden">
       <Navbar />
       <div className="relative flex-1 overflow-hidden">
       <Link
@@ -634,6 +636,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
 
       {showPositionPicker && (
         <PositionPickerModal
+          settings={mapSettings.settings}
           places={allPlaces.length > 0 ? allPlaces : city ? [city] : []}
           routes={allRoutes}
           buildings={buildings}

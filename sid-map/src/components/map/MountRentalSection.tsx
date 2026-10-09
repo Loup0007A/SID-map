@@ -35,6 +35,8 @@ export default function MountRentalSection({
   const [newSpeed, setNewSpeed] = useState(2);
   const [newFly, setNewFly] = useState(false);
   const [newPrice, setNewPrice] = useState(50);
+  const [newFlightSpeed, setNewFlightSpeed] = useState('');
+  const [newFlightRange, setNewFlightRange] = useState('');
 
   async function loadRentals() {
     setLoading(true);
@@ -85,6 +87,8 @@ export default function MountRentalSection({
       speed_multiplier: newSpeed,
       can_fly: newFly,
       rental_price: newPrice,
+      flight_speed_kmh: newFly && Number(newFlightSpeed) > 0 ? Number(newFlightSpeed) : null,
+      flight_range_km: newFly && Number(newFlightRange) > 0 ? Number(newFlightRange) : null,
       created_by: user?.id ?? null
     });
     if (error) showToast('Impossible de créer ce type de monture.', 'error');
@@ -223,6 +227,24 @@ export default function MountRentalSection({
                   Vole
                 </label>
               </div>
+              {newFly && (
+                <div className="grid grid-cols-2 gap-2 text-xs text-paper/60">
+                  <input
+                    type="number"
+                    placeholder="Vitesse de vol (km/h)"
+                    value={newFlightSpeed}
+                    onChange={(e) => setNewFlightSpeed(e.target.value)}
+                    className="glass-input rounded-lg px-2 py-1.5 outline-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Portée max (km)"
+                    value={newFlightRange}
+                    onChange={(e) => setNewFlightRange(e.target.value)}
+                    className="glass-input rounded-lg px-2 py-1.5 outline-none"
+                  />
+                </div>
+              )}
               <input
                 type="number"
                 placeholder="Prix par défaut"

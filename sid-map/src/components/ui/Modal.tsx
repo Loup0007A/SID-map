@@ -14,8 +14,8 @@ export default function Modal({
   footer?: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className={`glass-strong flex max-h-[90vh] w-full ${maxWidth} flex-col overflow-hidden rounded-2xl`}>
+    <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
+      <div className={`glass-strong flex max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] w-full ${maxWidth} flex-col overflow-hidden rounded-2xl`}>
         <div className="stamp-bar h-1 shrink-0" />
         <div className="flex shrink-0 items-center justify-between px-5 pb-2 pt-4">
           <h3 className="font-display text-sm uppercase tracking-wide text-accent">{title}</h3>

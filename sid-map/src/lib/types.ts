@@ -135,6 +135,8 @@ export interface MountType {
   speed_multiplier: number;
   can_fly: boolean;
   rental_price: number;
+  flight_speed_kmh?: number | null;
+  flight_range_km?: number | null;
   created_by: string | null;
 }
 
