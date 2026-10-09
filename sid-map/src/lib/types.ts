@@ -120,6 +120,7 @@ export interface CharacterPosition {
   travel_duration_minutes: number | null;
   arrived_at: string | null;
   active_mount_id: string | null;
+  mount_expires_at?: string | null;
   status: string | null;
   is_visible: boolean;
   updated_at: string;
@@ -137,6 +138,8 @@ export interface MountType {
   rental_price: number;
   flight_speed_kmh?: number | null;
   flight_range_km?: number | null;
+  rental_hours?: number;
+  allowed_biomes?: string[] | null;
   created_by: string | null;
 }
 

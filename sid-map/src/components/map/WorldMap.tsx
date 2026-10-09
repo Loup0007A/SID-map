@@ -55,6 +55,7 @@ import { biomeTextureId, reliefTextureId, findTexture } from '@/lib/textures';
 import Modal from '@/components/ui/Modal';
 import { useTextures } from '@/lib/hooks/useTextures';
 import CrystalsModal from './CrystalsModal';
+import MountsModal from './MountsModal';
 import { isQuestFinished } from '@/lib/types';
 import TerritoryFlag from './TerritoryFlag';
 import PlaceSearch from './PlaceSearch';
@@ -107,6 +108,7 @@ export default function WorldMap() {
   const [selectedRoute, setSelectedRoute] = useState<MapRoute | null>(null);
   const [showPositionPicker, setShowPositionPicker] = useState(false);
   const [showCrystals, setShowCrystals] = useState(false);
+  const [showMounts, setShowMounts] = useState(false);
   const [showPlanner, setShowPlanner] = useState(false);
   const [highlightedPlan, setHighlightedPlan] = useState<RoutePlan | null>(null);
 
@@ -972,6 +974,10 @@ export default function WorldMap() {
         </Modal>
       )}
 
+      {showMounts && (
+        <MountsModal settings={mapSettings.settings} myPosition={positionsHook.myPosition} onClose={() => setShowMounts(false)} />
+      )}
+
       {showCrystals && (
         <CrystalsModal places={places} positionsHook={positionsHook} onClose={() => setShowCrystals(false)} />
       )}
@@ -979,6 +985,7 @@ export default function WorldMap() {
       {showPositionPicker && (
         <PositionPickerModal
           settings={mapSettings.settings}
+          biomes={biomes}
           places={places}
           routes={routes}
           positionsHook={positionsHook}
@@ -1051,6 +1058,12 @@ export default function WorldMap() {
           className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/70 hover:text-accent"
         >
           💎 Cristaux
+        </button>
+        <button
+          onClick={() => setShowMounts(true)}
+          className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/70 hover:text-accent"
+        >
+          🐎 Montures
         </button>
         <button
           onClick={() => setShowPlanner((v) => !v)}

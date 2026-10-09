@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import { useMountTypes } from '@/lib/hooks/useMountTypes';
-import IconPicker from './IconPicker';
+import MountsModal from './MountsModal';
+import { useMapSettings } from '@/lib/hooks/useMapSettings';
 import type { MountRental } from '@/lib/types';
 
 export default function MountRentalSection({
@@ -23,6 +24,7 @@ export default function MountRentalSection({
   const supabase = createClient();
   const { showToast } = useToast();
   const mounts = useMountTypes();
+  const { settings } = useMapSettings();
   const [rentals, setRentals] = useState<MountRental[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddRental, setShowAddRental] = useState(false);
@@ -32,13 +34,6 @@ export default function MountRentalSection({
   const [selectedMountType, setSelectedMountType] = useState('');
   const [priceOverride, setPriceOverride] = useState('');
 
-  const [newName, setNewName] = useState('');
-  const [newIcon, setNewIcon] = useState('🐴');
-  const [newSpeed, setNewSpeed] = useState(2);
-  const [newFly, setNewFly] = useState(false);
-  const [newPrice, setNewPrice] = useState(50);
-  const [newFlightSpeed, setNewFlightSpeed] = useState('');
-  const [newFlightRange, setNewFlightRange] = useState('');
 
   async function loadRentals() {
     setLoading(true);
@@ -78,28 +73,9 @@ export default function MountRentalSection({
     loadRentals();
   }
 
-  async function createMountType() {
-    if (!newName.trim()) return;
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
-    const { error } = await supabase.from('mount_types').insert({
-      name: newName.trim(),
-      icon: newIcon,
-      speed_multiplier: newSpeed,
-      can_fly: newFly,
-      rental_price: newPrice,
-      flight_speed_kmh: newFly && Number(newFlightSpeed) > 0 ? Number(newFlightSpeed) : null,
-      flight_range_km: newFly && Number(newFlightRange) > 0 ? Number(newFlightRange) : null,
-      created_by: user?.id ?? null
-    });
-    if (error) showToast('Impossible de créer ce type de monture.', 'error');
-    else {
-      showToast('Type de monture créé.');
-      setNewName('');
-      setShowNewMountType(false);
-      mounts.reload();
-    }
+  function rentalHoursFor(rentalId: string) {
+    const r = rentals.find((x) => x.id === rentalId);
+    return mounts.byId(r?.mount_type_id ?? null)?.rental_hours ?? 24;
   }
 
   async function handleRent(rentalId: string) {
@@ -109,13 +85,18 @@ export default function MountRentalSection({
     if (error === 'insufficient_funds') showToast('Fonds insuffisants.', 'error');
     else if (error === 'not_at_location') showToast('Tu dois être sur place pour louer.', 'error');
     else if (error === 'currently_traveling') showToast('Tu es en voyage.', 'error');
+    else if (error === 'already_equipped') showToast('Tu as déjà cette monture.', 'error');
     else if (error) showToast(`Location impossible (${error}).`, 'error');
-    else showToast(`Monture louée pour ${data?.price ?? '?'} pièces.`);
+    else showToast(`Monture louée pour ${data?.price ?? '?'} pièces (valable ${rentalHoursFor(rentalId)} h).`);
   }
 
   if (loading) return null;
 
   return (
+    <>
+    {showNewMountType && (
+      <MountsModal settings={settings} myPosition={null} onClose={() => { setShowNewMountType(false); mounts.reload(); }} />
+    )}
     <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
       <p className="text-[11px] uppercase tracking-wide text-paper/50">🐴 Montures louables ici</p>
 
@@ -217,79 +198,15 @@ export default function MountRentalSection({
             </button>
           )}
 
-          {showNewMountType ? (
-            <div className="space-y-1.5 rounded-lg border border-white/10 p-2">
-              <input
-                placeholder="Nom (ex: Cheval de guerre)"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                className="w-full glass-input rounded-lg px-2 py-1.5 text-xs outline-none"
-              />
-              <IconPicker value={newIcon} onChange={setNewIcon} />
-              <div className="flex items-center gap-2 text-xs text-paper/60">
-                <label className="flex-1">
-                  Vitesse ×
-                  <input
-                    type="number"
-                    step={0.5}
-                    min={0.5}
-                    value={newSpeed}
-                    onChange={(e) => setNewSpeed(Number(e.target.value))}
-                    className="ml-1 w-14 glass-input rounded px-1 py-0.5"
-                  />
-                </label>
-                <label className="flex items-center gap-1">
-                  <input type="checkbox" checked={newFly} onChange={(e) => setNewFly(e.target.checked)} />
-                  Vole
-                </label>
-              </div>
-              {newFly && (
-                <div className="grid grid-cols-2 gap-2 text-xs text-paper/60">
-                  <input
-                    type="number"
-                    placeholder="Vitesse de vol (km/h)"
-                    value={newFlightSpeed}
-                    onChange={(e) => setNewFlightSpeed(e.target.value)}
-                    className="glass-input rounded-lg px-2 py-1.5 outline-none"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Portée max (km)"
-                    value={newFlightRange}
-                    onChange={(e) => setNewFlightRange(e.target.value)}
-                    className="glass-input rounded-lg px-2 py-1.5 outline-none"
-                  />
-                </div>
-              )}
-              <input
-                type="number"
-                placeholder="Prix par défaut"
-                value={newPrice}
-                onChange={(e) => setNewPrice(Number(e.target.value))}
-                className="w-full glass-input rounded-lg px-2 py-1.5 text-xs outline-none"
-              />
-              <div className="flex gap-1.5">
-                <button onClick={createMountType} className="btn-accent flex-1 rounded-lg py-1.5 text-xs text-paper">
-                  Créer le type
-                </button>
-                <button
-                  onClick={() => setShowNewMountType(false)}
-                  className="rounded-lg border border-white/15 px-2 py-1.5 text-xs text-paper/60"
-                >
-                  Annuler
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowNewMountType(true)}
-              className="w-full rounded-lg border border-dashed border-white/20 py-1.5 text-xs text-paper/60 hover:bg-white/5"
-            >
-              + Nouveau type de monture
-            </button>
-          )}
+          <button
+            onClick={() => setShowNewMountType(true)}
+            className="w-full rounded-lg border border-dashed border-white/20 py-1.5 text-xs text-paper/60 hover:bg-white/5"
+          >
+            ⚙ Gérer les types de monture
+          </button>
         </div>
       )}
     </div>
+    </>
   );
 }

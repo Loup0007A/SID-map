@@ -7,11 +7,14 @@ import { useNow } from '@/lib/hooks/useNow';
 import { useMountTypes } from '@/lib/hooks/useMountTypes';
 import { usePositions } from '@/lib/hooks/usePositions';
 import { computeRemainingMinutes, formatMinutes } from '@/lib/travel';
-import type { CityBuilding, MapPlace, MapRoute } from '@/lib/types';
+import type { CityBuilding, MapBiome, MapPlace, MapRoute } from '@/lib/types';
+import { BIOME_LABELS } from '@/lib/types';
+import { blockedBiome } from '@/lib/biomePath';
 import { distanceKm, flightMinutes, formatDistance, type MapSettings } from '@/lib/mapScale';
 
 export default function PositionPickerModal({
   settings,
+  biomes = [],
   places,
   routes,
   buildings,
@@ -20,6 +23,7 @@ export default function PositionPickerModal({
   onClose
 }: {
   settings: MapSettings;
+  biomes?: MapBiome[];
   places: MapPlace[];
   routes: MapRoute[];
   buildings?: CityBuilding[];
@@ -66,6 +70,7 @@ export default function PositionPickerModal({
     const { error } = await startJourney({ routeId });
     setBusy(false);
     if (error === 'already_traveling') showToast('Tu es déjà en voyage.', 'error');
+    else if (error === 'forbidden_biome') showToast('Ta monture ne peut pas traverser un biome de ce trajet.', 'error');
     else if (error) showToast('Impossible de partir.', 'error');
     else showToast('En route !');
   }
@@ -75,6 +80,7 @@ export default function PositionPickerModal({
     const { error } = await startJourney({ targetPlaceId: placeId });
     setBusy(false);
     if (error === 'out_of_range') showToast('Trop loin pour cette monture.', 'error');
+    else if (error === 'forbidden_biome') showToast('Cette monture ne peut pas traverser ce biome.', 'error');
     else if (error) showToast('Vol impossible.', 'error');
     else showToast('Envol !');
   }
@@ -156,9 +162,11 @@ export default function PositionPickerModal({
     (r) => r.from_place_id === myPosition.place_id || r.to_place_id === myPosition.place_id
   );
   const currentPlace = places.find((p) => p.id === myPosition.place_id);
-  const flightResults = flightQuery
-    ? places.filter((p) => p.id !== myPosition.place_id && p.name.toLowerCase().includes(flightQuery.toLowerCase()))
-    : [];
+  const flightResults = places
+    .filter((p) => p.id !== myPosition.place_id && p.name.toLowerCase().includes(flightQuery.toLowerCase()))
+    .sort((a, b) =>
+      currentPlace ? distanceKm(currentPlace, a, settings) - distanceKm(currentPlace, b, settings) : 0
+    );
 
   return (
     <Modal title="Ma position" onClose={onClose} maxWidth="max-w-sm">
@@ -170,6 +178,11 @@ export default function PositionPickerModal({
             {activeMount && (
               <span className="ml-2 text-accent">
                 {activeMount.icon} {activeMount.name}
+                {myPosition.mount_expires_at && (
+                  <span className="ml-1 text-[11px] text-paper/50">
+                    ({formatMinutes(Math.max(0, (new Date(myPosition.mount_expires_at).getTime() - now) / 60000))} restantes)
+                  </span>
+                )}
                 <button
                   onClick={async () => {
                     const { error } = await unequipMount();
@@ -238,17 +251,29 @@ export default function PositionPickerModal({
               const dest = places.find((p) => p.id === destId);
               const baseMinutes = r.travel_minutes ?? 30;
               const duration = baseMinutes / (activeMount?.speed_multiplier ?? 1);
+              const from = places.find((p) => p.id === r.from_place_id);
+              const to = places.find((p) => p.id === r.to_place_id);
+              const blocked =
+                from && to && activeMount?.allowed_biomes?.length
+                  ? blockedBiome(
+                      [{ x: from.x, y: from.y }, ...(r.path_points ?? []), { x: to.x, y: to.y }],
+                      biomes,
+                      activeMount.allowed_biomes
+                    )
+                  : null;
               return (
                 <button
                   key={r.id}
-                  disabled={busy}
+                  disabled={busy || !!blocked}
                   onClick={() => travelRoute(r.id)}
                   className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10 disabled:opacity-50"
                 >
                   <span>
                     {dest?.icon ?? '📍'} {dest?.name ?? '?'}
                   </span>
-                  <span className="text-xs text-accent">{formatMinutes(duration)}</span>
+                  <span className="text-xs text-accent">
+                    {blocked ? `biome interdit (${BIOME_LABELS[blocked] ?? blocked})` : formatMinutes(duration)}
+                  </span>
                 </button>
               );
             })}
@@ -257,7 +282,7 @@ export default function PositionPickerModal({
 
         {activeMount?.can_fly && (
           <div className="border-t border-white/10 pt-3">
-            <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50">🕊️ Voler directement{activeMount?.flight_range_km ? ` (portée ${activeMount.flight_range_km} ${settings.unit_label})` : ''}</p>
+            <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50">🕊️ Voler n'importe où (sans chemin){activeMount?.flight_range_km ? ` (portée ${activeMount.flight_range_km} ${settings.unit_label})` : ''}</p>
             <input
               value={flightQuery}
               onChange={(e) => setFlightQuery(e.target.value)}
@@ -265,10 +290,19 @@ export default function PositionPickerModal({
               className="w-full glass-input rounded-lg px-3 py-2 text-sm outline-none"
             />
             {flightResults.length > 0 && (
-              <div className="mt-1 max-h-32 space-y-1 overflow-y-auto scrollbar-thin pr-1">
-                {flightResults.slice(0, 8).map((p) => {
+              <div className="mt-1 max-h-44 space-y-1 overflow-y-auto scrollbar-thin pr-1">
+                {flightResults.slice(0, 30).map((p) => {
                   const km = currentPlace ? distanceKm(currentPlace, p, settings) : 0;
-                  const tooFar = activeMount.flight_range_km != null && km > activeMount.flight_range_km;
+                  const outOfRange = activeMount.flight_range_km != null && km > activeMount.flight_range_km;
+                  const blocked =
+                    currentPlace && !outOfRange
+                      ? blockedBiome(
+                          [{ x: currentPlace.x, y: currentPlace.y }, { x: p.x, y: p.y }],
+                          biomes,
+                          activeMount.allowed_biomes
+                        )
+                      : null;
+                  const tooFar = outOfRange || !!blocked;
                   return (
                     <button
                       key={p.id}
@@ -282,7 +316,7 @@ export default function PositionPickerModal({
                       <span className="text-right text-[11px] text-accent">
                         {formatDistance(km, settings.unit_label)}
                         <span className="block text-paper/50">
-                          {tooFar ? 'hors de portée' : formatMinutes(flightMinutes(km, activeMount, settings))}
+                          {outOfRange ? 'hors de portée' : blocked ? `biome interdit (${BIOME_LABELS[blocked] ?? blocked})` : formatMinutes(flightMinutes(km, activeMount, settings))}
                         </span>
                       </span>
                     </button>

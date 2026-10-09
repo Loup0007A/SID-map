@@ -268,3 +268,10 @@ supabase/migrations/     schéma SQL additif
 ## Migration 0110 — correctif montures / voyages
 
 `list_active_positions` (0103) ne renvoyait pas `active_mount_id`, `travel_*`, `status`, `arrived_at`, `flight_target_place_id` : la monture louée n'apparaissait donc jamais comme équipée. Redéfinie complète. Ajout de `unequip_mount()` (bouton « Descendre »).
+
+## Migration 0111 — location 24 h, stats, biomes traversables
+
+- Une location de monture dure `rental_hours` (24 h par défaut, réglable par monture) ; ensuite la monture disparaît (côté serveur aussi). Journal `mount_rental_log` pour les stats.
+- Bouton « 🐎 Montures » : onglet « Ma monture » (temps restant) et « 📊 Stats » (vitesse, portée, prix, durée, biomes, nombre de locations ; les admins voient aussi les revenus et peuvent créer/modifier/supprimer).
+- Monture volante = vol libre vers n'importe quel lieu, sans chemin (liste triée par distance).
+- Biomes traversables (optionnel, par monture) : vérifié côté serveur sur les routes et les vols en ligne droite ; l'interface grise les trajets interdits.
