@@ -82,6 +82,7 @@ export default function ScaleBar({
           setWalk(String(settings.walk_kmh));
           setOpen(true);
         }}
+        data-guide="scale"
         title={canEdit ? "Régler l'échelle" : 'Échelle de la carte'}
         className="glass absolute bottom-3 left-3 z-10 rounded-lg px-2.5 py-1.5 text-left disabled:cursor-default md:bottom-4"
       >

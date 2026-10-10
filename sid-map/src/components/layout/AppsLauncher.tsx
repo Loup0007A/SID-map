@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { usePermission } from '@/lib/hooks/usePermission';
 import { APPS, CATEGORIES, openApp, type AppCategory } from '@/lib/apps';
 import AppIcon from './AppIcon';
+import { useGuide } from '@/components/guide/GuideProvider';
 
 // Panneau « Applications » ouvert depuis la barre du haut.
 export default function AppsLauncher({ onClose }: { onClose: () => void }) {
@@ -13,6 +14,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
   const { allowed: isAdmin } = usePermission('manage_map');
   const [cat, setCat] = useState<AppCategory | 'all'>('all');
   const [query, setQuery] = useState('');
+  const guide = useGuide();
 
   const categories = CATEGORIES.filter((c) => !c.adminOnly || isAdmin);
 
@@ -24,6 +26,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
 
   function launch(id: string) {
     onClose();
+    if (id === 'help') return guide.openHelp();
     if (pathname === '/carte') openApp(id);
     else router.push(`/carte?app=${id}`);
   }
@@ -65,7 +68,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 pb-4 scrollbar-thin">
-          {visible.length === 0 && <p className="py-6 text-center text-sm text-paper/50">Aucune application.</p>}
+          {visible.length === 0 && <p className="py-6 text-center text-sm text-paper/50">Aucune application ne correspond à « {query} ».</p>}
           {categories
             .filter((c) => visible.some((a) => a.category === c.id))
             .map((c) => (
@@ -87,6 +90,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
                       >
                         <AppIcon id={a.id} emoji={a.emoji} />
                         <span className="text-[11px] leading-tight text-paper/90">{a.name}</span>
+                        <span className="hidden text-[10px] leading-tight text-paper/45 sm:block">{a.description}</span>
                       </button>
                     ))}
                 </div>

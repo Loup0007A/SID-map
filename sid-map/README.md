@@ -25,6 +25,24 @@ npm run dev
    `role_permissions`), ou coche `is_founder = true` sur ton profil : ça
    suffit à voir apparaître le "Mode édition" sur la carte.
 
+## Accompagnement (visite guidée, aide, suggestions)
+
+- **Visite guidée** : proposée d'office à la première venue sur `/carte`
+  (partie joueur, puis partie admin pour qui a `manage_map`). Relançable
+  depuis **? Aide** dans la barre du haut ou via `/carte?visite=player|admin`.
+- **? Aide** : check-lists de démarrage cochées automatiquement d'après
+  l'état réel (position fixée, régions, lieux, routes, échelle…) et fiches
+  « Comment faire… » joueur / admin.
+- **Suggestion « et maintenant ? »** sur la carte : une seule à la fois
+  (carte vide, personnage sans position, lieux sans routes, voyage en
+  cours, échec de chargement), masquable.
+- **Bandeau de mode** : rappelle le geste attendu par l'outil actif, y
+  compris sur téléphone.
+- Tous les textes sont dans `src/lib/guide.ts`. Pour qu'une étape de visite
+  pointe un élément, donne-lui `data-guide="<nom>"` et mets ce nom dans
+  `target`. L'état « déjà vu / masqué » est stocké par appareil
+  (`localStorage`, clé `sid-guide-v1`).
+
 ## Interface mobile
 
 Le site utilise désormais les **Pointer Events** (unifiant souris, tactile

@@ -21,9 +21,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const showToast = useCallback((message: string, kind: Toast['kind'] = 'success') => {
     const id = ++counter.current;
     setToasts((t) => [...t, { id, message, kind }]);
+    // Une erreur explique quoi faire : on laisse le temps de la lire.
+    const delay = kind === 'error' ? Math.min(9000, 4500 + message.length * 45) : 3500;
     setTimeout(() => {
       setToasts((t) => t.filter((x) => x.id !== id));
-    }, 3500);
+    }, delay);
   }, []);
 
   return (
@@ -36,8 +38,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            role="status"
-            className={`glass-strong pointer-events-auto max-w-[92vw] rounded-full px-4 py-2 text-sm shadow-lg ${
+            role={t.kind === 'error' ? 'alert' : 'status'}
+            onClick={() => setToasts((all) => all.filter((x) => x.id !== t.id))}
+            className={`glass-strong pointer-events-auto max-w-[92vw] cursor-pointer rounded-2xl px-4 py-2 text-sm shadow-lg ${
               t.kind === 'error' ? 'text-accent' : t.kind === 'info' ? 'text-paper/80' : 'text-paper'
             }`}
           >
@@ -55,7 +58,7 @@ export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) {
     // Fallback silencieux si le provider n'est pas monté (ne devrait pas arriver)
-    return { showToast: (_m: string) => {} };
+    return { showToast: (_m: string, _k?: Toast['kind']) => {} };
   }
   return ctx;
 }
