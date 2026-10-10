@@ -70,6 +70,10 @@ import { usePositions } from '@/lib/hooks/usePositions';
 import { useNow } from '@/lib/hooks/useNow';
 import { useGroups } from '@/lib/hooks/useGroups';
 import { useToast } from '@/components/ui/Toast';
+import { useGuide } from '@/components/guide/GuideProvider';
+import MapCoach, { type CoachTip } from '@/components/guide/MapCoach';
+import { DEFAULT_SETTINGS } from '@/lib/mapScale';
+import { computeRemainingMinutes, formatMinutes } from '@/lib/travel';
 
 const CLOSE_SNAP_PX = 14;
 type PointTool = 'point-circle' | 'point-rect';
@@ -79,7 +83,8 @@ export default function WorldMap() {
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { allowed: canEdit } = usePermission('manage_map');
+  const { allowed: canEdit, loading: permLoading } = usePermission('manage_map');
+  const guide = useGuide();
   const { custom: customTextures } = useTextures();
   const mapSettings = useMapSettings();
   const [showTextures, setShowTextures] = useState(true);
@@ -103,6 +108,7 @@ export default function WorldMap() {
   const [showBiomes, setShowBiomes] = useState(false);
   const [editLayer, setEditLayer] = useState<'map' | 'relief' | 'biome'>('map');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [didInitialFocus, setDidInitialFocus] = useState(false);
 
   const [selected, setSelected] = useState<{ kind: 'zone' | 'place'; entity: MapZone | MapPlace } | null>(
@@ -153,6 +159,8 @@ export default function WorldMap() {
       setZones(data.zones ?? []);
       setPlaces(data.places ?? []);
     }
+    // Sans ça, une panne réseau ressemblait à une carte vide.
+    setLoadError(!!error || !data);
     setRoutes((routeData as MapRoute[]) ?? []);
     setQuests(((questData as MapQuest[]) ?? []).filter((q) => !isQuestFinished(q.status)));
     setRelief((reliefData as MapRelief[]) ?? []);
@@ -222,13 +230,16 @@ export default function WorldMap() {
           showToast(ok ? 'Image exportée.' : 'Export impossible depuis ce navigateur.', ok ? 'success' : 'error')
         );
         break;
+      case 'help':
+        guide.openHelp();
+        break;
       case 'edit':
-        if (canEdit) {
-          setToolbarOpen(true);
-          setEditMode(true);
-        }
+        if (!canEdit) return showToast("L'édition est réservée aux membres ayant la permission « manage_map ».", 'error');
+        setToolbarOpen(true);
+        setEditMode(true);
         break;
       case 'scale':
+        if (!canEdit) return showToast("Le réglage de l'échelle est réservé aux admins de la carte.", 'error');
         window.dispatchEvent(new Event('sid-scale-open'));
         break;
       case 'flight': {
@@ -255,13 +266,60 @@ export default function WorldMap() {
   // Application demandée depuis une autre page (?app=…)
   useEffect(() => {
     const id = searchParams.get('app');
-    if (!id || loading) return;
+    if (!id || loading || permLoading) return;
     runAppRef.current(id);
     const params = new URLSearchParams(searchParams.toString());
     params.delete('app');
     router.replace(params.toString() ? `/carte?${params.toString()}` : '/carte', { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, searchParams]);
+  }, [loading, permLoading, searchParams]);
+
+  // --- Accompagnement ---------------------------------------------------
+  // Visite proposée d'office à la première venue (et la partie admin le
+  // jour où le membre obtient le droit d'édition), ou demandée par ?visite=.
+  useEffect(() => {
+    if (!guide.ready || loading || permLoading || guide.tourRunning) return;
+    const asked = searchParams.get('visite');
+    if (asked === 'player' || asked === 'admin') {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('visite');
+      router.replace(params.toString() ? `/carte?${params.toString()}` : '/carte', { scroll: false });
+      if (asked === 'player' || canEdit) guide.startTour(asked);
+      return;
+    }
+    if (searchParams.get('lieu') || searchParams.get('app')) return; // venu pour autre chose
+    if (!guide.state.seenPlayer) guide.startTour(canEdit ? 'full' : 'player');
+    else if (canEdit && !guide.state.seenAdmin) guide.startTour('admin');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guide.ready, loading, permLoading, canEdit]);
+
+  // Pendant la visite, on déplie ce que l'étape montre.
+  useEffect(() => {
+    if (guide.activeStep?.target === 'edit-toolbar') setToolbarOpen(true);
+  }, [guide.activeStep]);
+
+  // État réel publié pour les check-lists du centre d'aide.
+  const myPos = positionsHook.myPosition;
+  const scaleSet =
+    mapSettings.settings.km_per_unit !== DEFAULT_SETTINGS.km_per_unit ||
+    mapSettings.settings.walk_kmh !== DEFAULT_SETTINGS.walk_kmh;
+  useEffect(() => {
+    if (loading || loadError || positionsHook.loading) return;
+    guide.setFacts({
+      hasPosition: !!myPos?.place_id,
+      hasMount: !!myPos?.active_mount_id,
+      hasStatus: !!myPos?.status,
+      zones: zones.length,
+      places: places.length,
+      routes: routes.length,
+      biomes: biomes.length,
+      relief: relief.length,
+      scaleSet,
+      mountTypes: mountTypes.mountTypes.length
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, loadError, positionsHook.loading, myPos?.place_id, myPos?.active_mount_id, myPos?.status, zones.length, places.length, routes.length, biomes.length, relief.length, scaleSet, mountTypes.mountTypes.length]);
+  useEffect(() => () => guide.setFacts(null), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function confirmFlight() {
     if (!flightTarget) return;
@@ -334,35 +392,35 @@ export default function WorldMap() {
     resetDrawing();
   }
 
-  async function deleteZone(z: MapZone) {
-    if (!confirm(`Supprimer la zone "${z.name}" ?`)) return;
-    await supabase.from('map_zones').delete().eq('id', z.id);
-    showToast('Zone supprimée.');
+  // Une suppression refusée (droits, réseau) échouait en silence tout en
+  // annonçant « supprimé ».
+  async function removeRow(table: string, id: string, okMessage: string) {
+    const { error } = await supabase.from(table).delete().eq('id', id);
+    if (error) return showToast(`Suppression impossible : ${error.message}`, 'error');
+    showToast(okMessage);
     load();
   }
+  async function deleteZone(z: MapZone) {
+    if (!confirm(`Supprimer la zone "${z.name}" ? Les lieux qu'elle contient sont conservés.`)) return;
+    await removeRow('map_zones', z.id, 'Zone supprimée.');
+  }
   async function deletePlace(p: MapPlace) {
-    if (!confirm(`Supprimer "${p.name}" ?`)) return;
-    await supabase.from('map_places').delete().eq('id', p.id);
-    showToast('Lieu supprimé.');
-    load();
+    const linked = routes.filter((r) => r.from_place_id === p.id || r.to_place_id === p.id).length;
+    const extra = linked > 0 ? ` ${linked} route${linked > 1 ? 's' : ''} y ${linked > 1 ? 'sont reliées' : 'est reliée'}.` : '';
+    if (!confirm(`Supprimer "${p.name}" ?${extra}`)) return;
+    await removeRow('map_places', p.id, 'Lieu supprimé.');
   }
   async function deleteRoute(r: MapRoute) {
     if (!confirm(`Supprimer la route "${r.name || 'sans nom'}" ?`)) return;
-    await supabase.from('map_routes').delete().eq('id', r.id);
-    showToast('Route supprimée.');
-    load();
+    await removeRow('map_routes', r.id, 'Route supprimée.');
   }
   async function deleteRelief(r: MapRelief) {
     if (!confirm('Supprimer cette zone de relief ?')) return;
-    await supabase.from('map_relief').delete().eq('id', r.id);
-    showToast('Relief supprimé.');
-    load();
+    await removeRow('map_relief', r.id, 'Relief supprimé.');
   }
   async function deleteBiome(b: MapBiome) {
     if (!confirm('Supprimer cette zone de biome ?')) return;
-    await supabase.from('map_biomes').delete().eq('id', b.id);
-    showToast('Biome supprimé.');
-    load();
+    await removeRow('map_biomes', b.id, 'Biome supprimé.');
   }
 
   function findPlaceNear(pt: Point): MapPlace | null {
@@ -526,7 +584,12 @@ export default function WorldMap() {
         if (nearbyPlace) {
           setRouteDraft({ fromPlaceId: nearbyPlace.id, points: [{ x: nearbyPlace.x, y: nearbyPlace.y }] });
         } else {
-          showToast('Clique sur un lieu de départ.', 'info');
+          showToast(
+            places.length < 2
+              ? 'Une route relie deux lieux : place-en au moins deux avant de tracer.'
+              : 'Une route part d’un lieu : clique sur le lieu de départ.',
+            'info'
+          );
         }
         return;
       }
@@ -574,12 +637,120 @@ export default function WorldMap() {
   const showGrid = editMode && activeTool !== null;
   const closeSnapReady = activeTool === 'polygon' && tempPoints.length >= 3;
 
+  // Consigne du mode en cours (visible aussi sur téléphone, où l'ancienne
+  // barre d'aide du bas était masquée).
+  const layerName = editLayer === 'map' ? 'Carte' : editLayer === 'relief' ? 'Relief' : 'Biomes';
+  const shapeMakes = editLayer === 'map' ? 'une région' : editLayer === 'relief' ? 'une zone de relief' : 'une zone de biome';
+  const modeHint: string | null = flightMode
+    ? flightTarget
+      ? '🕊️ Vol libre — vérifie le trajet puis confirme'
+      : '🕊️ Vol libre — clique le lieu de destination'
+    : !editMode
+    ? null
+    : deleteMode
+    ? editLayer === 'map'
+      ? '🗑 Suppression — clique une région, un lieu ou une route'
+      : `🗑 Suppression — clique une zone du calque ${layerName}`
+    : activeTool === 'polygon'
+    ? tempPoints.length === 0
+      ? `Polygone — clique pour poser le premier sommet (${shapeMakes})`
+      : tempPoints.length < 3
+      ? `Polygone — ${tempPoints.length} point${tempPoints.length > 1 ? 's' : ''}, il en faut au moins 3`
+      : `Polygone — ${tempPoints.length} points · reclique le premier point ou « Terminer »`
+    : activeTool === 'route'
+    ? routeDraft
+      ? `Route — ajoute des points de passage, puis clique le lieu d’arrivée`
+      : 'Route — clique le lieu de départ'
+    : activeTool === 'point-circle' || activeTool === 'point-rect'
+    ? 'Lieu — clic simple (taille standard) ou clic-glisse (taille au choix)'
+    : activeTool === 'freehand'
+    ? `Tracé libre — dessine le contour de ${shapeMakes} sans lâcher`
+    : activeTool
+    ? `Clic-glisse pour dessiner ${shapeMakes}`
+    : editLayer === 'map'
+    ? 'Édition — choisis un outil : une forme (région), Lieu ou Route'
+    : `Édition ${layerName} — choisis une forme, ou clique une zone pour changer sa texture`;
+
+  const coachTip: CoachTip | null = (() => {
+    if (loading || guide.tourRunning || modeHint || selected) return null;
+    if (loadError)
+      return {
+        id: 'load-error',
+        emoji: '⚠',
+        tone: 'error',
+        sticky: true,
+        text: 'La carte n’a pas pu être chargée. Vérifie ta connexion, puis réessaie.',
+        action: { label: 'Réessayer', run: load }
+      };
+    if (positionsHook.loading || permLoading) return null;
+    if (myPos?.travel_started_at) {
+      const destRoute = routes.find((r) => r.id === myPos.route_id);
+      const destId =
+        myPos.flight_target_place_id ??
+        (destRoute ? (destRoute.from_place_id === myPos.place_id ? destRoute.to_place_id : destRoute.from_place_id) : null);
+      const dest = places.find((p) => p.id === destId);
+      const remaining = computeRemainingMinutes(myPos, now);
+      return {
+        id: 'traveling',
+        emoji: myPos.flight_target_place_id ? '🕊️' : '🛣',
+        sticky: true,
+        text: `En voyage vers ${dest?.name ?? 'ta destination'} — ${remaining <= 0 ? 'arrivée imminente' : `arrivée dans ${formatMinutes(remaining)}`}. Le trajet se termine tout seul.`,
+        secondary: { label: 'Détails', run: () => setShowPositionPicker(true) }
+      };
+    }
+    const tips: CoachTip[] = [];
+    if (canEdit && places.length === 0 && zones.length === 0)
+      tips.push({
+        id: 'admin-empty',
+        emoji: '🗺️',
+        text: 'La carte est vide. Commence par régler l’échelle, puis dessine une première région.',
+        action: { label: 'Ouvrir les outils', run: () => runApp('edit') },
+        secondary: { label: 'Voir les étapes', run: () => guide.openHelp('start') }
+      });
+    if (!canEdit && places.length === 0)
+      tips.push({
+        id: 'player-empty',
+        emoji: '🗺️',
+        text: 'Aucun lieu n’a encore été publié sur la carte. Reviens quand les admins auront posé les premiers lieux.'
+      });
+    if (places.length > 0 && !myPos?.place_id)
+      tips.push({
+        id: 'no-position',
+        emoji: '📍',
+        text: 'Ton personnage n’est encore nulle part. Choisis son lieu de départ pour pouvoir voyager.',
+        action: { label: 'Choisir mon lieu', run: () => setShowPositionPicker(true) }
+      });
+    if (canEdit && places.length >= 2 && routes.length === 0)
+      tips.push({
+        id: 'admin-no-routes',
+        emoji: '🛣',
+        text: 'Aucune route ne relie les lieux : à pied, les joueurs ne peuvent pas quitter leur lieu de départ.',
+        action: {
+          label: 'Tracer une route',
+          run: () => {
+            setToolbarOpen(true);
+            setEditMode(true);
+            setEditLayer('map');
+            selectRouteTool();
+          }
+        }
+      });
+    if (myPos?.place_id && routes.length > 0 && !routes.some((r) => r.from_place_id === myPos.place_id || r.to_place_id === myPos.place_id) && !activeMountForFlight?.can_fly)
+      tips.push({
+        id: `stuck-${myPos.place_id}`,
+        emoji: '🚧',
+        text: 'Aucune route ne part du lieu où tu te trouves. Il te faut une monture volante, un cristal, ou qu’un admin trace une route.',
+        secondary: { label: 'Comment voyager', run: () => guide.openHelp('topics') }
+      });
+    return tips.find((t) => !guide.state.dismissed.includes(t.id)) ?? null;
+  })();
+
   return (
     <div className="flex h-[100dvh] w-full flex-col overflow-hidden">
       <Navbar />
       <div className="relative flex-1 overflow-hidden">
       {canEdit && (
-        <div className="fixed inset-x-2 bottom-2 z-20 max-w-full md:absolute md:inset-x-auto md:bottom-auto md:left-4 md:top-6 md:max-w-[calc(100%-2rem)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div data-guide="edit-toolbar" className="fixed inset-x-2 bottom-2 z-20 max-w-full md:absolute md:inset-x-auto md:bottom-auto md:left-4 md:top-6 md:max-w-[calc(100%-2rem)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           {!toolbarOpen ? (
             <button
               onClick={() => setToolbarOpen(true)}
@@ -698,7 +869,7 @@ export default function WorldMap() {
 
               {deleteMode && (
                 <p className="max-w-xs text-[11px] text-accent/90">
-                  Clique sur une zone ou un lieu pour le supprimer définitivement.
+                  Seul le calque {layerName} est concerné. Chaque suppression demande confirmation et est définitive.
                 </p>
               )}
             </div>
@@ -714,7 +885,7 @@ export default function WorldMap() {
         onSave={mapSettings.save}
       />
 
-      <div className="absolute right-4 top-6 z-20">
+      <div data-guide="zoom" className="absolute right-4 top-6 z-20">
         <ZoomControls onZoomIn={vp.zoomIn} onZoomOut={vp.zoomOut} onReset={vp.resetView} />
       </div>
 
@@ -1078,7 +1249,8 @@ export default function WorldMap() {
           <TexturePicker
             value={retexture.value}
             onChange={async (v) => {
-              await supabase.from(retexture.table).update({ texture_id: v }).eq('id', retexture.id);
+              const { error } = await supabase.from(retexture.table).update({ texture_id: v }).eq('id', retexture.id);
+              if (error) return showToast(`Texture non enregistrée : ${error.message}`, 'error');
               setRetexture(null);
               load();
             }}
@@ -1086,20 +1258,35 @@ export default function WorldMap() {
         </Modal>
       )}
 
-      {flightMode && (
-        <div className="glass absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-accent">
-          🕊️ Vol libre — clique un lieu de destination
-          <button
-            onClick={() => {
-              setFlightMode(false);
-              setFlightTarget(null);
-            }}
-            className="rounded-full border border-white/20 px-2 py-0.5 text-paper/70 hover:text-accent"
-          >
-            Quitter
-          </button>
+      {modeHint && (
+        <div
+          role="status"
+          className="glass-strong absolute left-1/2 top-36 md:top-[4.25rem] z-20 flex w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-2xl px-3.5 py-2 text-xs text-paper/90"
+        >
+          <span className="min-w-0">{modeHint}</span>
+          {flightMode ? (
+            <button
+              onClick={() => {
+                setFlightMode(false);
+                setFlightTarget(null);
+              }}
+              className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent"
+            >
+              Quitter
+            </button>
+          ) : deleteMode ? (
+            <button onClick={toggleDeleteMode} className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent">
+              Désactiver
+            </button>
+          ) : activeTool ? (
+            <button onClick={resetDrawing} className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent">
+              Annuler
+            </button>
+          ) : null}
         </div>
       )}
+
+      <MapCoach tip={coachTip} onDismiss={guide.dismiss} />
 
       {flightMode && flightTarget && myPlaceForFlight && activeMountForFlight && (
         <FlightPanel
@@ -1174,8 +1361,8 @@ export default function WorldMap() {
         />
       )}
 
-      <MapActionStack>
-        <div className="glass flex gap-1 rounded-full p-1">
+      <MapActionStack raised={canEdit && toolbarOpen && editMode}>
+        <div data-guide="layers" className="glass flex gap-1 rounded-full p-1">
           <button
             onClick={() => setShowRelief((v) => !v)}
             className={`rounded-full px-2.5 py-1 font-display text-[10px] uppercase tracking-wide transition ${
@@ -1219,15 +1406,17 @@ export default function WorldMap() {
             }
           ]}
         />
-        <PresencePanel
-          positions={positionsHook.positions}
-          places={places}
-          routes={routes}
-          onFocusPlace={(placeId) => {
-            const p = places.find((pl) => pl.id === placeId);
-            if (p) selectPlaceAndShare(p);
-          }}
-        />
+        <div data-guide="presence">
+          <PresencePanel
+            positions={positionsHook.positions}
+            places={places}
+            routes={routes}
+            onFocusPlace={(placeId) => {
+              const p = places.find((pl) => pl.id === placeId);
+              if (p) selectPlaceAndShare(p);
+            }}
+          />
+        </div>
       </MapActionStack>
 
       {showPlanner && (
@@ -1241,12 +1430,11 @@ export default function WorldMap() {
         </div>
       )}
 
-      <div className="absolute left-1/2 top-6 z-20 -translate-x-1/2">
+      <div data-guide="search" className="absolute left-1/2 top-6 z-20 -translate-x-1/2">
         <PlaceSearch places={places} onSelect={selectPlaceAndShare} />
       </div>
 
       {(() => {
-        const myPos = positionsHook.myPosition;
         if (!myPos?.place_id || !myPos.arrived_at || myPos.travel_started_at) return null;
         const questHere = quests.find((q) => q.place_id === myPos.place_id);
         if (!questHere) return null;
@@ -1260,21 +1448,11 @@ export default function WorldMap() {
         );
       })()}
 
-      <div className="glass absolute bottom-3 left-1/2 z-10 hidden -translate-x-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/60 md:block">
-        {deleteMode
-          ? 'Clique un élément pour le supprimer'
-          : editMode && activeTool === 'polygon'
-          ? 'Clique pour ajouter un point · reclique sur le premier pour fermer'
-          : editMode && activeTool === 'route'
-          ? routeDraft
-            ? "Clique des points intermédiaires, puis un lieu d'arrivée pour terminer"
-            : 'Clique un lieu de départ'
-          : editMode && (activeTool === 'point-circle' || activeTool === 'point-rect')
-          ? 'Clique-glisse pour définir la taille, ou clique simple pour une taille par défaut'
-          : editMode && activeTool
-          ? 'Clique-glisse pour dessiner'
-          : "Glisse pour naviguer · molette pour zoomer · clique un élément pour l'explorer"}
-      </div>
+      {!modeHint && (
+        <div className="glass absolute bottom-3 left-1/2 z-10 hidden -translate-x-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/60 md:block">
+          Glisse pour naviguer · molette pour zoomer · clique un élément pour l'explorer
+        </div>
+      )}
       </div>
     </div>
   );

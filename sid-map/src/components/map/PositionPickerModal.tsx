@@ -58,7 +58,7 @@ export default function PositionPickerModal({
     setBusy(true);
     const { error } = await setInitialPlace(placeId);
     setBusy(false);
-    if (error) showToast("Impossible de s'établir ici.", 'error');
+    if (error) showToast(`Impossible de s'établir ici (${error}).`, 'error');
     else {
       showToast('Te voilà établi !');
       onClose();
@@ -131,9 +131,17 @@ export default function PositionPickerModal({
       <Modal title="Où commence ton personnage ?" onClose={onClose}>
         <div className="space-y-2">
           <p className="text-xs text-paper/50">
-            Premier positionnement uniquement. Ensuite, tout déplacement se fera par un vrai trajet (à
-            pied, en voyage ou en vol) — plus aucune téléportation.
+            Ce choix ne se fait qu'une fois. Ensuite, tout déplacement sera un vrai trajet (à pied, sur une
+            monture ou en vol) — choisis donc le lieu où ton personnage commence réellement son histoire.
           </p>
+          {places.length === 0 && (
+            <p className="rounded-lg bg-white/5 px-3 py-2 text-xs text-paper/60">
+              Aucun lieu n'existe encore sur la carte : un admin doit d'abord en placer.
+            </p>
+          )}
+          {places.length > 0 && results.length === 0 && (
+            <p className="text-xs text-paper/50">Aucun lieu ne correspond à « {placeQuery} ».</p>
+          )}
           <input
             value={placeQuery}
             onChange={(e) => setPlaceQuery(e.target.value)}
@@ -243,7 +251,10 @@ export default function PositionPickerModal({
             🛣 Voyager (à pied{activeMount ? ` / ${activeMount.name}` : ''})
           </p>
           {connectedRoutes.length === 0 && (
-            <p className="text-xs text-paper/40">Aucune route ne part d'ici pour l'instant.</p>
+            <p className="text-xs text-paper/40">
+              Aucune route ne part d'ici pour l'instant. Pour quitter ce lieu, il faut une monture volante, un cristal
+              de téléportation, ou qu'un admin trace une route.
+            </p>
           )}
           <div className="max-h-40 space-y-1 overflow-y-auto scrollbar-thin pr-1">
             {connectedRoutes.map((r) => {

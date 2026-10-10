@@ -131,13 +131,15 @@ export default function CityMap({ cityId }: { cityId: string }) {
 
   async function deleteDistrict(d: CityDistrict) {
     if (!confirm(`Supprimer le quartier "${d.name}" ?`)) return;
-    await supabase.from('city_districts').delete().eq('id', d.id);
+    const { error } = await supabase.from('city_districts').delete().eq('id', d.id);
+    if (error) return showToast(`Suppression impossible : ${error.message}`, 'error');
     showToast('Quartier supprimé.');
     load();
   }
   async function deleteBuilding(b: CityBuilding) {
     if (!confirm(`Supprimer "${b.name || b.type}" et tous ses étages ?`)) return;
-    await supabase.from('city_buildings').delete().eq('id', b.id);
+    const { error } = await supabase.from('city_buildings').delete().eq('id', b.id);
+    if (error) return showToast(`Suppression impossible : ${error.message}`, 'error');
     showToast('Bâtiment supprimé.');
     load();
   }
@@ -646,7 +648,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
         />
       )}
 
-      <MapActionStack>
+      <MapActionStack raised={canEdit && toolbarOpen && editMode}>
         <MapLegend
           sections={[
             {
@@ -671,16 +673,26 @@ export default function CityMap({ cityId }: { cityId: string }) {
         </button>
       </MapActionStack>
 
-      <div className="glass absolute bottom-3 left-1/2 z-10 hidden -translate-x-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/60 md:block">
+      {/* Consigne du mode en cours : en haut sur téléphone (la barre d'outils occupe le bas). */}
+      <div
+        role="status"
+        className={`glass absolute left-1/2 top-24 z-10 w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-2xl px-4 py-1.5 text-center text-xs text-paper/80 md:bottom-3 md:top-auto ${
+          editMode ? '' : 'hidden md:block'
+        }`}
+      >
         {deleteMode
-          ? 'Clique un élément pour le supprimer'
+          ? '🗑 Suppression — clique un quartier ou un bâtiment (confirmation demandée)'
           : editMode && activeTool === 'polygon'
-          ? 'Clique pour ajouter un point · reclique sur le premier pour fermer'
+          ? tempPoints.length < 3
+            ? `Polygone — ${tempPoints.length} point${tempPoints.length > 1 ? 's' : ''}, il en faut au moins 3 (quartier)`
+            : `Polygone — ${tempPoints.length} points · reclique le premier point ou « Terminer »`
           : editMode && (activeTool === 'point-circle' || activeTool === 'point-rect')
-          ? 'Clique-glisse pour définir la taille'
+          ? 'Bâtiment — clic simple (taille standard) ou clic-glisse (taille au choix)'
           : editMode && activeTool
-          ? 'Clique-glisse pour dessiner'
-          : 'Glisse pour naviguer · molette pour zoomer'}
+          ? 'Clic-glisse pour dessiner un quartier'
+          : editMode
+          ? 'Édition — choisis un outil : une forme (quartier) ou Bâtiment'
+          : 'Glisse pour naviguer · molette pour zoomer · clique un bâtiment pour l’ouvrir'}
       </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import AppsLauncher from './AppsLauncher';
+import { useGuide } from '@/components/guide/GuideProvider';
 
 const LINKS = [{ href: '/carte', label: 'Carte du monde' }];
 const STORAGE_KEY = 'sid-navbar-collapsed';
@@ -15,6 +16,10 @@ export default function Navbar() {
   const supabase = createClient();
   const [collapsed, setCollapsed] = useState(false);
   const [appsOpen, setAppsOpen] = useState(false);
+  const guide = useGuide();
+
+  // La visite guidée pointe des boutons de cette barre : on la déplie.
+  const forceOpen = guide.tourRunning;
 
   useEffect(() => {
     setCollapsed(localStorage.getItem(STORAGE_KEY) === '1');
@@ -34,7 +39,7 @@ export default function Navbar() {
     router.refresh();
   }
 
-  if (collapsed) {
+  if (collapsed && !forceOpen) {
     return (
       <div className="relative z-40 flex h-4 shrink-0 items-center justify-center">
         <button
@@ -61,6 +66,7 @@ export default function Navbar() {
       <div className="flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-1.5">
         <button
           onClick={() => setAppsOpen(true)}
+          data-guide="apps"
           className="btn-accent shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 font-display text-[11px] uppercase tracking-wide text-paper md:px-3 md:text-xs"
         >
           ▦ Applications
@@ -78,6 +84,13 @@ export default function Navbar() {
             {l.label}
           </Link>
         ))}
+        <button
+          onClick={() => guide.openHelp()}
+          data-guide="help"
+          className="shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 font-display text-[11px] uppercase tracking-wide text-paper/80 transition hover:border-accent hover:text-accent md:px-3 md:text-xs"
+        >
+          ? Aide
+        </button>
         <button
           onClick={logout}
           className="ml-1 shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 font-display text-[11px] text-paper/60 transition hover:border-accent hover:text-accent md:px-3 md:text-xs"

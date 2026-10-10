@@ -51,7 +51,8 @@ export default function DetailPanel({
     if (!confirm(confirmMsg)) return;
 
     const table = kind === 'zone' ? 'map_zones' : 'map_places';
-    await supabase.from(table).delete().eq('id', entity.id);
+    const { error } = await supabase.from(table).delete().eq('id', entity.id);
+    if (error) return alert(`Suppression impossible : ${error.message}`);
     onClose();
     onDeleted?.();
   }

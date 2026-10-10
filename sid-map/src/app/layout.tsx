@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { ToastProvider } from '@/components/ui/Toast';
+import { GuideProvider } from '@/components/guide/GuideProvider';
 import './globals.css';
 
 const sans = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -29,7 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className={`${sans.variable} ${mono.variable}`}>
       <body className="bg-ink text-paper font-body antialiased">
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <GuideProvider>{children}</GuideProvider>
+        </ToastProvider>
       </body>
     </html>
   );
