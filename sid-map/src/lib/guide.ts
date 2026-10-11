@@ -318,6 +318,19 @@ export const HELP_TOPICS: HelpTopic[] = [
     note: 'Sur téléphone, poser un deuxième doigt annule le tracé et repasse en navigation.'
   },
   {
+    id: 'a-select',
+    audience: 'admin',
+    emoji: '⬚',
+    title: 'Sélection multiple et actions de groupe',
+    steps: [
+      'Mode édition → « ⬚ Sélection ». Clique des éléments pour les ajouter ou les retirer, ou glisse dans le vide pour les encadrer.',
+      'Glisse l’un des éléments sélectionnés : tout le groupe suit. Les routes attachées aux lieux déplacés suivent aussi.',
+      'La barre propose « Tout », « Aucun », l’attribution d’un territoire, la suppression groupée et « Annuler le déplacement ».',
+      'La sélection porte sur le calque en cours : régions et lieux sur Carte, zones sur Relief ou Biomes.'
+    ],
+    note: 'Avec l’outil Sélection actif, glisser ne déplace plus la carte : utilise la molette, les boutons de zoom ou deux doigts.'
+  },
+  {
     id: 'a-cities',
     audience: 'admin',
     emoji: '🏙️',

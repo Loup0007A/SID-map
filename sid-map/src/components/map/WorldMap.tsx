@@ -77,10 +77,12 @@ import { computeRemainingMinutes, formatMinutes, travelerScreenPosition } from '
 import { distanceUnits, formatDistance } from '@/lib/mapScale';
 import { useFavorites } from '@/lib/hooks/useFavorites';
 import { useIsDesktop } from '@/components/ui/Modal';
+import { SEL_TABLE, parseSel, pointInPolygon, selKey, shiftPoint, shiftPoints, type SelKind } from '@/lib/selection';
+import { DirectoryApp, NearbyApp, NotesApp } from '@/components/apps/ExtraApps';
 
 const CLOSE_SNAP_PX = 14;
 type PointTool = 'point-circle' | 'point-rect';
-type ActiveTool = ShapeTool | PointTool | 'route' | null;
+type ActiveTool = ShapeTool | PointTool | 'route' | 'select' | null;
 
 export default function WorldMap() {
   const supabase = createClient();
@@ -93,6 +95,14 @@ export default function WorldMap() {
   // Outil de mesure : deux points cliqués sur la carte.
   const [measureMode, setMeasureMode] = useState(false);
   const [measurePts, setMeasurePts] = useState<Point[]>([]);
+  // Sélection multiple (admins) : clés « genre:id », geste en cours, dernier déplacement annulable.
+  const [sel, setSel] = useState<string[]>([]);
+  const [selDrag, setSelDrag] = useState<{ mode: 'move' | 'marquee'; start: Point; cur: Point; hitKey: string | null } | null>(null);
+  const [lastMove, setLastMove] = useState<{ keys: string[]; dx: number; dy: number } | null>(null);
+  const [selBusy, setSelBusy] = useState(false);
+  // Plusieurs de ces fenêtres peuvent rester ouvertes côte à côte.
+  const [extraApps, setExtraApps] = useState<string[]>([]);
+  const closeExtra = (id: string) => setExtraApps((a) => a.filter((x) => x !== id));
   const { custom: customTextures } = useTextures();
   const mapSettings = useMapSettings();
   const [showTextures, setShowTextures] = useState(true);
@@ -240,6 +250,11 @@ export default function WorldMap() {
           showToast(ok ? 'Image exportée.' : 'Export impossible depuis ce navigateur.', ok ? 'success' : 'error')
         );
         break;
+      case 'directory':
+      case 'nearby':
+      case 'notes':
+        setExtraApps((a) => (a.includes(id) ? a : [...a, id]));
+        break;
       case 'measure':
         resetDrawing();
         setEditMode(false);
@@ -371,6 +386,8 @@ export default function WorldMap() {
   }, []);
 
   function resetDrawing() {
+    setSel([]);
+    setSelDrag(null);
     setActiveTool(null);
     setTempPoints([]);
     setDragBox(null);
@@ -395,6 +412,104 @@ export default function WorldMap() {
     setActiveTool(t);
     setTempPoints([]);
     setRouteDraft(null);
+  }
+
+  function selectSelectTool() {
+    resetDrawing();
+    setDeleteMode(false);
+    setActiveTool('select');
+  }
+
+  // --- Sélection multiple ------------------------------------------------
+  // Éléments sélectionnables du calque en cours (les lieux d'abord : ils
+  // sont dessinés par-dessus les régions).
+  function selCandidates(): { key: string; center: Point; hit: (pt: Point) => boolean }[] {
+    const poly = (kind: SelKind, list: { id: string; path_points: Point[] }[]) =>
+      list.map((e) => ({ key: selKey(kind, e.id), center: centroid(e.path_points), hit: (pt: Point) => pointInPolygon(pt, e.path_points) }));
+    if (editLayer === 'relief') return poly('relief', relief);
+    if (editLayer === 'biome') return poly('biome', biomes);
+    return [
+      ...places.map((p) => ({
+        key: selKey('place', p.id),
+        center: { x: p.x, y: p.y },
+        hit: (pt: Point) => {
+          const r = p.radius ?? 3;
+          if (p.shape === 'rect') return Math.abs(pt.x - p.x) <= (p.width ?? r * 2) / 2 && Math.abs(pt.y - p.y) <= (p.height ?? r * 2) / 2;
+          return Math.hypot(pt.x - p.x, pt.y - p.y) <= r;
+        }
+      })),
+      ...[...zones].reverse().map((z) => ({ key: selKey('zone', z.id), center: centroid(z.path_points), hit: (pt: Point) => pointInPolygon(pt, z.path_points) }))
+    ];
+  }
+
+  async function applyMove(keys: string[], dx: number, dy: number, undo = false) {
+    if (keys.length === 0 || (dx === 0 && dy === 0)) return;
+    setSelBusy(true);
+    const ids = (kind: SelKind) => new Set(keys.map(parseSel).filter((k) => k.kind === kind).map((k) => k.id));
+    const placeIds = ids('place');
+    const ops: PromiseLike<{ error: { message: string } | null }>[] = [];
+    places.filter((p) => placeIds.has(p.id)).forEach((p) => {
+      const n = shiftPoint(p, dx, dy);
+      ops.push(supabase.from('map_places').update({ x: n.x, y: n.y }).eq('id', p.id));
+    });
+    const polys: [SelKind, { id: string; path_points: Point[] }[]][] = [['zone', zones], ['relief', relief], ['biome', biomes]];
+    polys.forEach(([kind, list]) => {
+      const set = ids(kind);
+      list.filter((e) => set.has(e.id)).forEach((e) =>
+        ops.push(supabase.from(SEL_TABLE[kind]).update({ path_points: shiftPoints(e.path_points, dx, dy) }).eq('id', e.id))
+      );
+    });
+    // Les routes suivent leurs lieux : en entier si les deux bouts bougent,
+    // sinon seul le bout attaché est déplacé.
+    routes.forEach((r) => {
+      const a = !!r.from_place_id && placeIds.has(r.from_place_id);
+      const b = !!r.to_place_id && placeIds.has(r.to_place_id);
+      if (!a && !b) return;
+      const pts = r.path_points ?? [];
+      const next = a && b ? shiftPoints(pts, dx, dy) : pts.map((pt, i) => ((a && i === 0) || (b && i === pts.length - 1) ? shiftPoint(pt, dx, dy) : pt));
+      ops.push(supabase.from('map_routes').update({ path_points: next }).eq('id', r.id));
+    });
+    const results = await Promise.all(ops);
+    setSelBusy(false);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) showToast(`Déplacement incomplet : ${failed.error.message}`, 'error');
+    else showToast(undo ? 'Déplacement annulé.' : `${keys.length} élément${keys.length > 1 ? 's déplacés' : ' déplacé'}.`);
+    setLastMove(undo || failed ? null : { keys, dx, dy });
+    load();
+  }
+
+  async function deleteSelection() {
+    if (sel.length === 0) return;
+    const placeIds = new Set(sel.map(parseSel).filter((k) => k.kind === 'place').map((k) => k.id));
+    const linked = routes.filter((r) => (!!r.from_place_id && placeIds.has(r.from_place_id)) || (!!r.to_place_id && placeIds.has(r.to_place_id))).length;
+    const extra = linked > 0 ? ` ${linked} route${linked > 1 ? 's reliées à ces lieux sont concernées' : ' reliée à ces lieux est concernée'}.` : '';
+    if (!confirm(`Supprimer définitivement ${sel.length} élément${sel.length > 1 ? 's' : ''} ?${extra}`)) return;
+    setSelBusy(true);
+    const byKind = new Map<SelKind, string[]>();
+    sel.map(parseSel).forEach((k) => byKind.set(k.kind, [...(byKind.get(k.kind) ?? []), k.id]));
+    const results = await Promise.all(Array.from(byKind.entries()).map(([kind, list]) => supabase.from(SEL_TABLE[kind]).delete().in('id', list)));
+    setSelBusy(false);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) showToast(`Suppression incomplète : ${failed.error.message}`, 'error');
+    else showToast(`${sel.length} élément${sel.length > 1 ? 's supprimés' : ' supprimé'}.`);
+    setSel([]);
+    setLastMove(null);
+    load();
+  }
+
+  async function setSelectionTerritory(groupId: string | null) {
+    setSelBusy(true);
+    const results = await Promise.all(
+      (['place', 'zone'] as SelKind[]).map((kind) => {
+        const list = sel.map(parseSel).filter((k) => k.kind === kind).map((k) => k.id);
+        return list.length ? supabase.from(SEL_TABLE[kind]).update({ controlling_group_id: groupId }).in('id', list) : Promise.resolve({ error: null });
+      })
+    );
+    setSelBusy(false);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) showToast(`Territoire non modifié : ${failed.error.message}`, 'error');
+    else showToast(groupId ? 'Territoire attribué à la sélection.' : 'Sélection rendue neutre.');
+    load();
   }
 
   function selectRouteTool() {
@@ -457,6 +572,7 @@ export default function WorldMap() {
       downRef.current = null;
       setDragBox(null);
       setFreehandPoints([]);
+      setSelDrag(null);
       return;
     }
 
@@ -465,6 +581,14 @@ export default function WorldMap() {
 
     if (!editMode || activeTool === null) {
       vp.startPan(e.clientX, e.clientY);
+      return;
+    }
+    if (activeTool === 'select') {
+      if (selBusy) return;
+      const pt = vp.screenToSvg(e.clientX, e.clientY);
+      const hit = selCandidates().find((c) => c.hit(pt))?.key ?? null;
+      // Tirer un élément déjà sélectionné déplace tout le groupe ; sinon on trace un cadre.
+      setSelDrag({ mode: hit && sel.includes(hit) ? 'move' : 'marquee', start: pt, cur: pt, hitKey: hit });
       return;
     }
     if (activeTool === 'point-circle' || activeTool === 'point-rect') {
@@ -487,6 +611,11 @@ export default function WorldMap() {
       return;
     }
     if (!editMode || !activeTool) return;
+    if (selDrag) {
+      const pt = vp.screenToSvg(e.clientX, e.clientY);
+      setSelDrag((d) => (d ? { ...d, cur: pt } : d));
+      return;
+    }
     if (activeTool === 'freehand' && freehandPoints.length > 0) {
       const pt = vp.screenToSvg(e.clientX, e.clientY);
       setFreehandPoints((pts) => {
@@ -575,6 +704,27 @@ export default function WorldMap() {
 
     if (!editMode || !activeTool) return;
 
+    if (activeTool === 'select') {
+      const d = selDrag;
+      setSelDrag(null);
+      if (!d) return;
+      if (moved < 4) {
+        // Simple clic : ajoute ou retire l'élément ; dans le vide, tout désélectionner.
+        if (d.hitKey) setSel((cur) => (cur.includes(d.hitKey!) ? cur.filter((k) => k !== d.hitKey) : [...cur, d.hitKey!]));
+        else setSel([]);
+      } else if (d.mode === 'move') {
+        applyMove(sel, Math.round((d.cur.x - d.start.x) * 100) / 100, Math.round((d.cur.y - d.start.y) * 100) / 100);
+      } else {
+        const x1 = Math.min(d.start.x, d.cur.x);
+        const x2 = Math.max(d.start.x, d.cur.x);
+        const y1 = Math.min(d.start.y, d.cur.y);
+        const y2 = Math.max(d.start.y, d.cur.y);
+        const inside = selCandidates().filter((c) => c.center.x >= x1 && c.center.x <= x2 && c.center.y >= y1 && c.center.y <= y2).map((c) => c.key);
+        setSel((cur) => Array.from(new Set([...cur, ...inside])));
+      }
+      return;
+    }
+
     if (activeTool === 'point-circle' || activeTool === 'point-rect') {
       finalizePointDrag(moved);
       return;
@@ -662,6 +812,11 @@ export default function WorldMap() {
   })();
 
   const showGrid = editMode && activeTool !== null;
+  // Décalage d'aperçu pendant qu'on tire la sélection.
+  const moveDx = selDrag?.mode === 'move' ? selDrag.cur.x - selDrag.start.x : 0;
+  const moveDy = selDrag?.mode === 'move' ? selDrag.cur.y - selDrag.start.y : 0;
+  const isSel = (kind: SelKind, id: string) => activeTool === 'select' && sel.includes(selKey(kind, id));
+  const selShift = (kind: SelKind, id: string) => (isSel(kind, id) && (moveDx || moveDy) ? `translate(${moveDx} ${moveDy})` : undefined);
   const closeSnapReady = activeTool === 'polygon' && tempPoints.length >= 3;
 
   // Consigne du mode en cours (visible aussi sur téléphone, où l'ancienne
@@ -717,6 +872,10 @@ export default function WorldMap() {
     ? editLayer === 'map'
       ? '🗑 Suppression — clique une région, un lieu ou une route'
       : `🗑 Suppression — clique une zone du calque ${layerName}`
+    : activeTool === 'select'
+    ? sel.length === 0
+      ? '⬚ Sélection — clique des éléments, ou glisse pour les encadrer'
+      : `⬚ ${sel.length} sélectionné${sel.length > 1 ? 's' : ''} — glisse l’un d’eux pour déplacer le groupe`
     : activeTool === 'polygon'
     ? tempPoints.length === 0
       ? `Polygone — clique pour poser le premier sommet (${shapeMakes})`
@@ -897,6 +1056,14 @@ export default function WorldMap() {
                       </>
                     )}
                     <button
+                      onClick={selectSelectTool}
+                      className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 font-display text-xs transition ${
+                        activeTool === 'select' ? 'btn-accent border-transparent text-paper' : 'border-white/15 bg-white/5 text-paper/70'
+                      }`}
+                    >
+                      ⬚ Sélection
+                    </button>
+                    <button
                       onClick={toggleDeleteMode}
                       className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 font-display text-xs transition ${
                         deleteMode
@@ -921,7 +1088,7 @@ export default function WorldMap() {
               {editMode && !deleteMode && (
                 <ShapeToolbar
                   active={
-                    activeTool && activeTool !== 'point-circle' && activeTool !== 'point-rect' && activeTool !== 'route'
+                    activeTool && activeTool !== 'point-circle' && activeTool !== 'point-rect' && activeTool !== 'route' && activeTool !== 'select'
                       ? (activeTool as ShapeTool)
                       : null
                   }
@@ -931,6 +1098,63 @@ export default function WorldMap() {
                   onFinish={() => setFinalPoints(tempPoints)}
                   onCancel={resetDrawing}
                 />
+              )}
+
+              {activeTool === 'select' && (
+                <div className="anim-fade flex items-center gap-1.5 overflow-x-auto border-t border-white/10 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <span className="shrink-0 whitespace-nowrap rounded-full bg-[#e7c34a]/15 px-2.5 py-1 text-[11px] text-[#e7c34a]">
+                    {sel.length} sélectionné{sel.length > 1 ? 's' : ''}
+                  </span>
+                  <button
+                    onClick={() => setSel(selCandidates().map((c) => c.key))}
+                    className="shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-paper/75 hover:border-accent hover:text-accent"
+                  >
+                    Tout
+                  </button>
+                  <button
+                    onClick={() => setSel([])}
+                    disabled={sel.length === 0}
+                    className="shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-paper/75 hover:border-accent hover:text-accent disabled:opacity-30"
+                  >
+                    Aucun
+                  </button>
+                  {editLayer === 'map' && (
+                    <select
+                      value=""
+                      disabled={sel.length === 0 || selBusy}
+                      onChange={(e) => {
+                        if (e.target.value) setSelectionTerritory(e.target.value === 'none' ? null : e.target.value);
+                      }}
+                      style={{ colorScheme: 'dark' }}
+                      aria-label="Attribuer un territoire à la sélection"
+                      className="glass-input shrink-0 rounded-lg px-2 py-1.5 text-xs text-paper/80 disabled:opacity-30"
+                    >
+                      <option value="">🏴 Territoire…</option>
+                      <option value="none">Aucun (neutre)</option>
+                      {groupsHook.groups.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <button
+                    onClick={deleteSelection}
+                    disabled={sel.length === 0 || selBusy}
+                    className="shrink-0 whitespace-nowrap rounded-lg border border-accent/50 bg-accent/10 px-2.5 py-1.5 text-xs text-accent disabled:opacity-30"
+                  >
+                    🗑 Supprimer
+                  </button>
+                  {lastMove && (
+                    <button
+                      onClick={() => applyMove(lastMove.keys, -lastMove.dx, -lastMove.dy, true)}
+                      disabled={selBusy}
+                      className="shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-paper/75 hover:border-accent hover:text-accent disabled:opacity-30"
+                    >
+                      ↶ Annuler le déplacement
+                    </button>
+                  )}
+                </div>
               )}
 
               {deleteMode && (
@@ -963,6 +1187,7 @@ export default function WorldMap() {
         </div>
       )}
 
+      <div aria-hidden className="map-vignette pointer-events-none absolute inset-0 z-[5]" />
       <svg
         ref={vp.svgRef}
         viewBox={vp.viewBoxString}
@@ -991,6 +1216,10 @@ export default function WorldMap() {
             <stop offset="0.55" stopColor="#0e2444" />
             <stop offset="1" stopColor="#081629" />
           </radialGradient>
+          <radialGradient id="sid-place" cx="0.35" cy="0.3" r="0.9">
+            <stop offset="0" stopColor="#33405f" />
+            <stop offset="1" stopColor="#0b1120" />
+          </radialGradient>
           <pattern id="sid-graticule" width={10} height={10} patternUnits="userSpaceOnUse">
             <path d="M10 0H0V10" fill="none" stroke="#9fc4ff" strokeOpacity={0.07} strokeWidth={0.08} />
           </pattern>
@@ -1011,6 +1240,19 @@ export default function WorldMap() {
           style={{ pointerEvents: 'none' }}
         />
 
+        {/* Rose des vents, dans l'angle bas-droit du monde. */}
+        <g transform={`translate(${world - 9} ${world - 9})`} opacity={0.5} style={{ pointerEvents: 'none' }}>
+          <circle r={5.2} fill="none" stroke="#e7c34a" strokeOpacity={0.5} strokeWidth={0.1} />
+          <circle r={3.6} fill="none" stroke="#e7c34a" strokeOpacity={0.3} strokeWidth={0.08} strokeDasharray="0.4 0.4" />
+          {[0, 90, 180, 270].map((a) => (
+            <path key={a} d="M0 -5 L0.9 0 L0 0.9 L-0.9 0 Z" fill="#e7c34a" fillOpacity={a === 0 ? 0.9 : 0.45} transform={`rotate(${a})`} />
+          ))}
+          {[45, 135, 225, 315].map((a) => (
+            <path key={a} d="M0 -3 L0.5 0 L-0.5 0 Z" fill="#f4e9c8" fillOpacity={0.35} transform={`rotate(${a})`} />
+          ))}
+          <text y={-5.9} textAnchor="middle" fontSize={1.5} fill="#e7c34a" className="font-display">N</text>
+        </g>
+
         {showBiomes &&
           biomes.map((b) => (
             <polygon
@@ -1018,8 +1260,9 @@ export default function WorldMap() {
               points={pointsToSvg(b.path_points)}
               fill={b.color}
               fillOpacity={showTextures && findTexture(biomeTextureId(b), customTextures)?.bg ? 0 : 0.55}
-              stroke={deleteMode && editLayer === 'biome' ? '#d2463b' : '#00000033'}
-              strokeWidth={deleteMode && editLayer === 'biome' ? 0.3 : 0.1}
+              stroke={isSel('biome', b.id) ? '#e7c34a' : deleteMode && editLayer === 'biome' ? '#d2463b' : '#00000033'}
+              strokeWidth={isSel('biome', b.id) ? 0.45 : deleteMode && editLayer === 'biome' ? 0.3 : 0.1}
+              transform={selShift('biome', b.id)}
               className={editLayer === 'biome' ? 'cursor-pointer' : ''}
               onClick={(e) => {
                 if (editLayer !== 'biome') return;
@@ -1037,8 +1280,9 @@ export default function WorldMap() {
               points={pointsToSvg(r.path_points)}
               fill={reliefColor(r.elevation)}
               fillOpacity={showTextures && findTexture(reliefTextureId(r), customTextures)?.bg ? 0 : 0.4}
-              stroke={deleteMode && editLayer === 'relief' ? '#d2463b' : '#00000022'}
-              strokeWidth={deleteMode && editLayer === 'relief' ? 0.3 : 0.1}
+              stroke={isSel('relief', r.id) ? '#e7c34a' : deleteMode && editLayer === 'relief' ? '#d2463b' : '#00000022'}
+              strokeWidth={isSel('relief', r.id) ? 0.45 : deleteMode && editLayer === 'relief' ? 0.3 : 0.1}
+              transform={selShift('relief', r.id)}
               className={editLayer === 'relief' ? 'cursor-pointer' : ''}
               onClick={(e) => {
                 if (editLayer !== 'relief') return;
@@ -1065,8 +1309,12 @@ export default function WorldMap() {
             points={pointsToSvg(z.path_points)}
             fill={z.color}
             fillOpacity={0.75}
-            stroke={deleteMode ? '#d2463b' : '#00000066'}
-            strokeWidth={deleteMode ? 0.3 : 0.15}
+            stroke={isSel('zone', z.id) ? '#e7c34a' : deleteMode ? '#d2463b' : '#f4e9c8'}
+            strokeOpacity={isSel('zone', z.id) || deleteMode ? 1 : 0.4}
+            strokeWidth={isSel('zone', z.id) ? 0.45 : deleteMode ? 0.3 : 0.18}
+            strokeLinejoin="round"
+            strokeDasharray={isSel('zone', z.id) ? '1.2 0.6' : undefined}
+            transform={selShift('zone', z.id)}
             className="cursor-pointer transition hover:brightness-110"
             onClick={(e) => {
               e.stopPropagation();
@@ -1081,6 +1329,33 @@ export default function WorldMap() {
           if (!label) return null;
           const c = centroid(z.path_points);
           return <TerritoryFlag key={`flag-${z.id}`} x={c.x} y={c.y} label={label} />;
+        })}
+
+        {/* Nom des régions, en lettres espacées comme sur un atlas. */}
+        {zones.map((z) => {
+          if (!z.name || z.path_points.length < 3) return null;
+          const xs = z.path_points.map((p) => p.x);
+          const width = Math.max(...xs) - Math.min(...xs);
+          const size = Math.max(1.1, Math.min(3.2, (width * 0.7) / Math.max(4, z.name.length)));
+          const c = centroid(z.path_points);
+          const flag = !!groupsHook.labelFor(z.controlling_group_id);
+          return (
+            <text
+              key={`name-${z.id}`}
+              x={c.x}
+              y={c.y + (flag ? size * 2.2 : size * 0.35)}
+              textAnchor="middle"
+              fontSize={size}
+              letterSpacing={size * 0.22}
+              fill="#f4e9c8"
+              fillOpacity={0.62}
+              className="select-none font-display uppercase"
+              style={{ pointerEvents: 'none', paintOrder: 'stroke', stroke: '#06101f', strokeOpacity: 0.45, strokeWidth: size * 0.12 }}
+              transform={selShift('zone', z.id)}
+            >
+              {z.name}
+            </text>
+          );
         })}
 
         {showGrid && <GridOverlay viewBox={vp.viewBox} />}
@@ -1167,7 +1442,7 @@ export default function WorldMap() {
           return (
             <g
               key={p.id}
-              transform={`translate(${p.x}, ${p.y})`}
+              transform={`translate(${p.x + (isSel('place', p.id) ? moveDx : 0)}, ${p.y + (isSel('place', p.id) ? moveDy : 0)})`}
               className="map-place cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
@@ -1182,13 +1457,19 @@ export default function WorldMap() {
                   width={w}
                   height={h}
                   rx={0.6}
-                  fill="#151312"
-                  stroke={deleteMode ? '#d2463b' : '#d2463b'}
-                  strokeWidth={deleteMode ? 0.35 : 0.15}
+                  fill="url(#sid-place)"
+                  stroke={deleteMode ? '#d2463b' : '#d9b65a'}
+                  strokeWidth={deleteMode ? 0.35 : 0.16}
                 />
               ) : (
-                <circle r={r} fill="#151312" fillOpacity={0.9} stroke="#d2463b" strokeWidth={deleteMode ? 0.35 : 0.15} />
+                <circle r={r} fill="url(#sid-place)" stroke={deleteMode ? '#d2463b' : '#d9b65a'} strokeWidth={deleteMode ? 0.35 : 0.16} />
               )}
+              {isSel('place', p.id) &&
+                (p.shape === 'rect' ? (
+                  <rect x={-w / 2 - 0.7} y={-h / 2 - 0.7} width={w + 1.4} height={h + 1.4} rx={1} fill="none" stroke="#e7c34a" strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
+                ) : (
+                  <circle r={r + 0.8} fill="none" stroke="#e7c34a" strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
+                ))}
               <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
                 {p.icon || placeTypes.iconFor(p.type)}
               </text>
@@ -1212,6 +1493,21 @@ export default function WorldMap() {
           const offset = (p.shape === 'rect' ? (p.height ?? 6) / 2 : p.radius ?? 3) + 4;
           return <TerritoryFlag key={`flag-${p.id}`} x={p.x} y={p.y - offset} label={label} />;
         })}
+
+        {selDrag?.mode === 'marquee' && (
+          <rect
+            x={Math.min(selDrag.start.x, selDrag.cur.x)}
+            y={Math.min(selDrag.start.y, selDrag.cur.y)}
+            width={Math.abs(selDrag.cur.x - selDrag.start.x)}
+            height={Math.abs(selDrag.cur.y - selDrag.start.y)}
+            fill="#e7c34a"
+            fillOpacity={0.1}
+            stroke="#e7c34a"
+            strokeWidth={Math.max(0.1, vp.viewBox.w * 0.0015)}
+            strokeDasharray="1 0.6"
+            style={{ pointerEvents: 'none' }}
+          />
+        )}
 
         {measureMode && measurePts.length > 0 && (
           <g style={{ pointerEvents: 'none' }}>
@@ -1375,7 +1671,7 @@ export default function WorldMap() {
       {modeHint && (
         <div
           role="status"
-          className="anim-drop glass-strong absolute left-1/2 top-36 md:top-[4.25rem] z-20 flex w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-2xl px-3.5 py-2 text-xs text-paper/90"
+          className="anim-drop glass-strong absolute left-1/2 top-36 z-20 md:bottom-3 md:top-auto flex w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-2xl px-3.5 py-2 text-xs text-paper/90"
         >
           <span className="min-w-0">{modeHint}</span>
           {measureMode ? (
@@ -1542,6 +1838,34 @@ export default function WorldMap() {
           />
         </div>
       </MapActionStack>
+
+      {extraApps.includes('directory') && (
+        <DirectoryApp
+          places={places}
+          positions={positionsHook.positions}
+          favoriteIds={favorites.ids}
+          typeLabel={placeTypes.labelFor}
+          typeIcon={placeTypes.iconFor}
+          onGo={selectPlaceAndShare}
+          onClose={() => closeExtra('directory')}
+        />
+      )}
+      {extraApps.includes('nearby') && (
+        <NearbyApp
+          places={places}
+          routes={routes}
+          myPlaceId={myPos?.place_id ?? null}
+          settings={mapSettings.settings}
+          speedMultiplier={activeMountForFlight?.speed_multiplier ?? 1}
+          onGo={selectPlaceAndShare}
+          onOpenPosition={() => {
+            closeExtra('nearby');
+            setShowPositionPicker(true);
+          }}
+          onClose={() => closeExtra('nearby')}
+        />
+      )}
+      {extraApps.includes('notes') && <NotesApp currentPlaceName={places.find((p) => p.id === myPos?.place_id)?.name ?? null} onClose={() => closeExtra('notes')} />}
 
       {showPlanner &&
         (isDesktop ? (

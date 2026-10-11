@@ -59,8 +59,11 @@ export default function Navbar() {
       <div className="stamp-bar absolute bottom-0 left-0 h-[2px] w-full" />
 
       <Link href="/carte" className="shrink-0 font-display text-[10px] uppercase tracking-widest2 text-accent md:text-[11px]">
-        <span className="md:hidden">S.I.D.</span>
-        <span className="hidden md:inline">S.I.D. — Cartographie</span>
+        <span className="brand-mark flex items-center gap-2">
+          <span aria-hidden className="brand-seal">✦</span>
+          <span className="md:hidden">S.I.D.</span>
+          <span className="hidden md:inline">S.I.D. — Cartographie</span>
+        </span>
       </Link>
 
       <div className="flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-1.5">

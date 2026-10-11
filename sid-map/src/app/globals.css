@@ -183,6 +183,68 @@ button:active:not(:disabled) {
   50% { stroke-opacity: 0.55; }
 }
 
+/* Vignette : assombrit doucement les bords de la carte. */
+.map-vignette {
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(3, 6, 13, 0.55) 100%);
+}
+/* Anneau de sélection qui tourne autour des éléments choisis. */
+.sel-ring { animation: sel-march 1.2s linear infinite; }
+@keyframes sel-march {
+  to { stroke-dashoffset: -1.6; }
+}
+
+/* --- Finitions ------------------------------------------------------- */
+::selection { background: rgba(231, 195, 74, 0.35); color: #fff; }
+
+/* Titres de fenêtres et de panneaux : dégradé or → vermillon. */
+h1.font-display,
+h2.text-accent,
+h3.text-accent {
+  background: linear-gradient(92deg, #f1d77a 0%, #e9a55a 45%, #e2594c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-mark { letter-spacing: 0.22em; }
+.brand-seal {
+  display: inline-flex;
+  height: 1.5rem;
+  width: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #1a1206;
+  font-size: 0.7rem;
+  letter-spacing: 0;
+  background: radial-gradient(circle at 35% 30%, #f6e19a, #c9952f 70%);
+  box-shadow: 0 0 0 1px rgba(231, 195, 74, 0.5), 0 0 14px rgba(231, 195, 74, 0.45);
+  animation: seal-glow 4s ease-in-out infinite;
+}
+@keyframes seal-glow {
+  50% { box-shadow: 0 0 0 1px rgba(231, 195, 74, 0.7), 0 0 22px rgba(231, 195, 74, 0.7); }
+}
+
+/* Pastilles actives : dégradé et halo plutôt qu'un aplat. */
+.bg-accent {
+  background-image: linear-gradient(135deg, #e0503f, #a8281e);
+  box-shadow: 0 2px 12px rgba(200, 55, 45, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+input[type='checkbox'] { accent-color: var(--gold); }
+
+select.glass-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 1.9rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23e7c34a' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+}
+
+/* Barre du haut : filet lumineux sous la barre. */
+nav.glass-strong { box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(231, 195, 74, 0.18); }
+
 /* Accessibilité : anneau de focus visible au clavier sur tous les
    éléments interactifs (navigation sans souris/tactile). */
 a:focus-visible,

@@ -55,6 +55,12 @@ npm run dev
   Agrandir ajoute de l'espace à droite et en bas, sans rien déplacer.
 - **Thème « Atlas nocturne »** : couleurs dans `tailwind.config.ts`,
   surfaces et animations dans `src/app/globals.css` (classes `anim-*`).
+- **Sélection multiple** (admins, mode édition → « ⬚ Sélection ») : clic
+  ou cadre pour choisir, glisser pour déplacer le groupe (les routes
+  attachées suivent), territoire et suppression groupés, annulation du
+  dernier déplacement. Logique dans `src/lib/selection.ts`.
+- **Applications Répertoire, À proximité et Carnet** :
+  `src/components/apps/ExtraApps.tsx`.
 - Tous les textes sont dans `src/lib/guide.ts`. Pour qu'une étape de visite
   pointe un élément, donne-lui `data-guide="<nom>"` et mets ce nom dans
   `target`. L'état « déjà vu / masqué » est stocké par appareil
