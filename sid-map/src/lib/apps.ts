@@ -44,7 +44,7 @@ export const APPS: AppDef[] = [
   { id: 'export', name: 'Exporter la carte', description: 'Télécharger la carte en image PNG.', category: 'carte', emoji: '🖼️' },
   { id: 'help', name: 'Aide', description: 'Check-list de démarrage, fiches « comment faire » et visite guidée.', category: 'carte', emoji: '❓' },
   { id: 'edit', name: 'Outils d’édition', description: 'Dessiner zones, lieux, routes, relief, biomes.', category: 'admin', emoji: '🛠', adminOnly: true },
-  { id: 'scale', name: 'Échelle', description: 'Régler l’échelle de la carte et la vitesse de marche.', category: 'admin', emoji: '📏', adminOnly: true }
+  { id: 'scale', name: 'Échelle et taille', description: 'Régler l’échelle, la vitesse de marche et agrandir la carte.', category: 'admin', emoji: '📏', adminOnly: true }
 ];
 
 export function iconPath(id: string) {

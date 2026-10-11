@@ -37,10 +37,10 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
     }`;
 
   return (
-    <div className="fixed inset-0 z-50" onClick={onClose}>
+    <div className="anim-fade fixed inset-0 z-50 bg-[#03060d]/55 backdrop-blur-[2px]" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="glass-strong absolute inset-x-2 top-16 mx-auto flex max-h-[calc(100dvh-5rem)] max-w-3xl flex-col overflow-hidden rounded-2xl md:top-16"
+        className="anim-pop glass-strong absolute inset-x-2 top-16 mx-auto flex max-h-[calc(100dvh-5rem)] max-w-3xl flex-col overflow-hidden rounded-2xl md:top-16"
       >
         <div className="stamp-bar h-1 shrink-0" />
         <div className="flex shrink-0 items-center gap-2 px-4 pb-2 pt-3">
@@ -78,7 +78,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
                     {c.emoji} {c.label}
                   </h3>
                 )}
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+                <div className="anim-stagger grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
                   {visible
                     .filter((a) => a.category === c.id)
                     .map((a) => (
@@ -86,7 +86,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
                         key={a.id}
                         onClick={() => launch(a.id)}
                         title={a.description}
-                        className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 p-2.5 text-center transition hover:border-accent hover:bg-accent/10"
+                        className="hover-lift flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 p-2.5 text-center hover:border-[#e7c34a]/60 hover:bg-white/10"
                       >
                         <AppIcon id={a.id} emoji={a.emoji} />
                         <span className="text-[11px] leading-tight text-paper/90">{a.name}</span>

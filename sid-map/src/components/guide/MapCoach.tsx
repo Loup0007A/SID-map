@@ -20,7 +20,7 @@ export default function MapCoach({ tip, onDismiss }: { tip: CoachTip | null; onD
   return (
     <div
       role={tip.tone === 'error' ? 'alert' : 'status'}
-      className={`glass-strong absolute left-1/2 top-36 md:top-[4.25rem] z-10 flex w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 items-start gap-2.5 rounded-2xl p-3 ${
+      className={`anim-drop glass-strong absolute left-1/2 top-36 md:top-[4.25rem] z-10 flex w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 items-start gap-2.5 rounded-2xl p-3 ${
         tip.tone === 'error' ? 'border-accent/60' : ''
       }`}
     >

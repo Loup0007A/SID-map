@@ -60,7 +60,7 @@ export default function ReliefFormModal({
             max={100}
             value={elevation}
             onChange={(e) => setElevation(Number(e.target.value))}
-            className="w-full accent-[#b3261e]"
+            className="w-full accent-[#d2463b]"
           />
         </div>
         <TexturePicker value={textureId} onChange={setTextureId} />

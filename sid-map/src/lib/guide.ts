@@ -89,7 +89,7 @@ export const ADMIN_TOUR: TourStep[] = [
     id: 'admin-scale',
     target: 'scale',
     title: 'Échelle et légende',
-    body: 'Clique l’échelle pour régler les distances et la vitesse de marche (elles fixent les temps de vol). Dans la « Légende », clique une icône pour la changer pour tout le monde.'
+    body: 'Clique l’échelle pour régler les distances, la vitesse de marche (elles fixent les temps de vol) et agrandir la carte si le monde manque de place. Dans la « Légende », clique une icône pour la changer pour tout le monde.'
   }
 ];
 
@@ -159,7 +159,7 @@ export const PLAYER_CHECKLIST: ChecklistItem[] = [
 export const ADMIN_CHECKLIST: ChecklistItem[] = [
   {
     id: 'scale',
-    label: 'Régler l’échelle de la carte',
+    label: 'Régler l’échelle et la taille de la carte',
     why: 'À faire en premier : elle fixe les distances et donc les temps de vol. La changer plus tard modifie tous les trajets.',
     done: (f) => f.scaleSet,
     app: 'scale',
@@ -276,7 +276,8 @@ export const HELP_TOPICS: HelpTopic[] = [
     title: 'Quêtes sur la carte',
     steps: [
       'Les quêtes en cours sont épinglées sur leur lieu ; clique l’épingle pour le détail.',
-      'Si tu participes à une quête, rester une heure sur son lieu la valide automatiquement : un compte à rebours s’affiche en bas de la carte.'
+      'Si tu participes à une quête, rester une heure sur son lieu confirme ta présence : un compte à rebours s’affiche en bas de la carte.',
+      'La récompense n’est pas versée par la carte : elle l’est sur le site principal, quand un responsable valide la quête.'
     ]
   },
   {

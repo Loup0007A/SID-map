@@ -163,7 +163,7 @@ export default function CrystalsModal({
                     type="checkbox"
                     checked={single}
                     onChange={(e) => setSingle(e.target.checked)}
-                    className="h-4 w-4 accent-[#b3261e]"
+                    className="h-4 w-4 accent-[#d2463b]"
                   />
                   Usage unique (décoché = continu)
                 </label>

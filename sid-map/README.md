@@ -45,6 +45,16 @@ npm run dev
 - **Favoris** (☆ sur la fiche d'un lieu, listés dans la recherche),
   **Mesurer** (distance et temps de marche entre deux points) et bouton
   **◎** pour recentrer sur son personnage.
+- **Quêtes** (migration `0112`) : après 1 h sur place, la carte confirme
+  seulement la présence (`quest_participants.status` passe de `assigned` à
+  `submitted`). Elle ne verse plus rien : la récompense et la réputation
+  restent attribuées par le site principal quand un responsable clique
+  « Valider ».
+- **Taille de la carte** (migration `0112`, `map_settings.world_size`) :
+  réglable de 100 à 1000 unités depuis la fenêtre « Échelle et taille ».
+  Agrandir ajoute de l'espace à droite et en bas, sans rien déplacer.
+- **Thème « Atlas nocturne »** : couleurs dans `tailwind.config.ts`,
+  surfaces et animations dans `src/app/globals.css` (classes `anim-*`).
 - Tous les textes sont dans `src/lib/guide.ts`. Pour qu'une étape de visite
   pointe un élément, donne-lui `data-guide="<nom>"` et mets ce nom dans
   `target`. L'état « déjà vu / masqué » est stocké par appareil

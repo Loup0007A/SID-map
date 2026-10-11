@@ -57,9 +57,9 @@ function BlockingModal({ title, onClose, children, maxWidth = 'max-w-md', footer
   useEscape(onClose);
   return (
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4"
+      className="anim-fade fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-[#03060d]/70 p-3 backdrop-blur-sm sm:p-4"
     >
-      <div role="dialog" aria-modal="true" aria-label={title} className={`glass-strong flex max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] w-full ${maxWidth} flex-col overflow-hidden rounded-2xl`}>
+      <div role="dialog" aria-modal="true" aria-label={title} className={`anim-pop glass-strong flex max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] w-full ${maxWidth} flex-col overflow-hidden rounded-2xl`}>
         <div className="stamp-bar h-1 shrink-0" />
         <div className="flex shrink-0 items-center justify-between px-5 pb-2 pt-4">
           <h3 className="font-display text-sm uppercase tracking-wide text-accent">{title}</h3>
@@ -250,7 +250,7 @@ function FloatingWindow({ title, onClose, children, maxWidth = 'max-w-md', foote
       role="dialog"
       aria-label={title}
       onPointerDownCapture={focus}
-      className="glass-strong fixed flex flex-col overflow-hidden rounded-2xl"
+      className="anim-pop glass-strong fixed flex flex-col overflow-hidden rounded-2xl"
       style={{
         left: geo.x,
         top: geo.y,

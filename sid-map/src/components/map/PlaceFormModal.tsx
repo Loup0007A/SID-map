@@ -137,7 +137,7 @@ export default function PlaceFormModal({
               step={0.5}
               value={radius}
               onChange={(e) => setRadius(Number(e.target.value))}
-              className="w-full accent-[#b3261e]"
+              className="w-full accent-[#d2463b]"
             />
           </div>
         ) : (
@@ -154,7 +154,7 @@ export default function PlaceFormModal({
                 step={0.5}
                 value={width}
                 onChange={(e) => setWidth(Number(e.target.value))}
-                className="w-full accent-[#b3261e]"
+                className="w-full accent-[#d2463b]"
               />
             </div>
             <div className="space-y-1">
@@ -169,7 +169,7 @@ export default function PlaceFormModal({
                 step={0.5}
                 value={height}
                 onChange={(e) => setHeight(Number(e.target.value))}
-                className="w-full accent-[#b3261e]"
+                className="w-full accent-[#d2463b]"
               />
             </div>
           </>

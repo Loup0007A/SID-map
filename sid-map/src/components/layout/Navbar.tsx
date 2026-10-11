@@ -55,7 +55,7 @@ export default function Navbar() {
 
   return (
     <>
-    <nav className="relative z-40 flex h-14 shrink-0 items-center justify-between gap-2 glass-strong px-3 md:px-4">
+    <nav className="anim-fade relative z-40 flex h-14 shrink-0 items-center justify-between gap-2 glass-strong px-3 md:px-4">
       <div className="stamp-bar absolute bottom-0 left-0 h-[2px] w-full" />
 
       <Link href="/carte" className="shrink-0 font-display text-[10px] uppercase tracking-widest2 text-accent md:text-[11px]">

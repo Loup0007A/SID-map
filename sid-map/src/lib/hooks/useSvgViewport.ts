@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Point } from '@/lib/types';
 
 export interface ViewBox {
@@ -10,21 +10,34 @@ export interface ViewBox {
   h: number;
 }
 
-const WORLD = 100;
 const MIN_W = 12; // zoom in max
-const MAX_W = 130; // zoom out max (léger dépassement pour respirer)
-const MARGIN = 15;
 
-function clamp(vb: ViewBox): ViewBox {
-  const w = Math.min(MAX_W, Math.max(MIN_W, vb.w));
-  const h = Math.min(MAX_W, Math.max(MIN_W, vb.h));
-  const x = Math.min(WORLD + MARGIN - w, Math.max(-MARGIN, vb.x));
-  const y = Math.min(WORLD + MARGIN - h, Math.max(-MARGIN, vb.y));
+// Le monde est un carré de `world` unités de côté (100 par défaut,
+// réglable par les admins). Zoom arrière max et marges en dépendent.
+function clampTo(vb: ViewBox, world: number): ViewBox {
+  const maxW = world * 1.3; // léger dépassement pour respirer
+  const margin = world * 0.15;
+  const w = Math.min(maxW, Math.max(MIN_W, vb.w));
+  const h = Math.min(maxW, Math.max(MIN_W, vb.h));
+  const x = Math.min(world + margin - w, Math.max(-margin, vb.x));
+  const y = Math.min(world + margin - h, Math.max(-margin, vb.y));
   return { x, y, w, h };
 }
 
-export function useSvgViewport(initial: ViewBox = { x: 0, y: 0, w: WORLD, h: WORLD }) {
-  const [viewBox, setViewBox] = useState<ViewBox>(initial);
+export function useSvgViewport(world = 100) {
+  const worldRef = useRef(world);
+  worldRef.current = world;
+  const clamp = useCallback((vb: ViewBox) => clampTo(vb, worldRef.current), []);
+  const [viewBox, setViewBox] = useState<ViewBox>({ x: 0, y: 0, w: world, h: world });
+
+  // La taille du monde arrive après le premier rendu (réglage chargé) ou
+  // change quand un admin l'agrandit : on recadre sur la carte entière.
+  const firstWorld = useRef(world);
+  useEffect(() => {
+    if (firstWorld.current === world) return;
+    firstWorld.current = world;
+    setViewBox({ x: 0, y: 0, w: world, h: world });
+  }, [world]);
   const svgRef = useRef<SVGSVGElement>(null);
   const panState = useRef<{ startX: number; startY: number; origin: ViewBox } | null>(null);
   const [isPanning, setIsPanning] = useState(false);
@@ -48,7 +61,7 @@ export function useSvgViewport(initial: ViewBox = { x: 0, y: 0, w: WORLD, h: WOR
     (clientX: number, clientY: number, factor: number) => {
       setViewBox((vb) => {
         const before = screenToSvg(clientX, clientY);
-        const newW = Math.min(MAX_W, Math.max(MIN_W, vb.w * factor));
+        const newW = Math.min(worldRef.current * 1.3, Math.max(MIN_W, vb.w * factor));
         const actual = newW / vb.w;
         const newH = vb.h * actual;
         const newX = before.x - (before.x - vb.x) * actual;
@@ -56,7 +69,7 @@ export function useSvgViewport(initial: ViewBox = { x: 0, y: 0, w: WORLD, h: WOR
         return clamp({ x: newX, y: newY, w: newW, h: newH });
       });
     },
-    [screenToSvg]
+    [screenToSvg, clamp]
   );
 
   const handleWheel = useCallback(
@@ -80,7 +93,7 @@ export function useSvgViewport(initial: ViewBox = { x: 0, y: 0, w: WORLD, h: WOR
 
   const zoomIn = useCallback(() => centerZoom(1 / 1.35), [centerZoom]);
   const zoomOut = useCallback(() => centerZoom(1.35), [centerZoom]);
-  const resetView = useCallback(() => setViewBox(initial), [initial]);
+  const resetView = useCallback(() => setViewBox({ x: 0, y: 0, w: worldRef.current, h: worldRef.current }), []);
 
   const panTo = useCallback((x: number, y: number, targetW?: number) => {
     setViewBox((vb) => {

@@ -116,7 +116,7 @@ export default function GuideTour({
         ref={cardRef}
         tabIndex={-1}
         style={style}
-        className="glass-strong absolute overflow-hidden rounded-2xl outline-none transition-all duration-200"
+        className="anim-fade glass-strong absolute overflow-hidden rounded-2xl outline-none transition-all duration-200"
       >
         <div className="stamp-bar h-1" />
         <div className="space-y-2 p-4">

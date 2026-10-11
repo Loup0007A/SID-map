@@ -187,9 +187,9 @@ export default function FloorView({
               y={Math.min(drawing.start.y, drawing.current.y)}
               width={Math.abs(drawing.current.x - drawing.start.x)}
               height={Math.abs(drawing.current.y - drawing.start.y)}
-              fill="#b3261e"
+              fill="#d2463b"
               fillOpacity={0.3}
-              stroke="#b3261e"
+              stroke="#d2463b"
               strokeWidth={0.25}
             />
           )}

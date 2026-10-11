@@ -97,7 +97,8 @@ export default function WorldMap() {
   const mapSettings = useMapSettings();
   const [showTextures, setShowTextures] = useState(true);
   const [retexture, setRetexture] = useState<{ table: 'map_biomes' | 'map_relief'; id: string; value: string | null } | null>(null);
-  const vp = useSvgViewport();
+  const world = mapSettings.settings.world_size;
+  const vp = useSvgViewport(world);
   const placeTypes = useTypeConfig('place');
   const positionsHook = usePositions();
   const now = useNow(1000);
@@ -184,7 +185,7 @@ export default function WorldMap() {
   // Lien partageable : ?lieu=<id> ouvre et centre automatiquement sur
   // ce lieu au chargement de la page.
   useEffect(() => {
-    if (didInitialFocus || loading || places.length === 0) return;
+    if (didInitialFocus || loading || !mapSettings.ready || places.length === 0) return;
     const placeId = searchParams.get('lieu');
     if (placeId) {
       const p = places.find((pl) => pl.id === placeId);
@@ -195,7 +196,7 @@ export default function WorldMap() {
     }
     setDidInitialFocus(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, places]);
+  }, [loading, places, mapSettings.ready]);
 
   function selectPlaceAndShare(p: MapPlace) {
     if (measureMode) return; // le clic sert à poser un point de mesure
@@ -360,7 +361,7 @@ export default function WorldMap() {
     const check = async () => {
       const result = await positionsHook.checkQuestArrival();
       if (result?.some((r) => r.validated)) {
-        showToast('Quête validée par ta présence sur place !', 'success');
+        showToast('Présence confirmée pour ta quête ! La récompense sera versée après validation sur le site principal.', 'success');
       }
     };
     check();
@@ -675,6 +676,18 @@ export default function WorldMap() {
     }
   }, [editMode, flightMode]);
 
+  // Plus petite taille de monde qui garde tout le contenu sur la carte.
+  const minWorld = (() => {
+    let max = 100;
+    const see = (x: number, y: number) => {
+      if (x > max) max = x;
+      if (y > max) max = y;
+    };
+    places.forEach((p) => see(p.x + (p.radius ?? 3), p.y + (p.radius ?? 3)));
+    [...zones, ...routes, ...biomes, ...relief].forEach((e) => (e.path_points ?? []).forEach((pt) => see(pt.x, pt.y)));
+    return Math.min(1000, Math.ceil(max / 10) * 10);
+  })();
+
   const measureKm = measurePts.length === 2 ? distanceUnits(measurePts[0], measurePts[1]) * mapSettings.settings.km_per_unit : null;
   const measureText = (() => {
     if (measureKm == null) return measurePts.length === 0 ? '📐 Mesure — clique le point de départ' : '📐 Mesure — clique le point d’arrivée';
@@ -936,6 +949,7 @@ export default function WorldMap() {
         settings={mapSettings.settings}
         canEdit={canEdit}
         onSave={mapSettings.save}
+        minWorld={minWorld}
       />
 
       <div data-guide="zoom" className="absolute right-4 top-6 z-20">
@@ -943,9 +957,10 @@ export default function WorldMap() {
       </div>
 
       {loading && (
-        <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-display text-xs uppercase tracking-widest2 text-paper/50">
-          Chargement de la carte…
-        </p>
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3">
+          <span aria-hidden className="compass-spin text-3xl">🧭</span>
+          <p className="font-display text-xs uppercase tracking-widest2 text-paper/60">Chargement de la carte…</p>
+        </div>
       )}
 
       <svg
@@ -970,7 +985,31 @@ export default function WorldMap() {
           if (vp.isPanning) vp.endPan();
         }}
       >
-        <rect x={-50} y={-50} width={200} height={200} fill="#0c1a2e" />
+        <defs>
+          <radialGradient id="sid-ocean" gradientUnits="userSpaceOnUse" cx={world / 2} cy={world * 0.42} r={world * 0.85}>
+            <stop offset="0" stopColor="#16335a" />
+            <stop offset="0.55" stopColor="#0e2444" />
+            <stop offset="1" stopColor="#081629" />
+          </radialGradient>
+          <pattern id="sid-graticule" width={10} height={10} patternUnits="userSpaceOnUse">
+            <path d="M10 0H0V10" fill="none" stroke="#9fc4ff" strokeOpacity={0.07} strokeWidth={0.08} />
+          </pattern>
+        </defs>
+        {/* Hors du monde : le vide. Le cadre montre où la carte s'arrête. */}
+        <rect x={-world} y={-world} width={world * 3} height={world * 3} fill="#050b16" />
+        <rect x={0} y={0} width={world} height={world} fill="url(#sid-ocean)" />
+        <rect x={0} y={0} width={world} height={world} fill="url(#sid-graticule)" style={{ pointerEvents: 'none' }} />
+        <rect
+          x={0}
+          y={0}
+          width={world}
+          height={world}
+          fill="none"
+          stroke="#e7c34a"
+          strokeOpacity={0.35}
+          strokeWidth={Math.max(0.15, vp.viewBox.w * 0.0015)}
+          style={{ pointerEvents: 'none' }}
+        />
 
         {showBiomes &&
           biomes.map((b) => (
@@ -979,7 +1018,7 @@ export default function WorldMap() {
               points={pointsToSvg(b.path_points)}
               fill={b.color}
               fillOpacity={showTextures && findTexture(biomeTextureId(b), customTextures)?.bg ? 0 : 0.55}
-              stroke={deleteMode && editLayer === 'biome' ? '#b3261e' : '#00000033'}
+              stroke={deleteMode && editLayer === 'biome' ? '#d2463b' : '#00000033'}
               strokeWidth={deleteMode && editLayer === 'biome' ? 0.3 : 0.1}
               className={editLayer === 'biome' ? 'cursor-pointer' : ''}
               onClick={(e) => {
@@ -998,7 +1037,7 @@ export default function WorldMap() {
               points={pointsToSvg(r.path_points)}
               fill={reliefColor(r.elevation)}
               fillOpacity={showTextures && findTexture(reliefTextureId(r), customTextures)?.bg ? 0 : 0.4}
-              stroke={deleteMode && editLayer === 'relief' ? '#b3261e' : '#00000022'}
+              stroke={deleteMode && editLayer === 'relief' ? '#d2463b' : '#00000022'}
               strokeWidth={deleteMode && editLayer === 'relief' ? 0.3 : 0.1}
               className={editLayer === 'relief' ? 'cursor-pointer' : ''}
               onClick={(e) => {
@@ -1026,7 +1065,7 @@ export default function WorldMap() {
             points={pointsToSvg(z.path_points)}
             fill={z.color}
             fillOpacity={0.75}
-            stroke={deleteMode ? '#b3261e' : '#00000066'}
+            stroke={deleteMode ? '#d2463b' : '#00000066'}
             strokeWidth={deleteMode ? 0.3 : 0.15}
             className="cursor-pointer transition hover:brightness-110"
             onClick={(e) => {
@@ -1053,11 +1092,11 @@ export default function WorldMap() {
               key={r.id}
               points={pointsToSvg(r.path_points)}
               fill="none"
-              stroke={deleteMode ? '#b3261e' : isHighlighted ? '#4ade80' : r.color}
+              stroke={deleteMode ? '#d2463b' : isHighlighted ? '#4ade80' : r.color}
               strokeWidth={isHighlighted ? 0.6 : 0.35}
               strokeDasharray={isHighlighted ? undefined : '1.4 0.9'}
               strokeLinecap="round"
-              className="cursor-pointer"
+              className={`cursor-pointer ${isHighlighted ? 'route-glow' : 'route-flow'}`}
               onClick={(e) => {
                 e.stopPropagation();
                 if (deleteMode && editLayer === 'map') return deleteRoute(r);
@@ -1082,7 +1121,7 @@ export default function WorldMap() {
             <polyline
               points={pointsToSvg(tempPoints)}
               fill="none"
-              stroke="#b3261e"
+              stroke="#d2463b"
               strokeWidth={0.25}
               strokeDasharray="0.7"
             />
@@ -1092,7 +1131,7 @@ export default function WorldMap() {
                 cx={p.x}
                 cy={p.y}
                 r={i === 0 && closeSnapReady ? 0.9 : 0.45}
-                fill={i === 0 && closeSnapReady ? '#b3261e' : '#e7e5db'}
+                fill={i === 0 && closeSnapReady ? '#d2463b' : '#e7e5db'}
               />
             ))}
           </>
@@ -1101,21 +1140,21 @@ export default function WorldMap() {
         {previewBoxPoints && (
           <polygon
             points={pointsToSvg(previewBoxPoints)}
-            fill="#b3261e"
+            fill="#d2463b"
             fillOpacity={0.3}
-            stroke="#b3261e"
+            stroke="#d2463b"
             strokeWidth={0.25}
           />
         )}
         {activeTool === 'freehand' && freehandPoints.length > 1 && (
-          <polyline points={pointsToSvg(freehandPoints)} fill="none" stroke="#b3261e" strokeWidth={0.3} />
+          <polyline points={pointsToSvg(freehandPoints)} fill="none" stroke="#d2463b" strokeWidth={0.3} />
         )}
 
         {pointPreview && 'r' in pointPreview && (
-          <circle cx={pointPreview.cx} cy={pointPreview.cy} r={pointPreview.r} fill="#b3261e" fillOpacity={0.3} stroke="#b3261e" strokeWidth={0.25} />
+          <circle cx={pointPreview.cx} cy={pointPreview.cy} r={pointPreview.r} fill="#d2463b" fillOpacity={0.3} stroke="#d2463b" strokeWidth={0.25} />
         )}
         {pointPreview && 'rectX' in pointPreview && (
-          <rect x={pointPreview.rectX} y={pointPreview.rectY} width={pointPreview.w} height={pointPreview.h} fill="#b3261e" fillOpacity={0.3} stroke="#b3261e" strokeWidth={0.25} />
+          <rect x={pointPreview.rectX} y={pointPreview.rectY} width={pointPreview.w} height={pointPreview.h} fill="#d2463b" fillOpacity={0.3} stroke="#d2463b" strokeWidth={0.25} />
         )}
 
         {places.map((p) => {
@@ -1129,7 +1168,7 @@ export default function WorldMap() {
             <g
               key={p.id}
               transform={`translate(${p.x}, ${p.y})`}
-              className="cursor-pointer"
+              className="map-place cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 if (deleteMode && editLayer === 'map') return deletePlace(p);
@@ -1144,11 +1183,11 @@ export default function WorldMap() {
                   height={h}
                   rx={0.6}
                   fill="#151312"
-                  stroke={deleteMode ? '#b3261e' : '#b3261e'}
+                  stroke={deleteMode ? '#d2463b' : '#d2463b'}
                   strokeWidth={deleteMode ? 0.35 : 0.15}
                 />
               ) : (
-                <circle r={r} fill="#151312" fillOpacity={0.9} stroke="#b3261e" strokeWidth={deleteMode ? 0.35 : 0.15} />
+                <circle r={r} fill="#151312" fillOpacity={0.9} stroke="#d2463b" strokeWidth={deleteMode ? 0.35 : 0.15} />
               )}
               <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
                 {p.icon || placeTypes.iconFor(p.type)}
@@ -1159,7 +1198,7 @@ export default function WorldMap() {
                 fontSize="1.3"
                 fill="#e7e5db"
                 className="select-none"
-                style={{ paintOrder: 'stroke', stroke: '#0c1a2e', strokeWidth: 0.3 }}
+                style={{ paintOrder: 'stroke', stroke: '#081629', strokeWidth: 0.3 }}
               >
                 {p.name}
               </text>
@@ -1189,7 +1228,7 @@ export default function WorldMap() {
               />
             )}
             {measurePts.map((p, i) => (
-              <circle key={i} cx={p.x} cy={p.y} r={0.7} fill="#e7c34a" stroke="#0c1a2e" strokeWidth={0.2} />
+              <circle key={i} cx={p.x} cy={p.y} r={0.7} fill="#e7c34a" stroke="#081629" strokeWidth={0.2} />
             ))}
           </g>
         )}
@@ -1336,7 +1375,7 @@ export default function WorldMap() {
       {modeHint && (
         <div
           role="status"
-          className="glass-strong absolute left-1/2 top-36 md:top-[4.25rem] z-20 flex w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-2xl px-3.5 py-2 text-xs text-paper/90"
+          className="anim-drop glass-strong absolute left-1/2 top-36 md:top-[4.25rem] z-20 flex w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-2xl px-3.5 py-2 text-xs text-paper/90"
         >
           <span className="min-w-0">{modeHint}</span>
           {measureMode ? (
@@ -1396,7 +1435,7 @@ export default function WorldMap() {
             ].map((l) => (
               <label key={l.label} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-paper/80">
                 {l.label}
-                <input type="checkbox" checked={l.v} onChange={(e) => l.set(e.target.checked)} className="h-4 w-4 accent-[#b3261e]" />
+                <input type="checkbox" checked={l.v} onChange={(e) => l.set(e.target.checked)} className="h-4 w-4 accent-[#d2463b]" />
               </label>
             ))}
           </div>
@@ -1536,7 +1575,7 @@ export default function WorldMap() {
         const remaining = Math.ceil(60 - elapsedMin);
         return (
           <div className="glass absolute bottom-20 left-1/2 z-10 -translate-x-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-accent md:bottom-16">
-            📜 Quête "{questHere.title}" — validation dans {remaining} min
+            📜 Quête "{questHere.title}" — présence confirmée dans {remaining} min
           </div>
         );
       })()}

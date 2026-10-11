@@ -488,7 +488,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
             points={pointsToSvg(d.path_points)}
             fill={d.color}
             fillOpacity={activeDistrictFilter && activeDistrictFilter !== d.id ? 0.1 : 0.35}
-            stroke={deleteMode ? '#b3261e' : '#00000066'}
+            stroke={deleteMode ? '#d2463b' : '#00000066'}
             strokeWidth={deleteMode ? 0.3 : 0.15}
             className="cursor-pointer"
             onClick={(e) => {
@@ -505,7 +505,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
             <polyline
               points={pointsToSvg(tempPoints)}
               fill="none"
-              stroke="#b3261e"
+              stroke="#d2463b"
               strokeWidth={0.25}
               strokeDasharray="0.7"
             />
@@ -515,7 +515,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
                 cx={p.x}
                 cy={p.y}
                 r={i === 0 && closeSnapReady ? 0.9 : 0.45}
-                fill={i === 0 && closeSnapReady ? '#b3261e' : '#f4ecd8'}
+                fill={i === 0 && closeSnapReady ? '#d2463b' : '#f4ecd8'}
               />
             ))}
           </>
@@ -524,21 +524,21 @@ export default function CityMap({ cityId }: { cityId: string }) {
         {previewBoxPoints && (
           <polygon
             points={pointsToSvg(previewBoxPoints)}
-            fill="#b3261e"
+            fill="#d2463b"
             fillOpacity={0.3}
-            stroke="#b3261e"
+            stroke="#d2463b"
             strokeWidth={0.25}
           />
         )}
         {activeTool === 'freehand' && freehandPoints.length > 1 && (
-          <polyline points={pointsToSvg(freehandPoints)} fill="none" stroke="#b3261e" strokeWidth={0.3} />
+          <polyline points={pointsToSvg(freehandPoints)} fill="none" stroke="#d2463b" strokeWidth={0.3} />
         )}
 
         {pointPreview && 'r' in pointPreview && (
-          <circle cx={pointPreview.cx} cy={pointPreview.cy} r={pointPreview.r} fill="#b3261e" fillOpacity={0.3} stroke="#b3261e" strokeWidth={0.25} />
+          <circle cx={pointPreview.cx} cy={pointPreview.cy} r={pointPreview.r} fill="#d2463b" fillOpacity={0.3} stroke="#d2463b" strokeWidth={0.25} />
         )}
         {pointPreview && 'rectX' in pointPreview && (
-          <rect x={pointPreview.rectX} y={pointPreview.rectY} width={pointPreview.w} height={pointPreview.h} fill="#b3261e" fillOpacity={0.3} stroke="#b3261e" strokeWidth={0.25} />
+          <rect x={pointPreview.rectX} y={pointPreview.rectY} width={pointPreview.w} height={pointPreview.h} fill="#d2463b" fillOpacity={0.3} stroke="#d2463b" strokeWidth={0.25} />
         )}
 
         {visibleBuildings.map((b) => {
@@ -561,7 +561,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
               }}
             >
               {b.shape === 'circle' ? (
-                <circle r={radius} fill="#151312" stroke="#b3261e" strokeWidth={deleteMode ? 0.35 : 0.1} />
+                <circle r={radius} fill="#151312" stroke="#d2463b" strokeWidth={deleteMode ? 0.35 : 0.1} />
               ) : (
                 <rect
                   x={-b.width / 2}
@@ -570,7 +570,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
                   height={b.height}
                   rx={0.4}
                   fill="#151312"
-                  stroke="#b3261e"
+                  stroke="#d2463b"
                   strokeWidth={deleteMode ? 0.35 : 0.1}
                 />
               )}

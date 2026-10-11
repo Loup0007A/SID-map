@@ -40,7 +40,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             key={t.id}
             role={t.kind === 'error' ? 'alert' : 'status'}
             onClick={() => setToasts((all) => all.filter((x) => x.id !== t.id))}
-            className={`glass-strong pointer-events-auto max-w-[92vw] cursor-pointer rounded-2xl px-4 py-2 text-sm shadow-lg ${
+            className={`anim-slide-up glass-strong pointer-events-auto max-w-[92vw] cursor-pointer rounded-2xl px-4 py-2 text-sm shadow-lg ${
               t.kind === 'error' ? 'text-accent' : t.kind === 'info' ? 'text-paper/80' : 'text-paper'
             }`}
           >

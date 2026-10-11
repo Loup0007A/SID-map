@@ -8,14 +8,19 @@ let cache: MapSettings | null = null;
 
 export function useMapSettings() {
   const [settings, setSettings] = useState<MapSettings>(cache ?? DEFAULT_SETTINGS);
+  const [ready, setReady] = useState(cache !== null);
 
   const load = useCallback(async () => {
     const supabase = createClient();
-    const { data } = await supabase.from('map_settings').select('km_per_unit,walk_kmh,unit_label').eq('id', 1).maybeSingle();
+    const { data } = await supabase.from('map_settings').select('*').eq('id', 1).maybeSingle();
     if (data) {
-      cache = { km_per_unit: Number(data.km_per_unit), walk_kmh: Number(data.walk_kmh), unit_label: data.unit_label || 'km' };
+      cache = { km_per_unit: Number(data.km_per_unit), walk_kmh: Number(data.walk_kmh), unit_label: data.unit_label || 'km',
+        // colonne absente tant que la migration 0112 n'est pas jouée
+        world_size: Number(data.world_size) >= 100 ? Number(data.world_size) : 100
+      };
       setSettings(cache);
     }
+    setReady(true);
   }, []);
 
   useEffect(() => {
@@ -37,5 +42,5 @@ export function useMapSettings() {
     []
   );
 
-  return { settings, save, reload: load };
+  return { settings, ready, save, reload: load };
 }

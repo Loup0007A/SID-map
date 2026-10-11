@@ -52,7 +52,7 @@ export default function PresencePanel({
   return (
     <div className="relative">
       {open && (
-        <div className="glass-strong absolute bottom-full right-0 mb-2 max-h-[55vh] w-64 space-y-1 overflow-y-auto scrollbar-thin rounded-2xl p-3">
+        <div className="anim-pop glass-strong absolute bottom-full right-0 mb-2 max-h-[55vh] w-64 space-y-1 overflow-y-auto scrollbar-thin rounded-2xl p-3">
           <p className="mb-1 font-display text-[10px] uppercase tracking-wide text-accent">
             Présences ({positions.length})
           </p>

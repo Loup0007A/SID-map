@@ -18,10 +18,10 @@ export default function GridOverlay({ viewBox, step = 5 }: { viewBox: ViewBox; s
   return (
     <g pointerEvents="none">
       {vLines.map((x) => (
-        <line key={`v${x}`} x1={x} y1={viewBox.y - 20} x2={x} y2={viewBox.y + viewBox.h + 20} stroke="#b3261e" strokeOpacity={0.18} strokeWidth={strokeWidth} />
+        <line key={`v${x}`} x1={x} y1={viewBox.y - 20} x2={x} y2={viewBox.y + viewBox.h + 20} stroke="#d2463b" strokeOpacity={0.18} strokeWidth={strokeWidth} />
       ))}
       {hLines.map((y) => (
-        <line key={`h${y}`} x1={viewBox.x - 20} y1={y} x2={viewBox.x + viewBox.w + 20} y2={y} stroke="#b3261e" strokeOpacity={0.18} strokeWidth={strokeWidth} />
+        <line key={`h${y}`} x1={viewBox.x - 20} y1={y} x2={viewBox.x + viewBox.w + 20} y2={y} stroke="#d2463b" strokeOpacity={0.18} strokeWidth={strokeWidth} />
       ))}
     </g>
   );

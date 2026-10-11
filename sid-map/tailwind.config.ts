@@ -5,12 +5,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: '#12141b', // fond principal, proche du theme-color #1b1e27 du site 1
-        panel: '#1b1e27', // panneaux / cartes
-        panel2: '#242835', // panneaux surélevés / hover
-        paper: '#e7e5db', // texte clair "papier"
-        accent: '#b3261e', // rouge tampon officiel
-        accent2: '#8a1c16' // variante foncée (hover, bordures)
+        ink: '#070c18', // fond principal : bleu nuit
+        panel: '#101a30', // panneaux / cartes
+        panel2: '#18243f', // panneaux surélevés / hover
+        paper: '#ece7d8', // texte clair "papier"
+        accent: '#d2463b', // vermillon du sceau (éclairci pour rester lisible sur le bleu nuit)
+        accent2: '#9a231b' // variante foncée (hover, bordures)
       },
       fontFamily: {
         display: ['var(--font-mono)', 'ui-monospace', 'monospace'],

@@ -4,9 +4,11 @@ export interface MapSettings {
   km_per_unit: number;
   walk_kmh: number;
   unit_label: string;
+  /** côté du monde en unités de carte (100 = taille d'origine) */
+  world_size: number;
 }
 
-export const DEFAULT_SETTINGS: MapSettings = { km_per_unit: 5, walk_kmh: 5, unit_label: 'km' };
+export const DEFAULT_SETTINGS: MapSettings = { km_per_unit: 5, walk_kmh: 5, unit_label: 'km', world_size: 100 };
 
 export function distanceUnits(a: { x: number; y: number }, b: { x: number; y: number }) {
   return Math.hypot(a.x - b.x, a.y - b.y);

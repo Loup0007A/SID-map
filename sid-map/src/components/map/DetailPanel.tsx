@@ -62,7 +62,7 @@ export default function DetailPanel({
   }
 
   return (
-    <aside className="absolute right-0 top-0 z-30 h-full w-full max-w-sm overflow-y-auto scrollbar-thin glass-strong sm:rounded-l-2xl p-5">
+    <aside className="anim-slide-right absolute right-0 top-0 z-30 h-full w-full max-w-sm overflow-y-auto scrollbar-thin glass-strong sm:rounded-l-2xl p-5">
       <div className="mb-4 flex items-center justify-between">
         <button onClick={onClose} className="text-sm text-paper/60 hover:text-accent">
           ✕ Fermer
@@ -180,7 +180,7 @@ export default function DetailPanel({
                   setIsBuilding(e.target.checked);
                   await supabase.from('map_places').update({ is_building: e.target.checked }).eq('id', entity.id);
                 }}
-                className="h-4 w-4 accent-[#b3261e]"
+                className="h-4 w-4 accent-[#d2463b]"
               />
               🏗️ Ce lieu est un bâtiment éditable (étages, sous-sols…)
             </label>
