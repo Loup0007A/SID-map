@@ -97,7 +97,7 @@ export default function CrystalsModal({
 
   return (
     <>
-      <Modal title="💎 Cristaux de téléportation" onClose={onClose} maxWidth="max-w-sm">
+      <Modal title="💎 Cristaux de téléportation" windowId="crystals" onClose={onClose} maxWidth="max-w-sm">
         <div className="space-y-4">
           <div>
             <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50">Mes cristaux</p>

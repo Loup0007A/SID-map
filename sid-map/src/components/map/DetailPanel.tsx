@@ -19,8 +19,12 @@ export default function DetailPanel({
   kind,
   onClose,
   onDeleted,
-  positionsHook
+  positionsHook,
+  isFavorite,
+  onToggleFavorite
 }: {
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
   entity: MapZone | MapPlace;
   kind: 'zone' | 'place';
   onClose: () => void;
@@ -63,6 +67,17 @@ export default function DetailPanel({
         <button onClick={onClose} className="text-sm text-paper/60 hover:text-accent">
           ✕ Fermer
         </button>
+        {kind === 'place' && onToggleFavorite && (
+          <button
+            onClick={onToggleFavorite}
+            aria-pressed={!!isFavorite}
+            className={`ml-auto mr-2 rounded-lg border px-2.5 py-1 text-xs ${
+              isFavorite ? 'border-[#e7c34a]/60 text-[#e7c34a]' : 'border-white/15 text-paper/70 hover:border-accent hover:text-accent'
+            }`}
+          >
+            {isFavorite ? '★ Favori' : '☆ Favori'}
+          </button>
+        )}
         {canEdit && (
           <button
             onClick={handleDelete}

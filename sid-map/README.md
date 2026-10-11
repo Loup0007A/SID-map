@@ -38,6 +38,13 @@ npm run dev
   cours, échec de chargement), masquable.
 - **Bandeau de mode** : rappelle le geste attendu par l'outil actif, y
   compris sur téléphone.
+- **Fenêtres d'application** (ordinateur) : Montures, Cristaux, Ma position,
+  Itinéraire, Calques, Marchés noirs et Aide s'ouvrent en fenêtres
+  déplaçables et redimensionnables, non bloquantes. Il suffit de passer
+  `windowId="…"` à `<Modal>` ; place et taille sont mémorisées par appareil.
+- **Favoris** (☆ sur la fiche d'un lieu, listés dans la recherche),
+  **Mesurer** (distance et temps de marche entre deux points) et bouton
+  **◎** pour recentrer sur son personnage.
 - Tous les textes sont dans `src/lib/guide.ts`. Pour qu'une étape de visite
   pointe un élément, donne-lui `data-guide="<nom>"` et mets ce nom dans
   `target`. L'état « déjà vu / masqué » est stocké par appareil

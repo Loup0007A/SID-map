@@ -3,8 +3,10 @@
 export default function ZoomControls({
   onZoomIn,
   onZoomOut,
-  onReset
+  onReset,
+  onLocate
 }: {
+  onLocate?: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onReset: () => void;
@@ -25,6 +27,16 @@ export default function ZoomControls({
       >
         −
       </button>
+      {onLocate && (
+        <button
+          onClick={onLocate}
+          title="Centrer sur mon personnage"
+          aria-label="Centrer sur mon personnage"
+          className="border-b border-white/10 px-3 py-2 font-display text-sm text-paper/80 hover:bg-white/10 hover:text-accent"
+        >
+          ◎
+        </button>
+      )}
       <button
         onClick={onReset}
         title="Réinitialiser la vue"

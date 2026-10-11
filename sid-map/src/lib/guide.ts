@@ -257,6 +257,19 @@ export const HELP_TOPICS: HelpTopic[] = [
     note: '« Aucun itinéraire » signifie que les deux lieux ne sont reliés par aucune suite de routes.'
   },
   {
+    id: 'tools',
+    audience: 'player',
+    emoji: '🧰',
+    title: 'Fenêtres, favoris, mesure',
+    steps: [
+      'Sur ordinateur, chaque application s’ouvre dans une fenêtre : glisse sa barre de titre pour la déplacer, tire un bord ou le coin ◢ pour la redimensionner. Le bouton ⤾ (ou un double-clic sur le titre) la remet en place.',
+      'Favoris : clique ☆ sur la fiche d’un lieu ; il apparaît ensuite dès que tu ouvres la recherche.',
+      'Mesurer : Applications → « Mesurer », puis clique deux points. Un clic près d’un lieu s’y accroche.',
+      'Le bouton ◎ (sous le zoom) recentre la carte sur ton personnage, même en plein voyage.'
+    ],
+    note: 'La place des fenêtres et les favoris sont mémorisés sur l’appareil, pas sur ton compte.'
+  },
+  {
     id: 'quests',
     audience: 'player',
     emoji: '📜',

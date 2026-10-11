@@ -73,7 +73,10 @@ import { useToast } from '@/components/ui/Toast';
 import { useGuide } from '@/components/guide/GuideProvider';
 import MapCoach, { type CoachTip } from '@/components/guide/MapCoach';
 import { DEFAULT_SETTINGS } from '@/lib/mapScale';
-import { computeRemainingMinutes, formatMinutes } from '@/lib/travel';
+import { computeRemainingMinutes, formatMinutes, travelerScreenPosition } from '@/lib/travel';
+import { distanceUnits, formatDistance } from '@/lib/mapScale';
+import { useFavorites } from '@/lib/hooks/useFavorites';
+import { useIsDesktop } from '@/components/ui/Modal';
 
 const CLOSE_SNAP_PX = 14;
 type PointTool = 'point-circle' | 'point-rect';
@@ -85,6 +88,11 @@ export default function WorldMap() {
   const searchParams = useSearchParams();
   const { allowed: canEdit, loading: permLoading } = usePermission('manage_map');
   const guide = useGuide();
+  const favorites = useFavorites();
+  const isDesktop = useIsDesktop();
+  // Outil de mesure : deux points cliqués sur la carte.
+  const [measureMode, setMeasureMode] = useState(false);
+  const [measurePts, setMeasurePts] = useState<Point[]>([]);
   const { custom: customTextures } = useTextures();
   const mapSettings = useMapSettings();
   const [showTextures, setShowTextures] = useState(true);
@@ -190,6 +198,7 @@ export default function WorldMap() {
   }, [loading, places]);
 
   function selectPlaceAndShare(p: MapPlace) {
+    if (measureMode) return; // le clic sert à poser un point de mesure
     if (flightMode) {
       setFlightTarget(p);
       return;
@@ -229,6 +238,15 @@ export default function WorldMap() {
         exportMapPng(vp.svgRef.current, 'carte-du-monde-sid').then((ok) =>
           showToast(ok ? 'Image exportée.' : 'Export impossible depuis ce navigateur.', ok ? 'success' : 'error')
         );
+        break;
+      case 'measure':
+        resetDrawing();
+        setEditMode(false);
+        setDeleteMode(false);
+        setFlightMode(false);
+        setSelected(null);
+        setMeasurePts([]);
+        setMeasureMode(true);
         break;
       case 'help':
         guide.openHelp();
@@ -542,7 +560,15 @@ export default function WorldMap() {
 
     if (vp.isPanning) {
       vp.endPan();
-      if (moved < 4) setSelected(null);
+      if (moved < 4) {
+        if (measureMode) {
+          const pt = vp.screenToSvg(e.clientX, e.clientY);
+          // Un clic près d'un lieu s'y accroche ; un troisième clic recommence.
+          const near = findPlaceNear(pt);
+          const snapped = near ? { x: near.x, y: near.y } : pt;
+          setMeasurePts((pts) => (pts.length >= 2 ? [snapped] : [...pts, snapped]));
+        } else setSelected(null);
+      }
       return;
     }
 
@@ -641,7 +667,34 @@ export default function WorldMap() {
   // barre d'aide du bas était masquée).
   const layerName = editLayer === 'map' ? 'Carte' : editLayer === 'relief' ? 'Relief' : 'Biomes';
   const shapeMakes = editLayer === 'map' ? 'une région' : editLayer === 'relief' ? 'une zone de relief' : 'une zone de biome';
-  const modeHint: string | null = flightMode
+  // La mesure cède la place dès qu'un autre mode prend la main.
+  useEffect(() => {
+    if (editMode || flightMode) {
+      setMeasureMode(false);
+      setMeasurePts([]);
+    }
+  }, [editMode, flightMode]);
+
+  const measureKm = measurePts.length === 2 ? distanceUnits(measurePts[0], measurePts[1]) * mapSettings.settings.km_per_unit : null;
+  const measureText = (() => {
+    if (measureKm == null) return measurePts.length === 0 ? '📐 Mesure — clique le point de départ' : '📐 Mesure — clique le point d’arrivée';
+    const walk = (measureKm / mapSettings.settings.walk_kmh) * 60;
+    const mult = activeMountForFlight?.speed_multiplier ?? 1;
+    const mounted = activeMountForFlight && mult !== 1 ? ` · ${formatMinutes(walk / mult)} avec ${activeMountForFlight.name}` : '';
+    return `📐 ${formatDistance(measureKm, mapSettings.settings.unit_label)} à vol d’oiseau · ${formatMinutes(walk)} à pied${mounted}`;
+  })();
+
+  function locateMe() {
+    if (!myPos?.place_id) return showToast('Ton personnage n’a pas encore de position : ouvre « Ma position ».', 'info');
+    const moving = myPos.travel_started_at ? travelerScreenPosition(myPos, places, routes, Date.now()) : null;
+    const here = moving ?? places.find((p) => p.id === myPos.place_id);
+    if (!here) return showToast('Lieu introuvable sur la carte.', 'error');
+    vp.panTo(here.x, here.y, 30);
+  }
+
+  const modeHint: string | null = measureMode
+    ? measureText
+    : flightMode
     ? flightTarget
       ? '🕊️ Vol libre — vérifie le trajet puis confirme'
       : '🕊️ Vol libre — clique le lieu de destination'
@@ -886,7 +939,7 @@ export default function WorldMap() {
       />
 
       <div data-guide="zoom" className="absolute right-4 top-6 z-20">
-        <ZoomControls onZoomIn={vp.zoomIn} onZoomOut={vp.zoomOut} onReset={vp.resetView} />
+        <ZoomControls onZoomIn={vp.zoomIn} onZoomOut={vp.zoomOut} onReset={vp.resetView} onLocate={locateMe} />
       </div>
 
       {loading && (
@@ -979,7 +1032,7 @@ export default function WorldMap() {
             onClick={(e) => {
               e.stopPropagation();
               if (deleteMode && editLayer === 'map') return deleteZone(z);
-              if (!activeTool) setSelected({ kind: 'zone', entity: z });
+              if (!activeTool && !measureMode) setSelected({ kind: 'zone', entity: z });
             }}
           />
         ))}
@@ -1008,7 +1061,7 @@ export default function WorldMap() {
               onClick={(e) => {
                 e.stopPropagation();
                 if (deleteMode && editLayer === 'map') return deleteRoute(r);
-                if (!activeTool) setSelectedRoute(r);
+                if (!activeTool && !measureMode) setSelectedRoute(r);
               }}
             />
           );
@@ -1121,6 +1174,26 @@ export default function WorldMap() {
           return <TerritoryFlag key={`flag-${p.id}`} x={p.x} y={p.y - offset} label={label} />;
         })}
 
+        {measureMode && measurePts.length > 0 && (
+          <g style={{ pointerEvents: 'none' }}>
+            {measurePts.length === 2 && (
+              <line
+                x1={measurePts[0].x}
+                y1={measurePts[0].y}
+                x2={measurePts[1].x}
+                y2={measurePts[1].y}
+                stroke="#e7c34a"
+                strokeWidth={0.35}
+                strokeDasharray="1 0.6"
+                strokeLinecap="round"
+              />
+            )}
+            {measurePts.map((p, i) => (
+              <circle key={i} cx={p.x} cy={p.y} r={0.7} fill="#e7c34a" stroke="#0c1a2e" strokeWidth={0.2} />
+            ))}
+          </g>
+        )}
+
         <QuestMarkers quests={quests} places={places} openId={openQuestId} onToggle={(id) => setOpenQuestId((c) => (c === id ? null : id))} />
 
         {flightMode && flightTarget && myPlaceForFlight && (
@@ -1172,6 +1245,8 @@ export default function WorldMap() {
           onClose={() => setSelected(null)}
           onDeleted={load}
           positionsHook={positionsHook}
+          isFavorite={favorites.has(selected.entity.id)}
+          onToggleFavorite={() => favorites.toggle(selected.entity.id)}
         />
       )}
 
@@ -1264,7 +1339,17 @@ export default function WorldMap() {
           className="glass-strong absolute left-1/2 top-36 md:top-[4.25rem] z-20 flex w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-2xl px-3.5 py-2 text-xs text-paper/90"
         >
           <span className="min-w-0">{modeHint}</span>
-          {flightMode ? (
+          {measureMode ? (
+            <button
+              onClick={() => {
+                setMeasureMode(false);
+                setMeasurePts([]);
+              }}
+              className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent"
+            >
+              Quitter
+            </button>
+          ) : flightMode ? (
             <button
               onClick={() => {
                 setFlightMode(false);
@@ -1302,7 +1387,7 @@ export default function WorldMap() {
       )}
 
       {showLayers && (
-        <Modal title="🗂️ Calques" onClose={() => setShowLayers(false)} maxWidth="max-w-xs">
+        <Modal title="🗂️ Calques" windowId="layers" onClose={() => setShowLayers(false)} maxWidth="max-w-xs">
           <div className="space-y-2">
             {[
               { label: '🏔 Relief', v: showRelief, set: setShowRelief },
@@ -1319,7 +1404,7 @@ export default function WorldMap() {
       )}
 
       {showBlackMarkets && (
-        <Modal title="🕶️ Marchés noirs" onClose={() => setShowBlackMarkets(false)} maxWidth="max-w-xs">
+        <Modal title="🕶️ Marchés noirs" windowId="blackmarket" onClose={() => setShowBlackMarkets(false)} maxWidth="max-w-xs">
           <div className="space-y-1.5">
             {places.filter((p) => p.allows_black_market).length === 0 && (
               <p className="text-xs text-paper/50">Aucun lieu n'autorise de marché noir pour l'instant.</p>
@@ -1419,19 +1504,27 @@ export default function WorldMap() {
         </div>
       </MapActionStack>
 
-      {showPlanner && (
-        <div className="absolute bottom-40 right-4 z-20 md:bottom-3 md:right-24">
-          <RoutePlannerPanel
-            places={places}
-            routes={routes}
-            onClose={() => setShowPlanner(false)}
-            onHighlight={setHighlightedPlan}
-          />
-        </div>
-      )}
+      {showPlanner &&
+        (isDesktop ? (
+          <Modal
+            title="🧭 Itinéraire"
+            windowId="itinerary"
+            maxWidth="max-w-xs"
+            onClose={() => {
+              setHighlightedPlan(null);
+              setShowPlanner(false);
+            }}
+          >
+            <RoutePlannerPanel bare places={places} routes={routes} onClose={() => setShowPlanner(false)} onHighlight={setHighlightedPlan} />
+          </Modal>
+        ) : (
+          <div className="absolute bottom-40 right-4 z-20">
+            <RoutePlannerPanel places={places} routes={routes} onClose={() => setShowPlanner(false)} onHighlight={setHighlightedPlan} />
+          </div>
+        ))}
 
       <div data-guide="search" className="absolute left-1/2 top-6 z-20 -translate-x-1/2">
-        <PlaceSearch places={places} onSelect={selectPlaceAndShare} />
+        <PlaceSearch places={places} onSelect={selectPlaceAndShare} favoriteIds={favorites.ids} />
       </div>
 
       {(() => {

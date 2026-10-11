@@ -149,6 +149,7 @@ export default function HelpCenter({
   return (
     <Modal
       title="? Aide"
+      windowId="help"
       onClose={onClose}
       maxWidth="max-w-lg"
       top={

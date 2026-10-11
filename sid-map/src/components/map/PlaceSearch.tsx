@@ -5,8 +5,10 @@ import type { MapPlace } from '@/lib/types';
 
 export default function PlaceSearch({
   places,
-  onSelect
+  onSelect,
+  favoriteIds = []
 }: {
+  favoriteIds?: string[];
   places: MapPlace[];
   onSelect: (place: MapPlace) => void;
 }) {
@@ -16,6 +18,12 @@ export default function PlaceSearch({
   const results = query.trim()
     ? places.filter((p) => p.name.toLowerCase().includes(query.trim().toLowerCase())).slice(0, 8)
     : [];
+  const favorites = places.filter((p) => favoriteIds.includes(p.id));
+  const pick = (p: MapPlace) => {
+    onSelect(p);
+    setOpen(false);
+    setQuery('');
+  };
 
   return (
     <div className="w-full max-w-xs">
@@ -48,6 +56,22 @@ export default function PlaceSearch({
               ✕
             </button>
           </div>
+          {!query.trim() && (
+            <div className="mt-1.5 max-h-48 space-y-0.5 overflow-y-auto scrollbar-thin">
+              <p className="px-2.5 pt-1 font-display text-[10px] uppercase tracking-wide text-paper/45">★ Favoris</p>
+              {favorites.length === 0 && (
+                <p className="px-2.5 pb-1 text-xs text-paper/50">Aucun pour l'instant : ouvre un lieu et clique ☆ pour le retrouver ici.</p>
+              )}
+              {favorites.map((p) => (
+                <button key={p.id} onClick={() => pick(p)} className="block w-full rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10">
+                  {p.icon ?? '📍'} {p.name}
+                </button>
+              ))}
+            </div>
+          )}
+          {query.trim() && results.length === 0 && (
+            <p className="mt-1.5 px-2.5 pb-1 text-xs text-paper/50">Aucun lieu ne s'appelle ainsi.</p>
+          )}
           {results.length > 0 && (
             <div className="mt-1.5 max-h-48 space-y-0.5 overflow-y-auto scrollbar-thin">
               {results.map((p) => (

@@ -198,6 +198,7 @@ export default function MountsModal({
   return (
     <Modal
       title="🐎 Montures"
+      windowId="mounts"
       onClose={onClose}
       maxWidth="max-w-sm"
       top={<div className="flex gap-1 rounded-lg border border-white/15 bg-white/5 p-0.5">{tabBtn('mine', 'Ma monture')}{tabBtn('stats', '📊 Stats')}</div>}

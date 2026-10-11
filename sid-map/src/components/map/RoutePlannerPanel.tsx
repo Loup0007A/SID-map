@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { MapPlace, MapRoute } from '@/lib/types';
 import { findShortestPath, type RoutePlan } from '@/lib/pathfinding';
+import { formatMinutes } from '@/lib/travel';
 
 function PlacePicker({
   label,
@@ -57,8 +58,11 @@ export default function RoutePlannerPanel({
   places,
   routes,
   onClose,
-  onHighlight
+  onHighlight,
+  bare = false
 }: {
+  /** sans cadre ni titre : le contenu est posé dans une fenêtre */
+  bare?: boolean;
   places: MapPlace[];
   routes: MapRoute[];
   onClose: () => void;
@@ -78,8 +82,8 @@ export default function RoutePlannerPanel({
   }, [plan]);
 
   return (
-    <div className="glass-strong w-72 space-y-3 rounded-2xl p-3">
-      <div className="flex items-center justify-between">
+    <div className={bare ? 'space-y-3' : 'glass-strong w-72 space-y-3 rounded-2xl p-3'}>
+      <div className={bare ? 'hidden' : 'flex items-center justify-between'}>
         <p className="font-display text-[10px] uppercase tracking-wide text-accent">🧭 Itinéraire</p>
         <button
           onClick={() => {
@@ -99,7 +103,7 @@ export default function RoutePlannerPanel({
         <div className="border-t border-white/10 pt-2 text-sm">
           {plan ? (
             <>
-              <p className="text-accent">⏱ {plan.totalMinutes} min de trajet RP</p>
+              <p className="text-accent">⏱ {formatMinutes(plan.totalMinutes)} de trajet à pied</p>
               <ol className="mt-1.5 space-y-1 text-xs text-paper/70">
                 {plan.placeIds.map((pid, i) => {
                   const p = places.find((pl) => pl.id === pid);

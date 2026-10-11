@@ -39,6 +39,7 @@ export const APPS: AppDef[] = [
   { id: 'mounts', name: 'Montures', description: 'Ta monture, ses stats et le catalogue.', category: 'personnage', emoji: '🐎' },
   { id: 'crystals', name: 'Cristaux', description: 'Cristaux de téléportation reçus.', category: 'personnage', emoji: '💎' },
   { id: 'blackmarket', name: 'Marchés noirs', description: 'Lieux où des étals clandestins sont autorisés.', category: 'economie', emoji: '🕶️' },
+  { id: 'measure', name: 'Mesurer', description: 'Distance et temps de marche entre deux points de la carte.', category: 'carte', emoji: '📐' },
   { id: 'layers', name: 'Calques', description: 'Afficher ou masquer relief, biomes et textures.', category: 'carte', emoji: '🗂️' },
   { id: 'export', name: 'Exporter la carte', description: 'Télécharger la carte en image PNG.', category: 'carte', emoji: '🖼️' },
   { id: 'help', name: 'Aide', description: 'Check-list de démarrage, fiches « comment faire » et visite guidée.', category: 'carte', emoji: '❓' },
