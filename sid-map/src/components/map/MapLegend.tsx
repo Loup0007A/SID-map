@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
+
 import { useState } from 'react';
 import { usePermission } from '@/lib/hooks/usePermission';
 import IconPicker from './IconPicker';
@@ -54,7 +56,7 @@ export default function MapLegend({ sections }: { sections: LegendSection[] }) {
                           className={`w-5 text-center ${canEdit && s.onIconChange ? 'hover:scale-110' : ''}`}
                           title={canEdit && s.onIconChange ? "Changer l'icône" : undefined}
                         >
-                          {it.icon}
+                          <Icon value={it.icon} />
                         </button>
                       )}
                       {it.color && (

@@ -46,3 +46,59 @@ function distToSegment(p: Point, a: Point, b: Point) {
   const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
   return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
 }
+
+function insidePolygon(pt: Point, poly: Point[]): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i];
+    const b = poly[j];
+    if (a.y > pt.y !== b.y > pt.y && pt.x < ((b.x - a.x) * (pt.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+  }
+  return inside;
+}
+
+function edgeDistance(pt: Point, poly: Point[]): number {
+  let min = Infinity;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const d = distToSegment(pt, poly[i], poly[j]);
+    if (d < min) min = d;
+  }
+  return min;
+}
+
+/**
+ * Où écrire le nom d'une région : le point le plus « au large » de ses
+ * bords, à l'intérieur de son tracé ET hors des autres régions dessinées
+ * par-dessus (`obstacles`).
+ *
+ * La moyenne des sommets ne convient pas : pour un océan qui entoure un
+ * continent, elle tombe en plein milieu du continent.
+ * `clearance` = distance libre autour du point (sert à borner la taille
+ * du texte). Renvoie null si la région est entièrement recouverte.
+ */
+export function labelAnchor(poly: Point[], obstacles: Point[][], grid = 28): { point: Point; clearance: number } | null {
+  if (poly.length < 3) return null;
+  const xs = poly.map((p) => p.x);
+  const ys = poly.map((p) => p.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  // Seuls les obstacles qui touchent la boîte englobante comptent.
+  const near = obstacles.filter((o) => o.length >= 3 && o.some((p) => p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY));
+  let best: { point: Point; clearance: number } | null = null;
+  for (let i = 0; i < grid; i++) {
+    for (let j = 0; j < grid; j++) {
+      const pt = { x: minX + ((i + 0.5) / grid) * (maxX - minX), y: minY + ((j + 0.5) / grid) * (maxY - minY) };
+      if (!insidePolygon(pt, poly)) continue;
+      if (near.some((o) => insidePolygon(pt, o))) continue;
+      let d = edgeDistance(pt, poly);
+      for (const o of near) {
+        if (d <= (best?.clearance ?? 0)) break;
+        d = Math.min(d, edgeDistance(pt, o));
+      }
+      if (!best || d > best.clearance) best = { point: pt, clearance: d };
+    }
+  }
+  return best;
+}

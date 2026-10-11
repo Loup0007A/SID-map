@@ -1,8 +1,32 @@
 // Export PNG de la carte (SVG -> canvas).
-export function exportMapPng(svg: SVGSVGElement | null, filename: string): Promise<boolean> {
+// Une image externe n'est pas dessinée quand un SVG est converti en
+// bitmap : on remplace donc chaque icône importée par son contenu.
+async function inlineImages(root: SVGSVGElement) {
+  await Promise.all(
+    Array.from(root.querySelectorAll('image')).map(async (el) => {
+      const href = el.getAttribute('href') ?? el.getAttribute('xlink:href');
+      if (!href || href.startsWith('data:')) return;
+      try {
+        const blob = await (await fetch(href)).blob();
+        const data = await new Promise<string>((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(String(r.result));
+          r.onerror = rej;
+          r.readAsDataURL(blob);
+        });
+        el.setAttribute('href', data);
+      } catch {
+        el.remove(); // icône injoignable : on exporte le reste
+      }
+    })
+  );
+}
+
+export async function exportMapPng(svg: SVGSVGElement | null, filename: string): Promise<boolean> {
+  if (!svg) return false;
+  const clone = svg.cloneNode(true) as SVGSVGElement;
+  await inlineImages(clone);
   return new Promise((resolve) => {
-    if (!svg) return resolve(false);
-    const clone = svg.cloneNode(true) as SVGSVGElement;
     clone.querySelectorAll('foreignObject').forEach((el) => el.remove());
     clone.setAttribute('width', '1600');
     clone.setAttribute('height', '1600');

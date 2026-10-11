@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
+
 import { useCallback, useEffect, useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
@@ -207,7 +209,7 @@ export default function MountsModal({
         <div className="space-y-3 text-sm">
           {active ? (
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-              <p className="text-2xl">{active.icon}</p>
+              <p className="text-2xl"><Icon value={active.icon} /></p>
               <p className="text-paper">{active.name}</p>
               {remainingMs !== null && (
                 <p className="mt-1 text-xs text-accent">
@@ -236,7 +238,7 @@ export default function MountsModal({
               <div key={m.id} className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-paper">
-                    {m.icon} {m.name}
+                    <Icon value={m.icon} /> {m.name}
                   </p>
                   {isAdmin && (
                     <span className="flex gap-2">

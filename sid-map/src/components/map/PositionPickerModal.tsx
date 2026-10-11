@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
+
 import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
@@ -103,7 +105,7 @@ export default function PositionPickerModal({
     return (
       <Modal title="En voyage…" windowId="position" onClose={onClose} maxWidth="max-w-sm">
         <div className="space-y-3 text-center">
-          <p className="text-3xl">{myPosition.flight_target_place_id ? '🕊️' : activeMount ? activeMount.icon : '🚶'}</p>
+          <p className="text-3xl"><Icon value={myPosition.flight_target_place_id ? '🕊️' : activeMount ? activeMount.icon : '🚶'} /></p>
           <p className="text-sm text-paper/80">
             En route vers <span className="text-accent">{destPlace?.name ?? '?'}</span>
           </p>
@@ -156,7 +158,7 @@ export default function PositionPickerModal({
                 onClick={() => pickInitialPlace(p.id)}
                 className="block w-full rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10 disabled:opacity-50"
               >
-                {p.icon ?? '📍'} {p.name}
+                <Icon value={p.icon ?? '📍'} /> {p.name}
               </button>
             ))}
           </div>
@@ -182,10 +184,10 @@ export default function PositionPickerModal({
         <div className="rounded-lg border border-white/10 bg-white/5 p-2.5 text-sm">
           <p className="text-paper/50 text-[10px] uppercase tracking-wide">Actuellement</p>
           <p className="text-paper">
-            {currentPlace?.icon ?? '📍'} {currentPlace?.name ?? '?'}
+            <Icon value={currentPlace?.icon ?? '📍'} /> {currentPlace?.name ?? '?'}
             {activeMount && (
               <span className="ml-2 text-accent">
-                {activeMount.icon} {activeMount.name}
+                <Icon value={activeMount.icon} /> {activeMount.name}
                 {myPosition.mount_expires_at && (
                   <span className="ml-1 text-[11px] text-paper/50">
                     ({formatMinutes(Math.max(0, (new Date(myPosition.mount_expires_at).getTime() - now) / 60000))} restantes)
@@ -280,7 +282,7 @@ export default function PositionPickerModal({
                   className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10 disabled:opacity-50"
                 >
                   <span>
-                    {dest?.icon ?? '📍'} {dest?.name ?? '?'}
+                    <Icon value={dest?.icon ?? '📍'} /> {dest?.name ?? '?'}
                   </span>
                   <span className="text-xs text-accent">
                     {blocked ? `biome interdit (${BIOME_LABELS[blocked] ?? blocked})` : formatMinutes(duration)}
@@ -322,7 +324,7 @@ export default function PositionPickerModal({
                       className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10 disabled:opacity-40"
                     >
                       <span>
-                        {p.icon ?? '📍'} {p.name}
+                        <Icon value={p.icon ?? '📍'} /> {p.name}
                       </span>
                       <span className="text-right text-[11px] text-accent">
                         {formatDistance(km, settings.unit_label)}

@@ -1,5 +1,7 @@
 'use client';
 
+import { iconText } from '@/lib/icons';
+
 import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
@@ -82,7 +84,7 @@ export default function BuildingFormModal({
           >
             {buildingTypes.items.map((it) => (
               <option key={it.key} value={it.key}>
-                {it.icon} {it.label}
+                {iconText(it.icon)} {it.label}
               </option>
             ))}
           </select>

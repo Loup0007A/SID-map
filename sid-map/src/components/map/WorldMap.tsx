@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import Icon from '@/components/ui/Icon';
+
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { usePermission } from '@/lib/hooks/usePermission';
@@ -28,7 +30,8 @@ import {
   squareFromBox,
   trapezoidFromBox
 } from '@/lib/shapes';
-import { centroid } from '@/lib/geometry';
+import { centroid, labelAnchor } from '@/lib/geometry';
+import { isImageIcon } from '@/lib/icons';
 import type { RoutePlan } from '@/lib/pathfinding';
 import DetailPanel from './DetailPanel';
 import ZoneFormModal from './ZoneFormModal';
@@ -811,6 +814,19 @@ export default function WorldMap() {
     return { rectX: Math.min(start.x, end.x), rectY: Math.min(start.y, end.y), w: Math.abs(end.x - start.x), h: Math.abs(end.y - start.y) };
   })();
 
+  // Emplacement du nom (et du drapeau) de chaque région : dans la région
+  // elle-même, à l'écart des régions dessinées par-dessus. Les régions
+  // sont peintes dans l'ordre de la liste : seules les suivantes recouvrent.
+  const zoneAnchors = useMemo(() => {
+    const m = new Map<string, { point: Point; clearance: number }>();
+    zones.forEach((z, i) => {
+      const above = zones.slice(i + 1).map((o) => o.path_points);
+      const a = labelAnchor(z.path_points, above);
+      if (a) m.set(z.id, a);
+    });
+    return m;
+  }, [zones]);
+
   const showGrid = editMode && activeTool !== null;
   // Décalage d'aperçu pendant qu'on tire la sélection.
   const moveDx = selDrag?.mode === 'move' ? selDrag.cur.x - selDrag.start.x : 0;
@@ -1327,17 +1343,22 @@ export default function WorldMap() {
         {zones.map((z) => {
           const label = groupsHook.labelFor(z.controlling_group_id);
           if (!label) return null;
-          const c = centroid(z.path_points);
+          const c = zoneAnchors.get(z.id)?.point ?? centroid(z.path_points);
           return <TerritoryFlag key={`flag-${z.id}`} x={c.x} y={c.y} label={label} />;
         })}
 
         {/* Nom des régions, en lettres espacées comme sur un atlas. */}
         {zones.map((z) => {
           if (!z.name || z.path_points.length < 3) return null;
+          // Région entièrement recouverte par d'autres : pas de nom plutôt qu'un nom mal placé.
+          const anchor = zoneAnchors.get(z.id);
+          if (!anchor) return null;
           const xs = z.path_points.map((p) => p.x);
           const width = Math.max(...xs) - Math.min(...xs);
-          const size = Math.max(1.1, Math.min(3.2, (width * 0.7) / Math.max(4, z.name.length)));
-          const c = centroid(z.path_points);
+          // Le texte doit tenir dans l'espace libre autour du point d'ancrage.
+          const fit = (anchor.clearance * 2.6) / Math.max(4, z.name.length);
+          const size = Math.max(0.9, Math.min(3.2, (width * 0.7) / Math.max(4, z.name.length), fit));
+          const c = anchor.point;
           const flag = !!groupsHook.labelFor(z.controlling_group_id);
           return (
             <text
@@ -1470,9 +1491,18 @@ export default function WorldMap() {
                 ) : (
                   <circle r={r + 0.8} fill="none" stroke="#e7c34a" strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
                 ))}
-              <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
-                {p.icon || placeTypes.iconFor(p.type)}
-              </text>
+              {(() => {
+                const icon = p.icon || placeTypes.iconFor(p.type);
+                // Image importée : dessinée dans le rond, un peu plus grande qu'un emoji.
+                const s = iconSize * 1.55;
+                return isImageIcon(icon) ? (
+                  <image href={icon} x={-s / 2} y={-s / 2} width={s} height={s} preserveAspectRatio="xMidYMid meet" style={{ pointerEvents: 'none' }} />
+                ) : (
+                  <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
+                    {icon}
+                  </text>
+                );
+              })()}
               <text
                 textAnchor="middle"
                 dy={labelOffset}
@@ -1755,7 +1785,7 @@ export default function WorldMap() {
                   }}
                   className="block w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left text-sm text-paper/80 hover:border-accent"
                 >
-                  {p.icon ?? '📍'} {p.name}
+                  <Icon value={p.icon ?? '📍'} /> {p.name}
                 </button>
               ))}
           </div>

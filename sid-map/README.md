@@ -61,6 +61,12 @@ npm run dev
   dernier déplacement. Logique dans `src/lib/selection.ts`.
 - **Applications Répertoire, À proximité et Carnet** :
   `src/components/apps/ExtraApps.tsx`.
+- **Icônes importées** : le sélecteur d'icône accepte un fichier `.png` ou
+  `.ico` (512 Ko max), envoyé dans `map-images/icons` et réutilisable
+  ensuite par tous les admins. La colonne `icon` contient alors l'adresse
+  de l'image au lieu d'un emoji (`isImageIcon` dans `src/lib/icons.ts`).
+- **Nom des régions** : placé par `labelAnchor` (`src/lib/geometry.ts`),
+  à l'intérieur de la région et hors de celles dessinées par-dessus.
 - Tous les textes sont dans `src/lib/guide.ts`. Pour qu'une étape de visite
   pointe un élément, donne-lui `data-guide="<nom>"` et mets ce nom dans
   `target`. L'état « déjà vu / masqué » est stocké par appareil

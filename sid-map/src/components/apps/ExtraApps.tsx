@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import type { CharacterPosition, MapPlace, MapRoute } from '@/lib/types';
@@ -76,7 +78,7 @@ export function DirectoryApp({
         {places.length > 0 && list.length === 0 && <p className="py-4 text-center text-sm text-paper/50">Aucun lieu ne correspond à ce filtre.</p>}
         {list.map((p) => (
           <button key={p.id} onClick={() => onGo(p)} className={row}>
-            <span aria-hidden className="text-lg">{p.icon || typeIcon(p.type)}</span>
+            <span aria-hidden className="text-lg"><Icon value={p.icon || typeIcon(p.type)} /></span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm text-paper">
                 {p.name}
@@ -141,13 +143,13 @@ export function NearbyApp({
       ) : (
         <div className="space-y-2">
           <p className="text-xs text-paper/55">
-            Depuis <span className="text-paper">{me.icon ?? '📍'} {me.name}</span>, du plus proche au plus loin. Les distances sont à vol d’oiseau.
+            Depuis <span className="text-paper"><Icon value={me.icon ?? '📍'} /> {me.name}</span>, du plus proche au plus loin. Les distances sont à vol d’oiseau.
           </p>
           {list.length === 0 && <p className="py-3 text-center text-sm text-paper/50">Aucun autre lieu sur la carte.</p>}
           <div className="anim-stagger space-y-1.5">
             {list.map(({ p, km, route }) => (
               <button key={p.id} onClick={() => onGo(p)} className={row}>
-                <span aria-hidden className="text-lg">{p.icon ?? '📍'}</span>
+                <span aria-hidden className="text-lg"><Icon value={p.icon ?? '📍'} /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm text-paper">{p.name}</span>
                   <span className="block truncate text-[11px] text-paper/50">

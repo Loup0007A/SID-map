@@ -31,6 +31,7 @@ import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
 import { usePositions } from '@/lib/hooks/usePositions';
 import { useMapSettings } from '@/lib/hooks/useMapSettings';
 import { useToast } from '@/components/ui/Toast';
+import { isImageIcon } from '@/lib/icons';
 
 const CLOSE_SNAP_PX = 14;
 type PointTool = 'point-circle' | 'point-rect';
@@ -574,9 +575,17 @@ export default function CityMap({ cityId }: { cityId: string }) {
                   strokeWidth={deleteMode ? 0.35 : 0.1}
                 />
               )}
-              <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
-                {buildingTypes.iconFor(b.type, '🏗️')}
-              </text>
+              {(() => {
+                const icon = buildingTypes.iconFor(b.type, '🏗️');
+                const s = iconSize * 1.55;
+                return isImageIcon(icon) ? (
+                  <image href={icon} x={-s / 2} y={-s / 2} width={s} height={s} preserveAspectRatio="xMidYMid meet" style={{ pointerEvents: 'none' }} />
+                ) : (
+                  <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
+                    {icon}
+                  </text>
+                );
+              })()}
               {occupants.length > 0 && (
                 <>
                   <circle cx={radius * 0.75} cy={-radius * 0.75} r={1} fill="#1e9e5a" stroke="#151312" strokeWidth={0.15} />

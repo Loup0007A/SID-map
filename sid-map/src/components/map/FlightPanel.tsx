@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
+
 import type { MapBiome, MapPlace, MountType } from '@/lib/types';
 import { BIOME_LABELS } from '@/lib/types';
 import { blockedBiome } from '@/lib/biomePath';
@@ -35,7 +37,7 @@ export default function FlightPanel({
   return (
     <div className="glass-strong absolute bottom-20 left-1/2 z-30 w-72 max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-2xl p-3 text-xs text-paper md:bottom-6">
       <p className="text-[10px] uppercase tracking-wide text-paper/50">
-        {mount.icon} {mount.name} · vol libre
+        <Icon value={mount.icon} /> {mount.name} · vol libre
       </p>
       <p className="mt-0.5 text-sm">
         {from.name} → <span className="text-accent">{to.name}</span>

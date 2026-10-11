@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
+
 import { useState } from 'react';
 import type { MapPlace } from '@/lib/types';
 
@@ -64,7 +66,7 @@ export default function PlaceSearch({
               )}
               {favorites.map((p) => (
                 <button key={p.id} onClick={() => pick(p)} className="block w-full rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10">
-                  {p.icon ?? '📍'} {p.name}
+                  <Icon value={p.icon ?? '📍'} /> {p.name}
                 </button>
               ))}
             </div>
@@ -84,7 +86,7 @@ export default function PlaceSearch({
                   }}
                   className="block w-full rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10"
                 >
-                  {p.icon ?? '📍'} {p.name}
+                  <Icon value={p.icon ?? '📍'} /> {p.name}
                 </button>
               ))}
             </div>

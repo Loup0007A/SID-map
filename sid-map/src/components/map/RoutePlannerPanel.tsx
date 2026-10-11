@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
+
 import { useEffect, useMemo, useState } from 'react';
 import type { MapPlace, MapRoute } from '@/lib/types';
 import { findShortestPath, type RoutePlan } from '@/lib/pathfinding';
@@ -45,7 +47,7 @@ function PlacePicker({
               }}
               className="block w-full rounded-lg px-2 py-1 text-left text-xs text-paper/80 hover:bg-white/10"
             >
-              {p.icon ?? '📍'} {p.name}
+              <Icon value={p.icon ?? '📍'} /> {p.name}
             </button>
           ))}
         </div>
@@ -109,7 +111,7 @@ export default function RoutePlannerPanel({
                   const p = places.find((pl) => pl.id === pid);
                   return (
                     <li key={pid}>
-                      {i + 1}. {p?.icon ?? '📍'} {p?.name ?? '?'}
+                      {i + 1}. <Icon value={p?.icon ?? '📍'} /> {p?.name ?? '?'}
                     </li>
                   );
                 })}

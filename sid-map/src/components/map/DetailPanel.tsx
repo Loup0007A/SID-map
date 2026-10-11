@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { usePermission } from '@/lib/hooks/usePermission';
 import CommentsBox from './CommentsBox';
 import IconPicker from './IconPicker';
+import Icon from '@/components/ui/Icon';
 import MountRentalSection from './MountRentalSection';
 import BlackMarketSection from './BlackMarketSection';
 import type { MapPlace, MapZone } from '@/lib/types';
@@ -99,7 +100,7 @@ export default function DetailPanel({
       <p className="text-xs uppercase tracking-wide text-accent">{label}</p>
       <h2 className="font-display text-2xl">
         {kind === 'place' && (
-          <span className="mr-1">{icon || placeTypes.iconFor((entity as MapPlace).type)}</span>
+          <span className="mr-1"><Icon value={icon || placeTypes.iconFor((entity as MapPlace).type)} /></span>
         )}
         {entity.name}
       </h2>
@@ -119,7 +120,9 @@ export default function DetailPanel({
             value={icon ?? placeTypes.iconFor((entity as MapPlace).type)}
             onChange={async (newIcon) => {
               setIcon(newIcon);
-              await supabase.from('map_places').update({ icon: newIcon }).eq('id', entity.id);
+              const { error } = await supabase.from('map_places').update({ icon: newIcon }).eq('id', entity.id);
+              if (error) alert(`Icône non enregistrée : ${error.message}`);
+              else onDeleted?.(); // recharge la carte pour y voir la nouvelle icône
             }}
           />
         </div>
