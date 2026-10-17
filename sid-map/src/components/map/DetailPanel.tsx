@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { usePermission } from '@/lib/hooks/usePermission';
 import CommentsBox from './CommentsBox';
 import IconPicker from './IconPicker';
+import Icon from '@/components/ui/Icon';
 import MountRentalSection from './MountRentalSection';
 import BlackMarketSection from './BlackMarketSection';
 import type { MapPlace, MapZone } from '@/lib/types';
@@ -19,8 +20,12 @@ export default function DetailPanel({
   kind,
   onClose,
   onDeleted,
-  positionsHook
+  positionsHook,
+  isFavorite,
+  onToggleFavorite
 }: {
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
   entity: MapZone | MapPlace;
   kind: 'zone' | 'place';
   onClose: () => void;
@@ -51,17 +56,29 @@ export default function DetailPanel({
     if (!confirm(confirmMsg)) return;
 
     const table = kind === 'zone' ? 'map_zones' : 'map_places';
-    await supabase.from(table).delete().eq('id', entity.id);
+    const { error } = await supabase.from(table).delete().eq('id', entity.id);
+    if (error) return alert(`Suppression impossible : ${error.message}`);
     onClose();
     onDeleted?.();
   }
 
   return (
-    <aside className="absolute right-0 top-0 z-30 h-full w-full max-w-sm overflow-y-auto scrollbar-thin glass-strong sm:rounded-l-2xl p-5">
+    <aside className="anim-slide-right absolute right-0 top-0 z-30 h-full w-full max-w-sm overflow-y-auto scrollbar-thin glass-strong sm:rounded-l-2xl p-5">
       <div className="mb-4 flex items-center justify-between">
         <button onClick={onClose} className="text-sm text-paper/60 hover:text-accent">
           ✕ Fermer
         </button>
+        {kind === 'place' && onToggleFavorite && (
+          <button
+            onClick={onToggleFavorite}
+            aria-pressed={!!isFavorite}
+            className={`ml-auto mr-2 rounded-lg border px-2.5 py-1 text-xs ${
+              isFavorite ? 'border-[#e7c34a]/60 text-[#e7c34a]' : 'border-white/15 text-paper/70 hover:border-accent hover:text-accent'
+            }`}
+          >
+            {isFavorite ? '★ Favori' : '☆ Favori'}
+          </button>
+        )}
         {canEdit && (
           <button
             onClick={handleDelete}
@@ -83,7 +100,7 @@ export default function DetailPanel({
       <p className="text-xs uppercase tracking-wide text-accent">{label}</p>
       <h2 className="font-display text-2xl">
         {kind === 'place' && (
-          <span className="mr-1">{icon || placeTypes.iconFor((entity as MapPlace).type)}</span>
+          <span className="mr-1"><Icon value={icon || placeTypes.iconFor((entity as MapPlace).type)} /></span>
         )}
         {entity.name}
       </h2>
@@ -103,7 +120,9 @@ export default function DetailPanel({
             value={icon ?? placeTypes.iconFor((entity as MapPlace).type)}
             onChange={async (newIcon) => {
               setIcon(newIcon);
-              await supabase.from('map_places').update({ icon: newIcon }).eq('id', entity.id);
+              const { error } = await supabase.from('map_places').update({ icon: newIcon }).eq('id', entity.id);
+              if (error) alert(`Icône non enregistrée : ${error.message}`);
+              else onDeleted?.(); // recharge la carte pour y voir la nouvelle icône
             }}
           />
         </div>
@@ -164,7 +183,7 @@ export default function DetailPanel({
                   setIsBuilding(e.target.checked);
                   await supabase.from('map_places').update({ is_building: e.target.checked }).eq('id', entity.id);
                 }}
-                className="h-4 w-4 accent-[#b3261e]"
+                className="h-4 w-4 accent-[#d2463b]"
               />
               🏗️ Ce lieu est un bâtiment éditable (étages, sous-sols…)
             </label>

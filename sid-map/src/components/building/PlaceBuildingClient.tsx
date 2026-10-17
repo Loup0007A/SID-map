@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -77,7 +79,7 @@ export default function PlaceBuildingClient({ placeId }: { placeId: string }) {
               {placeTypes.labelFor(place.type)} — intérieur
             </p>
             <h1 className="font-display text-3xl">
-              {place.icon ?? placeTypes.iconFor(place.type)} {place.name}
+              <Icon value={place.icon ?? placeTypes.iconFor(place.type)} /> {place.name}
             </h1>
 
             {place.image_url && (

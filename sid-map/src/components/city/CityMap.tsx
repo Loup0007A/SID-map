@@ -31,6 +31,7 @@ import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
 import { usePositions } from '@/lib/hooks/usePositions';
 import { useMapSettings } from '@/lib/hooks/useMapSettings';
 import { useToast } from '@/components/ui/Toast';
+import { isImageIcon } from '@/lib/icons';
 
 const CLOSE_SNAP_PX = 14;
 type PointTool = 'point-circle' | 'point-rect';
@@ -131,13 +132,15 @@ export default function CityMap({ cityId }: { cityId: string }) {
 
   async function deleteDistrict(d: CityDistrict) {
     if (!confirm(`Supprimer le quartier "${d.name}" ?`)) return;
-    await supabase.from('city_districts').delete().eq('id', d.id);
+    const { error } = await supabase.from('city_districts').delete().eq('id', d.id);
+    if (error) return showToast(`Suppression impossible : ${error.message}`, 'error');
     showToast('Quartier supprimé.');
     load();
   }
   async function deleteBuilding(b: CityBuilding) {
     if (!confirm(`Supprimer "${b.name || b.type}" et tous ses étages ?`)) return;
-    await supabase.from('city_buildings').delete().eq('id', b.id);
+    const { error } = await supabase.from('city_buildings').delete().eq('id', b.id);
+    if (error) return showToast(`Suppression impossible : ${error.message}`, 'error');
     showToast('Bâtiment supprimé.');
     load();
   }
@@ -486,7 +489,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
             points={pointsToSvg(d.path_points)}
             fill={d.color}
             fillOpacity={activeDistrictFilter && activeDistrictFilter !== d.id ? 0.1 : 0.35}
-            stroke={deleteMode ? '#b3261e' : '#00000066'}
+            stroke={deleteMode ? '#d2463b' : '#00000066'}
             strokeWidth={deleteMode ? 0.3 : 0.15}
             className="cursor-pointer"
             onClick={(e) => {
@@ -503,7 +506,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
             <polyline
               points={pointsToSvg(tempPoints)}
               fill="none"
-              stroke="#b3261e"
+              stroke="#d2463b"
               strokeWidth={0.25}
               strokeDasharray="0.7"
             />
@@ -513,7 +516,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
                 cx={p.x}
                 cy={p.y}
                 r={i === 0 && closeSnapReady ? 0.9 : 0.45}
-                fill={i === 0 && closeSnapReady ? '#b3261e' : '#f4ecd8'}
+                fill={i === 0 && closeSnapReady ? '#d2463b' : '#f4ecd8'}
               />
             ))}
           </>
@@ -522,21 +525,21 @@ export default function CityMap({ cityId }: { cityId: string }) {
         {previewBoxPoints && (
           <polygon
             points={pointsToSvg(previewBoxPoints)}
-            fill="#b3261e"
+            fill="#d2463b"
             fillOpacity={0.3}
-            stroke="#b3261e"
+            stroke="#d2463b"
             strokeWidth={0.25}
           />
         )}
         {activeTool === 'freehand' && freehandPoints.length > 1 && (
-          <polyline points={pointsToSvg(freehandPoints)} fill="none" stroke="#b3261e" strokeWidth={0.3} />
+          <polyline points={pointsToSvg(freehandPoints)} fill="none" stroke="#d2463b" strokeWidth={0.3} />
         )}
 
         {pointPreview && 'r' in pointPreview && (
-          <circle cx={pointPreview.cx} cy={pointPreview.cy} r={pointPreview.r} fill="#b3261e" fillOpacity={0.3} stroke="#b3261e" strokeWidth={0.25} />
+          <circle cx={pointPreview.cx} cy={pointPreview.cy} r={pointPreview.r} fill="#d2463b" fillOpacity={0.3} stroke="#d2463b" strokeWidth={0.25} />
         )}
         {pointPreview && 'rectX' in pointPreview && (
-          <rect x={pointPreview.rectX} y={pointPreview.rectY} width={pointPreview.w} height={pointPreview.h} fill="#b3261e" fillOpacity={0.3} stroke="#b3261e" strokeWidth={0.25} />
+          <rect x={pointPreview.rectX} y={pointPreview.rectY} width={pointPreview.w} height={pointPreview.h} fill="#d2463b" fillOpacity={0.3} stroke="#d2463b" strokeWidth={0.25} />
         )}
 
         {visibleBuildings.map((b) => {
@@ -559,7 +562,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
               }}
             >
               {b.shape === 'circle' ? (
-                <circle r={radius} fill="#151312" stroke="#b3261e" strokeWidth={deleteMode ? 0.35 : 0.1} />
+                <circle r={radius} fill="#151312" stroke="#d2463b" strokeWidth={deleteMode ? 0.35 : 0.1} />
               ) : (
                 <rect
                   x={-b.width / 2}
@@ -568,13 +571,21 @@ export default function CityMap({ cityId }: { cityId: string }) {
                   height={b.height}
                   rx={0.4}
                   fill="#151312"
-                  stroke="#b3261e"
+                  stroke="#d2463b"
                   strokeWidth={deleteMode ? 0.35 : 0.1}
                 />
               )}
-              <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
-                {buildingTypes.iconFor(b.type, '🏗️')}
-              </text>
+              {(() => {
+                const icon = buildingTypes.iconFor(b.type, '🏗️');
+                const s = iconSize * 1.55;
+                return isImageIcon(icon) ? (
+                  <image href={icon} x={-s / 2} y={-s / 2} width={s} height={s} preserveAspectRatio="xMidYMid meet" style={{ pointerEvents: 'none' }} />
+                ) : (
+                  <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
+                    {icon}
+                  </text>
+                );
+              })()}
               {occupants.length > 0 && (
                 <>
                   <circle cx={radius * 0.75} cy={-radius * 0.75} r={1} fill="#1e9e5a" stroke="#151312" strokeWidth={0.15} />
@@ -646,7 +657,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
         />
       )}
 
-      <MapActionStack>
+      <MapActionStack raised={canEdit && toolbarOpen && editMode}>
         <MapLegend
           sections={[
             {
@@ -671,16 +682,26 @@ export default function CityMap({ cityId }: { cityId: string }) {
         </button>
       </MapActionStack>
 
-      <div className="glass absolute bottom-3 left-1/2 z-10 hidden -translate-x-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/60 md:block">
+      {/* Consigne du mode en cours : en haut sur téléphone (la barre d'outils occupe le bas). */}
+      <div
+        role="status"
+        className={`glass absolute left-1/2 top-24 z-10 w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-2xl px-4 py-1.5 text-center text-xs text-paper/80 md:bottom-3 md:top-auto ${
+          editMode ? '' : 'hidden md:block'
+        }`}
+      >
         {deleteMode
-          ? 'Clique un élément pour le supprimer'
+          ? '🗑 Suppression — clique un quartier ou un bâtiment (confirmation demandée)'
           : editMode && activeTool === 'polygon'
-          ? 'Clique pour ajouter un point · reclique sur le premier pour fermer'
+          ? tempPoints.length < 3
+            ? `Polygone — ${tempPoints.length} point${tempPoints.length > 1 ? 's' : ''}, il en faut au moins 3 (quartier)`
+            : `Polygone — ${tempPoints.length} points · reclique le premier point ou « Terminer »`
           : editMode && (activeTool === 'point-circle' || activeTool === 'point-rect')
-          ? 'Clique-glisse pour définir la taille'
+          ? 'Bâtiment — clic simple (taille standard) ou clic-glisse (taille au choix)'
           : editMode && activeTool
-          ? 'Clique-glisse pour dessiner'
-          : 'Glisse pour naviguer · molette pour zoomer'}
+          ? 'Clic-glisse pour dessiner un quartier'
+          : editMode
+          ? 'Édition — choisis un outil : une forme (quartier) ou Bâtiment'
+          : 'Glisse pour naviguer · molette pour zoomer · clique un bâtiment pour l’ouvrir'}
       </div>
       </div>
     </div>

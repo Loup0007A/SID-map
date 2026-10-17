@@ -137,7 +137,7 @@ export default function BlackMarketSection({
             type="checkbox"
             checked={allows}
             onChange={(e) => toggleAllow(e.target.checked)}
-            className="h-4 w-4 accent-[#b3261e]"
+            className="h-4 w-4 accent-[#d2463b]"
           />
           Autoriser les marchés noirs ici
         </label>

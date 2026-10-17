@@ -1,5 +1,7 @@
 'use client';
 
+import { iconText } from '@/lib/icons';
+
 import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
@@ -82,7 +84,7 @@ export default function BuildingFormModal({
           >
             {buildingTypes.items.map((it) => (
               <option key={it.key} value={it.key}>
-                {it.icon} {it.label}
+                {iconText(it.icon)} {it.label}
               </option>
             ))}
           </select>
@@ -106,7 +108,7 @@ export default function BuildingFormModal({
               step={0.5}
               value={width}
               onChange={(e) => setWidth(Number(e.target.value))}
-              className="w-full accent-[#b3261e]"
+              className="w-full accent-[#d2463b]"
             />
           </div>
 
@@ -123,7 +125,7 @@ export default function BuildingFormModal({
                 step={0.5}
                 value={height}
                 onChange={(e) => setHeight(Number(e.target.value))}
-                className="w-full accent-[#b3261e]"
+                className="w-full accent-[#d2463b]"
               />
             </div>
           )}

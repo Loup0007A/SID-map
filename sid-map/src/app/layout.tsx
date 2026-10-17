@@ -9,6 +9,7 @@ import '@fontsource/jetbrains-mono/500.css';
 import '@fontsource/jetbrains-mono/700.css';
 import { ToastProvider } from '@/components/ui/Toast';
 import TermsBanner from '@/components/legal/TermsBanner';
+import { GuideProvider } from '@/components/guide/GuideProvider';
 import './globals.css';
 
 
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#1b1e27',
+  themeColor: '#070c18',
   viewportFit: 'cover'
 };
 
@@ -35,7 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr">
       <body className="bg-ink text-paper font-body antialiased">
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <GuideProvider>{children}</GuideProvider>
+        </ToastProvider>
         <TermsBanner />
       </body>
     </html>

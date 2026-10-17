@@ -1,5 +1,8 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
+import { iconText } from '@/lib/icons';
+
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
@@ -115,7 +118,7 @@ export default function MountRentalSection({
             className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-2 text-sm"
           >
             <span>
-              {type.icon} {type.name}
+              <Icon value={type.icon} /> {type.name}
               {type.can_fly && ' · vol'} · x{type.speed_multiplier} · {price} 🪙
             </span>
             <div className="flex items-center gap-1.5">
@@ -166,7 +169,7 @@ export default function MountRentalSection({
                 <option value="">Choisir un type de monture…</option>
                 {mounts.mountTypes.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.icon} {m.name} ({m.rental_price} 🪙)
+                    {iconText(m.icon)} {m.name} ({m.rental_price} 🪙)
                   </option>
                 ))}
               </select>

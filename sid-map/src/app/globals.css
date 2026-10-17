@@ -2,8 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =====================================================================
+   Thème « Atlas nocturne » : bleu nuit profond, verre fumé, sceau
+   vermillon et filets d'or. Les couleurs de base sont dans
+   tailwind.config.ts ; ici vivent les surfaces et les animations.
+   ===================================================================== */
+
 :root {
   color-scheme: dark;
+  --gold: #e7c34a;
+  --seal: #c8372d;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root {
@@ -15,63 +24,231 @@ body {
   overflow-x: hidden;
   min-height: 100vh;
   min-height: 100dvh;
-  background:
-    radial-gradient(circle at 15% 10%, rgba(179, 38, 30, 0.16), transparent 45%),
-    radial-gradient(circle at 85% 0%, rgba(90, 60, 160, 0.14), transparent 40%),
-    radial-gradient(circle at 50% 100%, rgba(20, 60, 110, 0.18), transparent 50%),
-    linear-gradient(160deg, #14161f 0%, #1b1e2b 45%, #12141b 100%);
-  background-attachment: fixed;
+  background: #070c18;
 }
 
-.scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
+/* Lueurs d'aurore qui dérivent lentement derrière toute l'interface. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 34% at 18% 22%, rgba(200, 55, 45, 0.2), transparent 70%),
+    radial-gradient(34% 30% at 82% 12%, rgba(104, 84, 200, 0.2), transparent 70%),
+    radial-gradient(46% 40% at 55% 92%, rgba(28, 111, 176, 0.24), transparent 70%),
+    linear-gradient(165deg, #0a1122 0%, #0d1730 48%, #070c18 100%);
+  animation: aurora 38s ease-in-out infinite alternate;
 }
+@keyframes aurora {
+  0% { transform: translate3d(-2%, -1%, 0) scale(1); }
+  100% { transform: translate3d(3%, 2%, 0) scale(1.08); }
+}
+
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: rgba(231, 195, 74, 0.45) transparent; }
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #b3261e;
+  background: linear-gradient(180deg, rgba(231, 195, 74, 0.6), rgba(200, 55, 45, 0.7));
   border-radius: 999px;
 }
 
-/* Glassmorphism */
+/* --- Verre fumé ------------------------------------------------------ */
 .glass {
-  background: rgba(30, 33, 46, 0.55);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(180deg, rgba(26, 38, 66, 0.62), rgba(14, 22, 42, 0.58));
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(160, 190, 255, 0.14);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 .glass-strong {
-  background: rgba(20, 22, 32, 0.72);
-  backdrop-filter: blur(22px) saturate(150%);
-  -webkit-backdrop-filter: blur(22px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  background: linear-gradient(180deg, rgba(20, 30, 54, 0.86), rgba(10, 16, 32, 0.84));
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(160, 190, 255, 0.16);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 .glass-input {
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(160, 190, 255, 0.16);
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
 }
 .glass-input:focus {
-  border-color: #b3261e;
+  border-color: var(--gold);
   background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(231, 195, 74, 0.14);
 }
 
 .btn-accent {
-  background: linear-gradient(135deg, #c9342b, #8a1c16);
-  box-shadow: 0 4px 14px rgba(179, 38, 30, 0.35);
+  background: linear-gradient(135deg, #de4a3d, #9a231b);
+  box-shadow: 0 4px 16px rgba(200, 55, 45, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  position: relative;
+  overflow: hidden;
 }
-.btn-accent:hover {
-  background: linear-gradient(135deg, #d63c32, #9c211a);
+.btn-accent:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ea5a4c, #ad2a20);
+  box-shadow: 0 6px 22px rgba(200, 55, 45, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+/* Reflet qui traverse le bouton au survol. */
+.btn-accent::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.28) 50%, transparent 65%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+.btn-accent:hover:not(:disabled)::after {
+  transform: translateX(120%);
+  transition: transform 0.6s var(--ease-out);
+}
+
+/* Tous les boutons : survol souple, léger enfoncement au clic. */
+button,
+a {
+  transition: color 0.18s, background-color 0.18s, border-color 0.18s, box-shadow 0.2s, opacity 0.18s, transform 0.14s var(--ease-out);
+}
+button:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 .stamp-bar {
-  background: linear-gradient(90deg, #b3261e, #7c4dbf, #1c6fb0, #b3261e);
+  background: linear-gradient(90deg, var(--seal), var(--gold), #6f58c9, #1c6fb0, var(--seal));
   background-size: 300% 100%;
-  animation: shimmer 8s linear infinite;
+  animation: shimmer 9s linear infinite;
 }
 @keyframes shimmer {
   0% { background-position: 0% 50%; }
   100% { background-position: 300% 50%; }
 }
+
+/* --- Apparitions ----------------------------------------------------- */
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-right {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+/* Pour les éléments centrés par -translate-x-1/2 : on anime sans toucher
+   au transform, sinon le centrage sauterait. */
+@keyframes drop-in {
+  from { opacity: 0; margin-top: -10px; }
+  to { opacity: 1; margin-top: 0; }
+}
+.anim-pop { animation: pop-in 0.28s var(--ease-out) both; }
+.anim-fade { animation: fade-in 0.25s ease-out both; }
+.anim-slide-right { animation: slide-right 0.32s var(--ease-out) both; }
+.anim-slide-up { animation: slide-up 0.3s var(--ease-out) both; }
+.anim-drop { animation: drop-in 0.3s var(--ease-out) both; }
+/* Grille d'éléments qui arrivent en cascade. */
+.anim-stagger > * { animation: slide-up 0.34s var(--ease-out) both; }
+.anim-stagger > *:nth-child(2) { animation-delay: 0.03s; }
+.anim-stagger > *:nth-child(3) { animation-delay: 0.06s; }
+.anim-stagger > *:nth-child(4) { animation-delay: 0.09s; }
+.anim-stagger > *:nth-child(5) { animation-delay: 0.12s; }
+.anim-stagger > *:nth-child(n + 6) { animation-delay: 0.15s; }
+
+.hover-lift:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35); }
+
+.compass-spin { display: inline-block; animation: compass 1.6s var(--ease-out) infinite; }
+@keyframes compass {
+  0% { transform: rotate(-30deg); }
+  50% { transform: rotate(35deg); }
+  100% { transform: rotate(-30deg); }
+}
+
+/* --- Carte ----------------------------------------------------------- */
+.map-place { animation: fade-in 0.5s ease-out both; }
+.map-place > circle,
+.map-place > rect { transition: stroke-width 0.2s, filter 0.2s, fill 0.2s; }
+.map-place:hover > circle,
+.map-place:hover > rect {
+  stroke: var(--gold);
+  stroke-width: 0.3;
+  filter: drop-shadow(0 0 1.2px rgba(231, 195, 74, 0.9));
+}
+/* Les routes « coulent » doucement ; l'itinéraire choisi pulse. */
+.route-flow { animation: route-flow 2.6s linear infinite; transition: stroke-width 0.2s; }
+.route-flow:hover { stroke-width: 0.55; }
+@keyframes route-flow {
+  to { stroke-dashoffset: -2.3; }
+}
+.route-glow { animation: route-glow 1.6s ease-in-out infinite; filter: drop-shadow(0 0 0.8px rgba(74, 222, 128, 0.9)); }
+@keyframes route-glow {
+  50% { stroke-opacity: 0.55; }
+}
+
+/* Vignette : assombrit doucement les bords de la carte. */
+.map-vignette {
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(3, 6, 13, 0.55) 100%);
+}
+/* Anneau de sélection qui tourne autour des éléments choisis. */
+.sel-ring { animation: sel-march 1.2s linear infinite; }
+@keyframes sel-march {
+  to { stroke-dashoffset: -1.6; }
+}
+
+/* --- Finitions ------------------------------------------------------- */
+::selection { background: rgba(231, 195, 74, 0.35); color: #fff; }
+
+/* Titres de fenêtres et de panneaux : dégradé or → vermillon. */
+h1.font-display,
+h2.text-accent,
+h3.text-accent {
+  background: linear-gradient(92deg, #f1d77a 0%, #e9a55a 45%, #e2594c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-mark { letter-spacing: 0.22em; }
+.brand-seal {
+  display: inline-flex;
+  height: 1.5rem;
+  width: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: #1a1206;
+  font-size: 0.7rem;
+  letter-spacing: 0;
+  background: radial-gradient(circle at 35% 30%, #f6e19a, #c9952f 70%);
+  box-shadow: 0 0 0 1px rgba(231, 195, 74, 0.5), 0 0 14px rgba(231, 195, 74, 0.45);
+  animation: seal-glow 4s ease-in-out infinite;
+}
+@keyframes seal-glow {
+  50% { box-shadow: 0 0 0 1px rgba(231, 195, 74, 0.7), 0 0 22px rgba(231, 195, 74, 0.7); }
+}
+
+/* Pastilles actives : dégradé et halo plutôt qu'un aplat. */
+.bg-accent {
+  background-image: linear-gradient(135deg, #e0503f, #a8281e);
+  box-shadow: 0 2px 12px rgba(200, 55, 45, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+input[type='checkbox'] { accent-color: var(--gold); }
+
+select.glass-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 1.9rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23e7c34a' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+}
+
+/* Barre du haut : filet lumineux sous la barre. */
+nav.glass-strong { box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(231, 195, 74, 0.18); }
 
 /* Accessibilité : anneau de focus visible au clavier sur tous les
    éléments interactifs (navigation sans souris/tactile). */
@@ -81,18 +258,20 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid #e7c34a;
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* Respecte la préférence système "réduire les animations". */
 @media (prefers-reduced-motion: reduce) {
-  .stamp-bar {
+  .stamp-bar,
+  body::before {
     animation: none;
-    background-position: 0% 50%;
   }
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

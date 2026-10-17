@@ -97,7 +97,7 @@ export default function CrystalsModal({
 
   return (
     <>
-      <Modal title="💎 Cristaux de téléportation" onClose={onClose} maxWidth="max-w-sm">
+      <Modal title="💎 Cristaux de téléportation" windowId="crystals" onClose={onClose} maxWidth="max-w-sm">
         <div className="space-y-4">
           <div>
             <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50">Mes cristaux</p>
@@ -163,7 +163,7 @@ export default function CrystalsModal({
                     type="checkbox"
                     checked={single}
                     onChange={(e) => setSingle(e.target.checked)}
-                    className="h-4 w-4 accent-[#b3261e]"
+                    className="h-4 w-4 accent-[#d2463b]"
                   />
                   Usage unique (décoché = continu)
                 </label>

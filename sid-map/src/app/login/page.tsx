@@ -62,7 +62,7 @@ function LoginForm() {
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <div className="glass-strong overflow-hidden rounded-2xl">
+        <div className="anim-pop glass-strong overflow-hidden rounded-2xl">
           <div className="stamp-bar h-1.5 w-full" />
           <form onSubmit={handleSubmit} className="space-y-5 p-8">
             <div className="space-y-1 text-center">

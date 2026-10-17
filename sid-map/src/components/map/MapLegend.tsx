@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
+
 import { useState } from 'react';
 import { usePermission } from '@/lib/hooks/usePermission';
 import IconPicker from './IconPicker';
@@ -39,7 +41,7 @@ export default function MapLegend({ sections }: { sections: LegendSection[] }) {
   return (
     <div className="relative">
       {open && (
-        <div className="glass-strong mb-2 max-h-[65vh] w-64 space-y-4 overflow-y-auto scrollbar-thin rounded-2xl p-3">
+        <div className="anim-pop glass-strong mb-2 max-h-[65vh] w-64 space-y-4 overflow-y-auto scrollbar-thin rounded-2xl p-3">
           {sections.map((s) => (
             <div key={s.title}>
               <p className="mb-1 font-display text-[10px] uppercase tracking-wide text-accent">{s.title}</p>
@@ -54,7 +56,7 @@ export default function MapLegend({ sections }: { sections: LegendSection[] }) {
                           className={`w-5 text-center ${canEdit && s.onIconChange ? 'hover:scale-110' : ''}`}
                           title={canEdit && s.onIconChange ? "Changer l'icône" : undefined}
                         >
-                          {it.icon}
+                          <Icon value={it.icon} />
                         </button>
                       )}
                       {it.color && (

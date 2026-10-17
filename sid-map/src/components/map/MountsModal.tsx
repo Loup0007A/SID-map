@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
+
 import { useCallback, useEffect, useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
@@ -149,7 +151,7 @@ export default function MountsModal({
               <input type="number" min={1} value={draft.rental_hours} onChange={(e) => setDraft({ ...draft, rental_hours: Number(e.target.value) })} className={field} />
             </label>
             <label className="flex items-end gap-2 pb-1.5 normal-case text-xs text-paper/70">
-              <input type="checkbox" checked={draft.can_fly} onChange={(e) => setDraft({ ...draft, can_fly: e.target.checked })} className="h-4 w-4 accent-[#b3261e]" />
+              <input type="checkbox" checked={draft.can_fly} onChange={(e) => setDraft({ ...draft, can_fly: e.target.checked })} className="h-4 w-4 accent-[#d2463b]" />
               Vole (sans chemin)
             </label>
           </div>
@@ -173,7 +175,7 @@ export default function MountsModal({
                       onChange={() =>
                         setDraft({ ...draft, allowed_biomes: on ? draft.allowed_biomes.filter((b) => b !== k) : [...draft.allowed_biomes, k] })
                       }
-                      className="h-3.5 w-3.5 accent-[#b3261e]"
+                      className="h-3.5 w-3.5 accent-[#d2463b]"
                     />
                     {label}
                   </label>
@@ -198,6 +200,7 @@ export default function MountsModal({
   return (
     <Modal
       title="🐎 Montures"
+      windowId="mounts"
       onClose={onClose}
       maxWidth="max-w-sm"
       top={<div className="flex gap-1 rounded-lg border border-white/15 bg-white/5 p-0.5">{tabBtn('mine', 'Ma monture')}{tabBtn('stats', '📊 Stats')}</div>}
@@ -206,7 +209,7 @@ export default function MountsModal({
         <div className="space-y-3 text-sm">
           {active ? (
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-              <p className="text-2xl">{active.icon}</p>
+              <p className="text-2xl"><Icon value={active.icon} /></p>
               <p className="text-paper">{active.name}</p>
               {remainingMs !== null && (
                 <p className="mt-1 text-xs text-accent">
@@ -235,7 +238,7 @@ export default function MountsModal({
               <div key={m.id} className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-paper">
-                    {m.icon} {m.name}
+                    <Icon value={m.icon} /> {m.name}
                   </p>
                   {isAdmin && (
                     <span className="flex gap-2">

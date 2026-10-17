@@ -251,7 +251,7 @@ export default function TextureEditorModal({
                   <span>Épaisseur</span>
                   <span className="text-accent">{width.toFixed(1)}</span>
                 </div>
-                <input type="range" min={0.2} max={2} step={0.1} value={width} onChange={(e) => setWidth(Number(e.target.value))} className="w-full accent-[#b3261e]" />
+                <input type="range" min={0.2} max={2} step={0.1} value={width} onChange={(e) => setWidth(Number(e.target.value))} className="w-full accent-[#d2463b]" />
               </div>
             </div>
             <div className="flex gap-1.5">
@@ -297,7 +297,7 @@ export default function TextureEditorModal({
                 type="checkbox"
                 checked={bg !== null}
                 onChange={(e) => setBg(e.target.checked ? '#8a7a68' : null)}
-                className="h-4 w-4 accent-[#b3261e]"
+                className="h-4 w-4 accent-[#d2463b]"
                 title="Activer le fond (remplace la couleur du biome / relief)"
               />
             </div>
@@ -310,7 +310,7 @@ export default function TextureEditorModal({
               <span>Opacité du fond</span>
               <span className="text-accent">{Math.round(bgOpacity * 100)}%</span>
             </div>
-            <input type="range" min={0.1} max={1} step={0.05} value={bgOpacity} onChange={(e) => setBgOpacity(Number(e.target.value))} className="w-full accent-[#b3261e]" />
+            <input type="range" min={0.1} max={1} step={0.05} value={bgOpacity} onChange={(e) => setBgOpacity(Number(e.target.value))} className="w-full accent-[#d2463b]" />
           </div>
         )}
 
@@ -319,24 +319,24 @@ export default function TextureEditorModal({
             <span>Taille de la tuile</span>
             <span className="text-accent">{size.toFixed(1)}</span>
           </div>
-          <input type="range" min={1} max={12} step={0.2} value={size} onChange={(e) => setSize(Number(e.target.value))} className="w-full accent-[#b3261e]" />
+          <input type="range" min={1} max={12} step={0.2} value={size} onChange={(e) => setSize(Number(e.target.value))} className="w-full accent-[#d2463b]" />
         </div>
         <div className="space-y-1">
           <div className={row}>
             <span>Opacité du motif</span>
             <span className="text-accent">{Math.round(opacity * 100)}%</span>
           </div>
-          <input type="range" min={0.1} max={1} step={0.05} value={opacity} onChange={(e) => setOpacity(Number(e.target.value))} className="w-full accent-[#b3261e]" />
+          <input type="range" min={0.1} max={1} step={0.05} value={opacity} onChange={(e) => setOpacity(Number(e.target.value))} className="w-full accent-[#d2463b]" />
         </div>
         <div className="space-y-1">
           <div className={row}>
             <span>Rotation</span>
             <span className="text-accent">{rotation}°</span>
           </div>
-          <input type="range" min={0} max={180} step={5} value={rotation} onChange={(e) => setRotation(Number(e.target.value))} className="w-full accent-[#b3261e]" />
+          <input type="range" min={0} max={180} step={5} value={rotation} onChange={(e) => setRotation(Number(e.target.value))} className="w-full accent-[#d2463b]" />
         </div>
         <label className="flex items-center gap-2 text-xs text-paper/70">
-          <input type="checkbox" checked={stagger} onChange={(e) => setStagger(e.target.checked)} className="h-4 w-4 accent-[#b3261e]" />
+          <input type="checkbox" checked={stagger} onChange={(e) => setStagger(e.target.checked)} className="h-4 w-4 accent-[#d2463b]" />
           Quinconce (deux motifs par tuile)
         </label>
 

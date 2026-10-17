@@ -25,6 +25,53 @@ npm run dev
    `role_permissions`), ou coche `is_founder = true` sur ton profil : ça
    suffit à voir apparaître le "Mode édition" sur la carte.
 
+## Accompagnement (visite guidée, aide, suggestions)
+
+- **Visite guidée** : proposée d'office à la première venue sur `/carte`
+  (partie joueur, puis partie admin pour qui a `manage_map`). Relançable
+  depuis **? Aide** dans la barre du haut ou via `/carte?visite=player|admin`.
+- **? Aide** : check-lists de démarrage cochées automatiquement d'après
+  l'état réel (position fixée, régions, lieux, routes, échelle…) et fiches
+  « Comment faire… » joueur / admin.
+- **Suggestion « et maintenant ? »** sur la carte : une seule à la fois
+  (carte vide, personnage sans position, lieux sans routes, voyage en
+  cours, échec de chargement), masquable.
+- **Bandeau de mode** : rappelle le geste attendu par l'outil actif, y
+  compris sur téléphone.
+- **Fenêtres d'application** (ordinateur) : Montures, Cristaux, Ma position,
+  Itinéraire, Calques, Marchés noirs et Aide s'ouvrent en fenêtres
+  déplaçables et redimensionnables, non bloquantes. Il suffit de passer
+  `windowId="…"` à `<Modal>` ; place et taille sont mémorisées par appareil.
+- **Favoris** (☆ sur la fiche d'un lieu, listés dans la recherche),
+  **Mesurer** (distance et temps de marche entre deux points) et bouton
+  **◎** pour recentrer sur son personnage.
+- **Quêtes** (migration `0112`) : après 1 h sur place, la carte confirme
+  seulement la présence (`quest_participants.status` passe de `assigned` à
+  `submitted`). Elle ne verse plus rien : la récompense et la réputation
+  restent attribuées par le site principal quand un responsable clique
+  « Valider ».
+- **Taille de la carte** (migration `0112`, `map_settings.world_size`) :
+  réglable de 100 à 1000 unités depuis la fenêtre « Échelle et taille ».
+  Agrandir ajoute de l'espace à droite et en bas, sans rien déplacer.
+- **Thème « Atlas nocturne »** : couleurs dans `tailwind.config.ts`,
+  surfaces et animations dans `src/app/globals.css` (classes `anim-*`).
+- **Sélection multiple** (admins, mode édition → « ⬚ Sélection ») : clic
+  ou cadre pour choisir, glisser pour déplacer le groupe (les routes
+  attachées suivent), territoire et suppression groupés, annulation du
+  dernier déplacement. Logique dans `src/lib/selection.ts`.
+- **Applications Répertoire, À proximité et Carnet** :
+  `src/components/apps/ExtraApps.tsx`.
+- **Icônes importées** : le sélecteur d'icône accepte un fichier `.png` ou
+  `.ico` (512 Ko max), envoyé dans `map-images/icons` et réutilisable
+  ensuite par tous les admins. La colonne `icon` contient alors l'adresse
+  de l'image au lieu d'un emoji (`isImageIcon` dans `src/lib/icons.ts`).
+- **Nom des régions** : placé par `labelAnchor` (`src/lib/geometry.ts`),
+  à l'intérieur de la région et hors de celles dessinées par-dessus.
+- Tous les textes sont dans `src/lib/guide.ts`. Pour qu'une étape de visite
+  pointe un élément, donne-lui `data-guide="<nom>"` et mets ce nom dans
+  `target`. L'état « déjà vu / masqué » est stocké par appareil
+  (`localStorage`, clé `sid-guide-v1`).
+
 ## Interface mobile
 
 Le site utilise désormais les **Pointer Events** (unifiant souris, tactile

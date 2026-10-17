@@ -36,13 +36,18 @@ export const APPS: AppDef[] = [
   { id: 'position', name: 'Ma position', description: 'Où tu es, ton statut, partir en voyage.', category: 'voyage', emoji: '📍' },
   { id: 'flight', name: 'Vol libre', description: 'Voler vers un lieu en ligne droite avec une monture volante.', category: 'voyage', emoji: '🕊️' },
   { id: 'itinerary', name: 'Itinéraire', description: 'Calculer un trajet entre deux lieux.', category: 'voyage', emoji: '🧭' },
+  { id: 'nearby', name: 'À proximité', description: 'Les lieux les plus proches de ton personnage, avec distance et durée.', category: 'voyage', emoji: '📡' },
+  { id: 'notes', name: 'Carnet', description: 'Tes notes de voyage, gardées sur cet appareil.', category: 'personnage', emoji: '📓' },
   { id: 'mounts', name: 'Montures', description: 'Ta monture, ses stats et le catalogue.', category: 'personnage', emoji: '🐎' },
   { id: 'crystals', name: 'Cristaux', description: 'Cristaux de téléportation reçus.', category: 'personnage', emoji: '💎' },
   { id: 'blackmarket', name: 'Marchés noirs', description: 'Lieux où des étals clandestins sont autorisés.', category: 'economie', emoji: '🕶️' },
+  { id: 'directory', name: 'Répertoire', description: 'Tous les lieux de la carte, par type, avec qui s’y trouve.', category: 'carte', emoji: '📖' },
+  { id: 'measure', name: 'Mesurer', description: 'Distance et temps de marche entre deux points de la carte.', category: 'carte', emoji: '📐' },
   { id: 'layers', name: 'Calques', description: 'Afficher ou masquer relief, biomes et textures.', category: 'carte', emoji: '🗂️' },
   { id: 'export', name: 'Exporter la carte', description: 'Télécharger la carte en image PNG.', category: 'carte', emoji: '🖼️' },
+  { id: 'help', name: 'Aide', description: 'Check-list de démarrage, fiches « comment faire » et visite guidée.', category: 'carte', emoji: '❓' },
   { id: 'edit', name: 'Outils d’édition', description: 'Dessiner zones, lieux, routes, relief, biomes.', category: 'admin', emoji: '🛠', adminOnly: true },
-  { id: 'scale', name: 'Échelle', description: 'Régler l’échelle de la carte et la vitesse de marche.', category: 'admin', emoji: '📏', adminOnly: true }
+  { id: 'scale', name: 'Échelle et taille', description: 'Régler l’échelle, la vitesse de marche et agrandir la carte.', category: 'admin', emoji: '📏', adminOnly: true }
 ];
 
 export function iconPath(id: string) {

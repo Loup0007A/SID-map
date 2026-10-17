@@ -1,5 +1,7 @@
 'use client';
 
+import Icon from '@/components/ui/Icon';
+
 import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
@@ -58,7 +60,7 @@ export default function PositionPickerModal({
     setBusy(true);
     const { error } = await setInitialPlace(placeId);
     setBusy(false);
-    if (error) showToast("Impossible de s'établir ici.", 'error');
+    if (error) showToast(`Impossible de s'établir ici (${error}).`, 'error');
     else {
       showToast('Te voilà établi !');
       onClose();
@@ -101,9 +103,9 @@ export default function PositionPickerModal({
       : null;
 
     return (
-      <Modal title="En voyage…" onClose={onClose} maxWidth="max-w-sm">
+      <Modal title="En voyage…" windowId="position" onClose={onClose} maxWidth="max-w-sm">
         <div className="space-y-3 text-center">
-          <p className="text-3xl">{myPosition.flight_target_place_id ? '🕊️' : activeMount ? activeMount.icon : '🚶'}</p>
+          <p className="text-3xl"><Icon value={myPosition.flight_target_place_id ? '🕊️' : activeMount ? activeMount.icon : '🚶'} /></p>
           <p className="text-sm text-paper/80">
             En route vers <span className="text-accent">{destPlace?.name ?? '?'}</span>
           </p>
@@ -128,12 +130,20 @@ export default function PositionPickerModal({
       : places;
 
     return (
-      <Modal title="Où commence ton personnage ?" onClose={onClose}>
+      <Modal title="Où commence ton personnage ?" windowId="position" onClose={onClose}>
         <div className="space-y-2">
           <p className="text-xs text-paper/50">
-            Premier positionnement uniquement. Ensuite, tout déplacement se fera par un vrai trajet (à
-            pied, en voyage ou en vol) — plus aucune téléportation.
+            Ce choix ne se fait qu'une fois. Ensuite, tout déplacement sera un vrai trajet (à pied, sur une
+            monture ou en vol) — choisis donc le lieu où ton personnage commence réellement son histoire.
           </p>
+          {places.length === 0 && (
+            <p className="rounded-lg bg-white/5 px-3 py-2 text-xs text-paper/60">
+              Aucun lieu n'existe encore sur la carte : un admin doit d'abord en placer.
+            </p>
+          )}
+          {places.length > 0 && results.length === 0 && (
+            <p className="text-xs text-paper/50">Aucun lieu ne correspond à « {placeQuery} ».</p>
+          )}
           <input
             value={placeQuery}
             onChange={(e) => setPlaceQuery(e.target.value)}
@@ -148,7 +158,7 @@ export default function PositionPickerModal({
                 onClick={() => pickInitialPlace(p.id)}
                 className="block w-full rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10 disabled:opacity-50"
               >
-                {p.icon ?? '📍'} {p.name}
+                <Icon value={p.icon ?? '📍'} /> {p.name}
               </button>
             ))}
           </div>
@@ -169,15 +179,15 @@ export default function PositionPickerModal({
     );
 
   return (
-    <Modal title="Ma position" onClose={onClose} maxWidth="max-w-sm">
+    <Modal title="Ma position" windowId="position" onClose={onClose} maxWidth="max-w-sm">
       <div className="space-y-4">
         <div className="rounded-lg border border-white/10 bg-white/5 p-2.5 text-sm">
           <p className="text-paper/50 text-[10px] uppercase tracking-wide">Actuellement</p>
           <p className="text-paper">
-            {currentPlace?.icon ?? '📍'} {currentPlace?.name ?? '?'}
+            <Icon value={currentPlace?.icon ?? '📍'} /> {currentPlace?.name ?? '?'}
             {activeMount && (
               <span className="ml-2 text-accent">
-                {activeMount.icon} {activeMount.name}
+                <Icon value={activeMount.icon} /> {activeMount.name}
                 {myPosition.mount_expires_at && (
                   <span className="ml-1 text-[11px] text-paper/50">
                     ({formatMinutes(Math.max(0, (new Date(myPosition.mount_expires_at).getTime() - now) / 60000))} restantes)
@@ -243,7 +253,10 @@ export default function PositionPickerModal({
             🛣 Voyager (à pied{activeMount ? ` / ${activeMount.name}` : ''})
           </p>
           {connectedRoutes.length === 0 && (
-            <p className="text-xs text-paper/40">Aucune route ne part d'ici pour l'instant.</p>
+            <p className="text-xs text-paper/40">
+              Aucune route ne part d'ici pour l'instant. Pour quitter ce lieu, il faut une monture volante, un cristal
+              de téléportation, ou qu'un admin trace une route.
+            </p>
           )}
           <div className="max-h-40 space-y-1 overflow-y-auto scrollbar-thin pr-1">
             {connectedRoutes.map((r) => {
@@ -269,7 +282,7 @@ export default function PositionPickerModal({
                   className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10 disabled:opacity-50"
                 >
                   <span>
-                    {dest?.icon ?? '📍'} {dest?.name ?? '?'}
+                    <Icon value={dest?.icon ?? '📍'} /> {dest?.name ?? '?'}
                   </span>
                   <span className="text-xs text-accent">
                     {blocked ? `biome interdit (${BIOME_LABELS[blocked] ?? blocked})` : formatMinutes(duration)}
@@ -311,7 +324,7 @@ export default function PositionPickerModal({
                       className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10 disabled:opacity-40"
                     >
                       <span>
-                        {p.icon ?? '📍'} {p.name}
+                        <Icon value={p.icon ?? '📍'} /> {p.name}
                       </span>
                       <span className="text-right text-[11px] text-accent">
                         {formatDistance(km, settings.unit_label)}

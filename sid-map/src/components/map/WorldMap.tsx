@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import Icon from '@/components/ui/Icon';
+
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { usePermission } from '@/lib/hooks/usePermission';
@@ -28,7 +30,8 @@ import {
   squareFromBox,
   trapezoidFromBox
 } from '@/lib/shapes';
-import { centroid } from '@/lib/geometry';
+import { centroid, labelAnchor } from '@/lib/geometry';
+import { isImageIcon } from '@/lib/icons';
 import type { RoutePlan } from '@/lib/pathfinding';
 import DetailPanel from './DetailPanel';
 import ZoneFormModal from './ZoneFormModal';
@@ -70,21 +73,45 @@ import { usePositions } from '@/lib/hooks/usePositions';
 import { useNow } from '@/lib/hooks/useNow';
 import { useGroups } from '@/lib/hooks/useGroups';
 import { useToast } from '@/components/ui/Toast';
+import { useGuide } from '@/components/guide/GuideProvider';
+import MapCoach, { type CoachTip } from '@/components/guide/MapCoach';
+import { DEFAULT_SETTINGS } from '@/lib/mapScale';
+import { computeRemainingMinutes, formatMinutes, travelerScreenPosition } from '@/lib/travel';
+import { distanceUnits, formatDistance } from '@/lib/mapScale';
+import { useFavorites } from '@/lib/hooks/useFavorites';
+import { useIsDesktop } from '@/components/ui/Modal';
+import { SEL_TABLE, parseSel, pointInPolygon, selKey, shiftPoint, shiftPoints, type SelKind } from '@/lib/selection';
+import { DirectoryApp, NearbyApp, NotesApp } from '@/components/apps/ExtraApps';
 
 const CLOSE_SNAP_PX = 14;
 type PointTool = 'point-circle' | 'point-rect';
-type ActiveTool = ShapeTool | PointTool | 'route' | null;
+type ActiveTool = ShapeTool | PointTool | 'route' | 'select' | null;
 
 export default function WorldMap() {
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { allowed: canEdit } = usePermission('manage_map');
+  const { allowed: canEdit, loading: permLoading } = usePermission('manage_map');
+  const guide = useGuide();
+  const favorites = useFavorites();
+  const isDesktop = useIsDesktop();
+  // Outil de mesure : deux points cliqués sur la carte.
+  const [measureMode, setMeasureMode] = useState(false);
+  const [measurePts, setMeasurePts] = useState<Point[]>([]);
+  // Sélection multiple (admins) : clés « genre:id », geste en cours, dernier déplacement annulable.
+  const [sel, setSel] = useState<string[]>([]);
+  const [selDrag, setSelDrag] = useState<{ mode: 'move' | 'marquee'; start: Point; cur: Point; hitKey: string | null } | null>(null);
+  const [lastMove, setLastMove] = useState<{ keys: string[]; dx: number; dy: number } | null>(null);
+  const [selBusy, setSelBusy] = useState(false);
+  // Plusieurs de ces fenêtres peuvent rester ouvertes côte à côte.
+  const [extraApps, setExtraApps] = useState<string[]>([]);
+  const closeExtra = (id: string) => setExtraApps((a) => a.filter((x) => x !== id));
   const { custom: customTextures } = useTextures();
   const mapSettings = useMapSettings();
   const [showTextures, setShowTextures] = useState(true);
   const [retexture, setRetexture] = useState<{ table: 'map_biomes' | 'map_relief'; id: string; value: string | null } | null>(null);
-  const vp = useSvgViewport();
+  const world = mapSettings.settings.world_size;
+  const vp = useSvgViewport(world);
   const placeTypes = useTypeConfig('place');
   const positionsHook = usePositions();
   const now = useNow(1000);
@@ -103,6 +130,7 @@ export default function WorldMap() {
   const [showBiomes, setShowBiomes] = useState(false);
   const [editLayer, setEditLayer] = useState<'map' | 'relief' | 'biome'>('map');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [didInitialFocus, setDidInitialFocus] = useState(false);
 
   const [selected, setSelected] = useState<{ kind: 'zone' | 'place'; entity: MapZone | MapPlace } | null>(
@@ -153,6 +181,8 @@ export default function WorldMap() {
       setZones(data.zones ?? []);
       setPlaces(data.places ?? []);
     }
+    // Sans ça, une panne réseau ressemblait à une carte vide.
+    setLoadError(!!error || !data);
     setRoutes((routeData as MapRoute[]) ?? []);
     setQuests(((questData as MapQuest[]) ?? []).filter((q) => !isQuestFinished(q.status)));
     setRelief((reliefData as MapRelief[]) ?? []);
@@ -168,7 +198,7 @@ export default function WorldMap() {
   // Lien partageable : ?lieu=<id> ouvre et centre automatiquement sur
   // ce lieu au chargement de la page.
   useEffect(() => {
-    if (didInitialFocus || loading || places.length === 0) return;
+    if (didInitialFocus || loading || !mapSettings.ready || places.length === 0) return;
     const placeId = searchParams.get('lieu');
     if (placeId) {
       const p = places.find((pl) => pl.id === placeId);
@@ -179,9 +209,10 @@ export default function WorldMap() {
     }
     setDidInitialFocus(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, places]);
+  }, [loading, places, mapSettings.ready]);
 
   function selectPlaceAndShare(p: MapPlace) {
+    if (measureMode) return; // le clic sert à poser un point de mesure
     if (flightMode) {
       setFlightTarget(p);
       return;
@@ -222,13 +253,30 @@ export default function WorldMap() {
           showToast(ok ? 'Image exportée.' : 'Export impossible depuis ce navigateur.', ok ? 'success' : 'error')
         );
         break;
+      case 'directory':
+      case 'nearby':
+      case 'notes':
+        setExtraApps((a) => (a.includes(id) ? a : [...a, id]));
+        break;
+      case 'measure':
+        resetDrawing();
+        setEditMode(false);
+        setDeleteMode(false);
+        setFlightMode(false);
+        setSelected(null);
+        setMeasurePts([]);
+        setMeasureMode(true);
+        break;
+      case 'help':
+        guide.openHelp();
+        break;
       case 'edit':
-        if (canEdit) {
-          setToolbarOpen(true);
-          setEditMode(true);
-        }
+        if (!canEdit) return showToast("L'édition est réservée aux membres ayant la permission « manage_map ».", 'error');
+        setToolbarOpen(true);
+        setEditMode(true);
         break;
       case 'scale':
+        if (!canEdit) return showToast("Le réglage de l'échelle est réservé aux admins de la carte.", 'error');
         window.dispatchEvent(new Event('sid-scale-open'));
         break;
       case 'flight': {
@@ -255,13 +303,60 @@ export default function WorldMap() {
   // Application demandée depuis une autre page (?app=…)
   useEffect(() => {
     const id = searchParams.get('app');
-    if (!id || loading) return;
+    if (!id || loading || permLoading) return;
     runAppRef.current(id);
     const params = new URLSearchParams(searchParams.toString());
     params.delete('app');
     router.replace(params.toString() ? `/carte?${params.toString()}` : '/carte', { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, searchParams]);
+  }, [loading, permLoading, searchParams]);
+
+  // --- Accompagnement ---------------------------------------------------
+  // Visite proposée d'office à la première venue (et la partie admin le
+  // jour où le membre obtient le droit d'édition), ou demandée par ?visite=.
+  useEffect(() => {
+    if (!guide.ready || loading || permLoading || guide.tourRunning) return;
+    const asked = searchParams.get('visite');
+    if (asked === 'player' || asked === 'admin') {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('visite');
+      router.replace(params.toString() ? `/carte?${params.toString()}` : '/carte', { scroll: false });
+      if (asked === 'player' || canEdit) guide.startTour(asked);
+      return;
+    }
+    if (searchParams.get('lieu') || searchParams.get('app')) return; // venu pour autre chose
+    if (!guide.state.seenPlayer) guide.startTour(canEdit ? 'full' : 'player');
+    else if (canEdit && !guide.state.seenAdmin) guide.startTour('admin');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guide.ready, loading, permLoading, canEdit]);
+
+  // Pendant la visite, on déplie ce que l'étape montre.
+  useEffect(() => {
+    if (guide.activeStep?.target === 'edit-toolbar') setToolbarOpen(true);
+  }, [guide.activeStep]);
+
+  // État réel publié pour les check-lists du centre d'aide.
+  const myPos = positionsHook.myPosition;
+  const scaleSet =
+    mapSettings.settings.km_per_unit !== DEFAULT_SETTINGS.km_per_unit ||
+    mapSettings.settings.walk_kmh !== DEFAULT_SETTINGS.walk_kmh;
+  useEffect(() => {
+    if (loading || loadError || positionsHook.loading) return;
+    guide.setFacts({
+      hasPosition: !!myPos?.place_id,
+      hasMount: !!myPos?.active_mount_id,
+      hasStatus: !!myPos?.status,
+      zones: zones.length,
+      places: places.length,
+      routes: routes.length,
+      biomes: biomes.length,
+      relief: relief.length,
+      scaleSet,
+      mountTypes: mountTypes.mountTypes.length
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, loadError, positionsHook.loading, myPos?.place_id, myPos?.active_mount_id, myPos?.status, zones.length, places.length, routes.length, biomes.length, relief.length, scaleSet, mountTypes.mountTypes.length]);
+  useEffect(() => () => guide.setFacts(null), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function confirmFlight() {
     if (!flightTarget) return;
@@ -284,7 +379,7 @@ export default function WorldMap() {
     const check = async () => {
       const result = await positionsHook.checkQuestArrival();
       if (result?.some((r) => r.validated)) {
-        showToast('Quête validée par ta présence sur place !', 'success');
+        showToast('Présence confirmée pour ta quête ! La récompense sera versée après validation sur le site principal.', 'success');
       }
     };
     check();
@@ -294,6 +389,8 @@ export default function WorldMap() {
   }, []);
 
   function resetDrawing() {
+    setSel([]);
+    setSelDrag(null);
     setActiveTool(null);
     setTempPoints([]);
     setDragBox(null);
@@ -320,6 +417,104 @@ export default function WorldMap() {
     setRouteDraft(null);
   }
 
+  function selectSelectTool() {
+    resetDrawing();
+    setDeleteMode(false);
+    setActiveTool('select');
+  }
+
+  // --- Sélection multiple ------------------------------------------------
+  // Éléments sélectionnables du calque en cours (les lieux d'abord : ils
+  // sont dessinés par-dessus les régions).
+  function selCandidates(): { key: string; center: Point; hit: (pt: Point) => boolean }[] {
+    const poly = (kind: SelKind, list: { id: string; path_points: Point[] }[]) =>
+      list.map((e) => ({ key: selKey(kind, e.id), center: centroid(e.path_points), hit: (pt: Point) => pointInPolygon(pt, e.path_points) }));
+    if (editLayer === 'relief') return poly('relief', relief);
+    if (editLayer === 'biome') return poly('biome', biomes);
+    return [
+      ...places.map((p) => ({
+        key: selKey('place', p.id),
+        center: { x: p.x, y: p.y },
+        hit: (pt: Point) => {
+          const r = p.radius ?? 3;
+          if (p.shape === 'rect') return Math.abs(pt.x - p.x) <= (p.width ?? r * 2) / 2 && Math.abs(pt.y - p.y) <= (p.height ?? r * 2) / 2;
+          return Math.hypot(pt.x - p.x, pt.y - p.y) <= r;
+        }
+      })),
+      ...[...zones].reverse().map((z) => ({ key: selKey('zone', z.id), center: centroid(z.path_points), hit: (pt: Point) => pointInPolygon(pt, z.path_points) }))
+    ];
+  }
+
+  async function applyMove(keys: string[], dx: number, dy: number, undo = false) {
+    if (keys.length === 0 || (dx === 0 && dy === 0)) return;
+    setSelBusy(true);
+    const ids = (kind: SelKind) => new Set(keys.map(parseSel).filter((k) => k.kind === kind).map((k) => k.id));
+    const placeIds = ids('place');
+    const ops: PromiseLike<{ error: { message: string } | null }>[] = [];
+    places.filter((p) => placeIds.has(p.id)).forEach((p) => {
+      const n = shiftPoint(p, dx, dy);
+      ops.push(supabase.from('map_places').update({ x: n.x, y: n.y }).eq('id', p.id));
+    });
+    const polys: [SelKind, { id: string; path_points: Point[] }[]][] = [['zone', zones], ['relief', relief], ['biome', biomes]];
+    polys.forEach(([kind, list]) => {
+      const set = ids(kind);
+      list.filter((e) => set.has(e.id)).forEach((e) =>
+        ops.push(supabase.from(SEL_TABLE[kind]).update({ path_points: shiftPoints(e.path_points, dx, dy) }).eq('id', e.id))
+      );
+    });
+    // Les routes suivent leurs lieux : en entier si les deux bouts bougent,
+    // sinon seul le bout attaché est déplacé.
+    routes.forEach((r) => {
+      const a = !!r.from_place_id && placeIds.has(r.from_place_id);
+      const b = !!r.to_place_id && placeIds.has(r.to_place_id);
+      if (!a && !b) return;
+      const pts = r.path_points ?? [];
+      const next = a && b ? shiftPoints(pts, dx, dy) : pts.map((pt, i) => ((a && i === 0) || (b && i === pts.length - 1) ? shiftPoint(pt, dx, dy) : pt));
+      ops.push(supabase.from('map_routes').update({ path_points: next }).eq('id', r.id));
+    });
+    const results = await Promise.all(ops);
+    setSelBusy(false);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) showToast(`Déplacement incomplet : ${failed.error.message}`, 'error');
+    else showToast(undo ? 'Déplacement annulé.' : `${keys.length} élément${keys.length > 1 ? 's déplacés' : ' déplacé'}.`);
+    setLastMove(undo || failed ? null : { keys, dx, dy });
+    load();
+  }
+
+  async function deleteSelection() {
+    if (sel.length === 0) return;
+    const placeIds = new Set(sel.map(parseSel).filter((k) => k.kind === 'place').map((k) => k.id));
+    const linked = routes.filter((r) => (!!r.from_place_id && placeIds.has(r.from_place_id)) || (!!r.to_place_id && placeIds.has(r.to_place_id))).length;
+    const extra = linked > 0 ? ` ${linked} route${linked > 1 ? 's reliées à ces lieux sont concernées' : ' reliée à ces lieux est concernée'}.` : '';
+    if (!confirm(`Supprimer définitivement ${sel.length} élément${sel.length > 1 ? 's' : ''} ?${extra}`)) return;
+    setSelBusy(true);
+    const byKind = new Map<SelKind, string[]>();
+    sel.map(parseSel).forEach((k) => byKind.set(k.kind, [...(byKind.get(k.kind) ?? []), k.id]));
+    const results = await Promise.all(Array.from(byKind.entries()).map(([kind, list]) => supabase.from(SEL_TABLE[kind]).delete().in('id', list)));
+    setSelBusy(false);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) showToast(`Suppression incomplète : ${failed.error.message}`, 'error');
+    else showToast(`${sel.length} élément${sel.length > 1 ? 's supprimés' : ' supprimé'}.`);
+    setSel([]);
+    setLastMove(null);
+    load();
+  }
+
+  async function setSelectionTerritory(groupId: string | null) {
+    setSelBusy(true);
+    const results = await Promise.all(
+      (['place', 'zone'] as SelKind[]).map((kind) => {
+        const list = sel.map(parseSel).filter((k) => k.kind === kind).map((k) => k.id);
+        return list.length ? supabase.from(SEL_TABLE[kind]).update({ controlling_group_id: groupId }).in('id', list) : Promise.resolve({ error: null });
+      })
+    );
+    setSelBusy(false);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) showToast(`Territoire non modifié : ${failed.error.message}`, 'error');
+    else showToast(groupId ? 'Territoire attribué à la sélection.' : 'Sélection rendue neutre.');
+    load();
+  }
+
   function selectRouteTool() {
     setDeleteMode(false);
     setActiveTool('route');
@@ -334,35 +529,35 @@ export default function WorldMap() {
     resetDrawing();
   }
 
-  async function deleteZone(z: MapZone) {
-    if (!confirm(`Supprimer la zone "${z.name}" ?`)) return;
-    await supabase.from('map_zones').delete().eq('id', z.id);
-    showToast('Zone supprimée.');
+  // Une suppression refusée (droits, réseau) échouait en silence tout en
+  // annonçant « supprimé ».
+  async function removeRow(table: string, id: string, okMessage: string) {
+    const { error } = await supabase.from(table).delete().eq('id', id);
+    if (error) return showToast(`Suppression impossible : ${error.message}`, 'error');
+    showToast(okMessage);
     load();
   }
+  async function deleteZone(z: MapZone) {
+    if (!confirm(`Supprimer la zone "${z.name}" ? Les lieux qu'elle contient sont conservés.`)) return;
+    await removeRow('map_zones', z.id, 'Zone supprimée.');
+  }
   async function deletePlace(p: MapPlace) {
-    if (!confirm(`Supprimer "${p.name}" ?`)) return;
-    await supabase.from('map_places').delete().eq('id', p.id);
-    showToast('Lieu supprimé.');
-    load();
+    const linked = routes.filter((r) => r.from_place_id === p.id || r.to_place_id === p.id).length;
+    const extra = linked > 0 ? ` ${linked} route${linked > 1 ? 's' : ''} y ${linked > 1 ? 'sont reliées' : 'est reliée'}.` : '';
+    if (!confirm(`Supprimer "${p.name}" ?${extra}`)) return;
+    await removeRow('map_places', p.id, 'Lieu supprimé.');
   }
   async function deleteRoute(r: MapRoute) {
     if (!confirm(`Supprimer la route "${r.name || 'sans nom'}" ?`)) return;
-    await supabase.from('map_routes').delete().eq('id', r.id);
-    showToast('Route supprimée.');
-    load();
+    await removeRow('map_routes', r.id, 'Route supprimée.');
   }
   async function deleteRelief(r: MapRelief) {
     if (!confirm('Supprimer cette zone de relief ?')) return;
-    await supabase.from('map_relief').delete().eq('id', r.id);
-    showToast('Relief supprimé.');
-    load();
+    await removeRow('map_relief', r.id, 'Relief supprimé.');
   }
   async function deleteBiome(b: MapBiome) {
     if (!confirm('Supprimer cette zone de biome ?')) return;
-    await supabase.from('map_biomes').delete().eq('id', b.id);
-    showToast('Biome supprimé.');
-    load();
+    await removeRow('map_biomes', b.id, 'Biome supprimé.');
   }
 
   function findPlaceNear(pt: Point): MapPlace | null {
@@ -380,6 +575,7 @@ export default function WorldMap() {
       downRef.current = null;
       setDragBox(null);
       setFreehandPoints([]);
+      setSelDrag(null);
       return;
     }
 
@@ -388,6 +584,14 @@ export default function WorldMap() {
 
     if (!editMode || activeTool === null) {
       vp.startPan(e.clientX, e.clientY);
+      return;
+    }
+    if (activeTool === 'select') {
+      if (selBusy) return;
+      const pt = vp.screenToSvg(e.clientX, e.clientY);
+      const hit = selCandidates().find((c) => c.hit(pt))?.key ?? null;
+      // Tirer un élément déjà sélectionné déplace tout le groupe ; sinon on trace un cadre.
+      setSelDrag({ mode: hit && sel.includes(hit) ? 'move' : 'marquee', start: pt, cur: pt, hitKey: hit });
       return;
     }
     if (activeTool === 'point-circle' || activeTool === 'point-rect') {
@@ -410,6 +614,11 @@ export default function WorldMap() {
       return;
     }
     if (!editMode || !activeTool) return;
+    if (selDrag) {
+      const pt = vp.screenToSvg(e.clientX, e.clientY);
+      setSelDrag((d) => (d ? { ...d, cur: pt } : d));
+      return;
+    }
     if (activeTool === 'freehand' && freehandPoints.length > 0) {
       const pt = vp.screenToSvg(e.clientX, e.clientY);
       setFreehandPoints((pts) => {
@@ -484,11 +693,40 @@ export default function WorldMap() {
 
     if (vp.isPanning) {
       vp.endPan();
-      if (moved < 4) setSelected(null);
+      if (moved < 4) {
+        if (measureMode) {
+          const pt = vp.screenToSvg(e.clientX, e.clientY);
+          // Un clic près d'un lieu s'y accroche ; un troisième clic recommence.
+          const near = findPlaceNear(pt);
+          const snapped = near ? { x: near.x, y: near.y } : pt;
+          setMeasurePts((pts) => (pts.length >= 2 ? [snapped] : [...pts, snapped]));
+        } else setSelected(null);
+      }
       return;
     }
 
     if (!editMode || !activeTool) return;
+
+    if (activeTool === 'select') {
+      const d = selDrag;
+      setSelDrag(null);
+      if (!d) return;
+      if (moved < 4) {
+        // Simple clic : ajoute ou retire l'élément ; dans le vide, tout désélectionner.
+        if (d.hitKey) setSel((cur) => (cur.includes(d.hitKey!) ? cur.filter((k) => k !== d.hitKey) : [...cur, d.hitKey!]));
+        else setSel([]);
+      } else if (d.mode === 'move') {
+        applyMove(sel, Math.round((d.cur.x - d.start.x) * 100) / 100, Math.round((d.cur.y - d.start.y) * 100) / 100);
+      } else {
+        const x1 = Math.min(d.start.x, d.cur.x);
+        const x2 = Math.max(d.start.x, d.cur.x);
+        const y1 = Math.min(d.start.y, d.cur.y);
+        const y2 = Math.max(d.start.y, d.cur.y);
+        const inside = selCandidates().filter((c) => c.center.x >= x1 && c.center.x <= x2 && c.center.y >= y1 && c.center.y <= y2).map((c) => c.key);
+        setSel((cur) => Array.from(new Set([...cur, ...inside])));
+      }
+      return;
+    }
 
     if (activeTool === 'point-circle' || activeTool === 'point-rect') {
       finalizePointDrag(moved);
@@ -526,7 +764,12 @@ export default function WorldMap() {
         if (nearbyPlace) {
           setRouteDraft({ fromPlaceId: nearbyPlace.id, points: [{ x: nearbyPlace.x, y: nearbyPlace.y }] });
         } else {
-          showToast('Clique sur un lieu de départ.', 'info');
+          showToast(
+            places.length < 2
+              ? 'Une route relie deux lieux : place-en au moins deux avant de tracer.'
+              : 'Une route part d’un lieu : clique sur le lieu de départ.',
+            'info'
+          );
         }
         return;
       }
@@ -571,15 +814,184 @@ export default function WorldMap() {
     return { rectX: Math.min(start.x, end.x), rectY: Math.min(start.y, end.y), w: Math.abs(end.x - start.x), h: Math.abs(end.y - start.y) };
   })();
 
+  // Emplacement du nom (et du drapeau) de chaque région : dans la région
+  // elle-même, à l'écart des régions dessinées par-dessus. Les régions
+  // sont peintes dans l'ordre de la liste : seules les suivantes recouvrent.
+  const zoneAnchors = useMemo(() => {
+    const m = new Map<string, { point: Point; clearance: number }>();
+    zones.forEach((z, i) => {
+      const above = zones.slice(i + 1).map((o) => o.path_points);
+      const a = labelAnchor(z.path_points, above);
+      if (a) m.set(z.id, a);
+    });
+    return m;
+  }, [zones]);
+
   const showGrid = editMode && activeTool !== null;
+  // Décalage d'aperçu pendant qu'on tire la sélection.
+  const moveDx = selDrag?.mode === 'move' ? selDrag.cur.x - selDrag.start.x : 0;
+  const moveDy = selDrag?.mode === 'move' ? selDrag.cur.y - selDrag.start.y : 0;
+  const isSel = (kind: SelKind, id: string) => activeTool === 'select' && sel.includes(selKey(kind, id));
+  const selShift = (kind: SelKind, id: string) => (isSel(kind, id) && (moveDx || moveDy) ? `translate(${moveDx} ${moveDy})` : undefined);
   const closeSnapReady = activeTool === 'polygon' && tempPoints.length >= 3;
+
+  // Consigne du mode en cours (visible aussi sur téléphone, où l'ancienne
+  // barre d'aide du bas était masquée).
+  const layerName = editLayer === 'map' ? 'Carte' : editLayer === 'relief' ? 'Relief' : 'Biomes';
+  const shapeMakes = editLayer === 'map' ? 'une région' : editLayer === 'relief' ? 'une zone de relief' : 'une zone de biome';
+  // La mesure cède la place dès qu'un autre mode prend la main.
+  useEffect(() => {
+    if (editMode || flightMode) {
+      setMeasureMode(false);
+      setMeasurePts([]);
+    }
+  }, [editMode, flightMode]);
+
+  // Plus petite taille de monde qui garde tout le contenu sur la carte.
+  const minWorld = (() => {
+    let max = 100;
+    const see = (x: number, y: number) => {
+      if (x > max) max = x;
+      if (y > max) max = y;
+    };
+    places.forEach((p) => see(p.x + (p.radius ?? 3), p.y + (p.radius ?? 3)));
+    [...zones, ...routes, ...biomes, ...relief].forEach((e) => (e.path_points ?? []).forEach((pt) => see(pt.x, pt.y)));
+    return Math.min(1000, Math.ceil(max / 10) * 10);
+  })();
+
+  const measureKm = measurePts.length === 2 ? distanceUnits(measurePts[0], measurePts[1]) * mapSettings.settings.km_per_unit : null;
+  const measureText = (() => {
+    if (measureKm == null) return measurePts.length === 0 ? '📐 Mesure — clique le point de départ' : '📐 Mesure — clique le point d’arrivée';
+    const walk = (measureKm / mapSettings.settings.walk_kmh) * 60;
+    const mult = activeMountForFlight?.speed_multiplier ?? 1;
+    const mounted = activeMountForFlight && mult !== 1 ? ` · ${formatMinutes(walk / mult)} avec ${activeMountForFlight.name}` : '';
+    return `📐 ${formatDistance(measureKm, mapSettings.settings.unit_label)} à vol d’oiseau · ${formatMinutes(walk)} à pied${mounted}`;
+  })();
+
+  function locateMe() {
+    if (!myPos?.place_id) return showToast('Ton personnage n’a pas encore de position : ouvre « Ma position ».', 'info');
+    const moving = myPos.travel_started_at ? travelerScreenPosition(myPos, places, routes, Date.now()) : null;
+    const here = moving ?? places.find((p) => p.id === myPos.place_id);
+    if (!here) return showToast('Lieu introuvable sur la carte.', 'error');
+    vp.panTo(here.x, here.y, 30);
+  }
+
+  const modeHint: string | null = measureMode
+    ? measureText
+    : flightMode
+    ? flightTarget
+      ? '🕊️ Vol libre — vérifie le trajet puis confirme'
+      : '🕊️ Vol libre — clique le lieu de destination'
+    : !editMode
+    ? null
+    : deleteMode
+    ? editLayer === 'map'
+      ? '🗑 Suppression — clique une région, un lieu ou une route'
+      : `🗑 Suppression — clique une zone du calque ${layerName}`
+    : activeTool === 'select'
+    ? sel.length === 0
+      ? '⬚ Sélection — clique des éléments, ou glisse pour les encadrer'
+      : `⬚ ${sel.length} sélectionné${sel.length > 1 ? 's' : ''} — glisse l’un d’eux pour déplacer le groupe`
+    : activeTool === 'polygon'
+    ? tempPoints.length === 0
+      ? `Polygone — clique pour poser le premier sommet (${shapeMakes})`
+      : tempPoints.length < 3
+      ? `Polygone — ${tempPoints.length} point${tempPoints.length > 1 ? 's' : ''}, il en faut au moins 3`
+      : `Polygone — ${tempPoints.length} points · reclique le premier point ou « Terminer »`
+    : activeTool === 'route'
+    ? routeDraft
+      ? `Route — ajoute des points de passage, puis clique le lieu d’arrivée`
+      : 'Route — clique le lieu de départ'
+    : activeTool === 'point-circle' || activeTool === 'point-rect'
+    ? 'Lieu — clic simple (taille standard) ou clic-glisse (taille au choix)'
+    : activeTool === 'freehand'
+    ? `Tracé libre — dessine le contour de ${shapeMakes} sans lâcher`
+    : activeTool
+    ? `Clic-glisse pour dessiner ${shapeMakes}`
+    : editLayer === 'map'
+    ? 'Édition — choisis un outil : une forme (région), Lieu ou Route'
+    : `Édition ${layerName} — choisis une forme, ou clique une zone pour changer sa texture`;
+
+  const coachTip: CoachTip | null = (() => {
+    if (loading || guide.tourRunning || modeHint || selected) return null;
+    if (loadError)
+      return {
+        id: 'load-error',
+        emoji: '⚠',
+        tone: 'error',
+        sticky: true,
+        text: 'La carte n’a pas pu être chargée. Vérifie ta connexion, puis réessaie.',
+        action: { label: 'Réessayer', run: load }
+      };
+    if (positionsHook.loading || permLoading) return null;
+    if (myPos?.travel_started_at) {
+      const destRoute = routes.find((r) => r.id === myPos.route_id);
+      const destId =
+        myPos.flight_target_place_id ??
+        (destRoute ? (destRoute.from_place_id === myPos.place_id ? destRoute.to_place_id : destRoute.from_place_id) : null);
+      const dest = places.find((p) => p.id === destId);
+      const remaining = computeRemainingMinutes(myPos, now);
+      return {
+        id: 'traveling',
+        emoji: myPos.flight_target_place_id ? '🕊️' : '🛣',
+        sticky: true,
+        text: `En voyage vers ${dest?.name ?? 'ta destination'} — ${remaining <= 0 ? 'arrivée imminente' : `arrivée dans ${formatMinutes(remaining)}`}. Le trajet se termine tout seul.`,
+        secondary: { label: 'Détails', run: () => setShowPositionPicker(true) }
+      };
+    }
+    const tips: CoachTip[] = [];
+    if (canEdit && places.length === 0 && zones.length === 0)
+      tips.push({
+        id: 'admin-empty',
+        emoji: '🗺️',
+        text: 'La carte est vide. Commence par régler l’échelle, puis dessine une première région.',
+        action: { label: 'Ouvrir les outils', run: () => runApp('edit') },
+        secondary: { label: 'Voir les étapes', run: () => guide.openHelp('start') }
+      });
+    if (!canEdit && places.length === 0)
+      tips.push({
+        id: 'player-empty',
+        emoji: '🗺️',
+        text: 'Aucun lieu n’a encore été publié sur la carte. Reviens quand les admins auront posé les premiers lieux.'
+      });
+    if (places.length > 0 && !myPos?.place_id)
+      tips.push({
+        id: 'no-position',
+        emoji: '📍',
+        text: 'Ton personnage n’est encore nulle part. Choisis son lieu de départ pour pouvoir voyager.',
+        action: { label: 'Choisir mon lieu', run: () => setShowPositionPicker(true) }
+      });
+    if (canEdit && places.length >= 2 && routes.length === 0)
+      tips.push({
+        id: 'admin-no-routes',
+        emoji: '🛣',
+        text: 'Aucune route ne relie les lieux : à pied, les joueurs ne peuvent pas quitter leur lieu de départ.',
+        action: {
+          label: 'Tracer une route',
+          run: () => {
+            setToolbarOpen(true);
+            setEditMode(true);
+            setEditLayer('map');
+            selectRouteTool();
+          }
+        }
+      });
+    if (myPos?.place_id && routes.length > 0 && !routes.some((r) => r.from_place_id === myPos.place_id || r.to_place_id === myPos.place_id) && !activeMountForFlight?.can_fly)
+      tips.push({
+        id: `stuck-${myPos.place_id}`,
+        emoji: '🚧',
+        text: 'Aucune route ne part du lieu où tu te trouves. Il te faut une monture volante, un cristal, ou qu’un admin trace une route.',
+        secondary: { label: 'Comment voyager', run: () => guide.openHelp('topics') }
+      });
+    return tips.find((t) => !guide.state.dismissed.includes(t.id)) ?? null;
+  })();
 
   return (
     <div className="flex h-[100dvh] w-full flex-col overflow-hidden">
       <Navbar />
       <div className="relative flex-1 overflow-hidden">
       {canEdit && (
-        <div className="fixed inset-x-2 bottom-2 z-20 max-w-full md:absolute md:inset-x-auto md:bottom-auto md:left-4 md:top-6 md:max-w-[calc(100%-2rem)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div data-guide="edit-toolbar" className="fixed inset-x-2 bottom-2 z-20 max-w-full md:absolute md:inset-x-auto md:bottom-auto md:left-4 md:top-6 md:max-w-[calc(100%-2rem)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           {!toolbarOpen ? (
             <button
               onClick={() => setToolbarOpen(true)}
@@ -660,6 +1072,14 @@ export default function WorldMap() {
                       </>
                     )}
                     <button
+                      onClick={selectSelectTool}
+                      className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 font-display text-xs transition ${
+                        activeTool === 'select' ? 'btn-accent border-transparent text-paper' : 'border-white/15 bg-white/5 text-paper/70'
+                      }`}
+                    >
+                      ⬚ Sélection
+                    </button>
+                    <button
                       onClick={toggleDeleteMode}
                       className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 font-display text-xs transition ${
                         deleteMode
@@ -684,7 +1104,7 @@ export default function WorldMap() {
               {editMode && !deleteMode && (
                 <ShapeToolbar
                   active={
-                    activeTool && activeTool !== 'point-circle' && activeTool !== 'point-rect' && activeTool !== 'route'
+                    activeTool && activeTool !== 'point-circle' && activeTool !== 'point-rect' && activeTool !== 'route' && activeTool !== 'select'
                       ? (activeTool as ShapeTool)
                       : null
                   }
@@ -696,9 +1116,66 @@ export default function WorldMap() {
                 />
               )}
 
+              {activeTool === 'select' && (
+                <div className="anim-fade flex items-center gap-1.5 overflow-x-auto border-t border-white/10 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <span className="shrink-0 whitespace-nowrap rounded-full bg-[#e7c34a]/15 px-2.5 py-1 text-[11px] text-[#e7c34a]">
+                    {sel.length} sélectionné{sel.length > 1 ? 's' : ''}
+                  </span>
+                  <button
+                    onClick={() => setSel(selCandidates().map((c) => c.key))}
+                    className="shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-paper/75 hover:border-accent hover:text-accent"
+                  >
+                    Tout
+                  </button>
+                  <button
+                    onClick={() => setSel([])}
+                    disabled={sel.length === 0}
+                    className="shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-paper/75 hover:border-accent hover:text-accent disabled:opacity-30"
+                  >
+                    Aucun
+                  </button>
+                  {editLayer === 'map' && (
+                    <select
+                      value=""
+                      disabled={sel.length === 0 || selBusy}
+                      onChange={(e) => {
+                        if (e.target.value) setSelectionTerritory(e.target.value === 'none' ? null : e.target.value);
+                      }}
+                      style={{ colorScheme: 'dark' }}
+                      aria-label="Attribuer un territoire à la sélection"
+                      className="glass-input shrink-0 rounded-lg px-2 py-1.5 text-xs text-paper/80 disabled:opacity-30"
+                    >
+                      <option value="">🏴 Territoire…</option>
+                      <option value="none">Aucun (neutre)</option>
+                      {groupsHook.groups.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <button
+                    onClick={deleteSelection}
+                    disabled={sel.length === 0 || selBusy}
+                    className="shrink-0 whitespace-nowrap rounded-lg border border-accent/50 bg-accent/10 px-2.5 py-1.5 text-xs text-accent disabled:opacity-30"
+                  >
+                    🗑 Supprimer
+                  </button>
+                  {lastMove && (
+                    <button
+                      onClick={() => applyMove(lastMove.keys, -lastMove.dx, -lastMove.dy, true)}
+                      disabled={selBusy}
+                      className="shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-paper/75 hover:border-accent hover:text-accent disabled:opacity-30"
+                    >
+                      ↶ Annuler le déplacement
+                    </button>
+                  )}
+                </div>
+              )}
+
               {deleteMode && (
                 <p className="max-w-xs text-[11px] text-accent/90">
-                  Clique sur une zone ou un lieu pour le supprimer définitivement.
+                  Seul le calque {layerName} est concerné. Chaque suppression demande confirmation et est définitive.
                 </p>
               )}
             </div>
@@ -712,18 +1189,21 @@ export default function WorldMap() {
         settings={mapSettings.settings}
         canEdit={canEdit}
         onSave={mapSettings.save}
+        minWorld={minWorld}
       />
 
-      <div className="absolute right-4 top-6 z-20">
-        <ZoomControls onZoomIn={vp.zoomIn} onZoomOut={vp.zoomOut} onReset={vp.resetView} />
+      <div data-guide="zoom" className="absolute right-4 top-6 z-20">
+        <ZoomControls onZoomIn={vp.zoomIn} onZoomOut={vp.zoomOut} onReset={vp.resetView} onLocate={locateMe} />
       </div>
 
       {loading && (
-        <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-display text-xs uppercase tracking-widest2 text-paper/50">
-          Chargement de la carte…
-        </p>
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3">
+          <span aria-hidden className="compass-spin text-3xl">🧭</span>
+          <p className="font-display text-xs uppercase tracking-widest2 text-paper/60">Chargement de la carte…</p>
+        </div>
       )}
 
+      <div aria-hidden className="map-vignette pointer-events-none absolute inset-0 z-[5]" />
       <svg
         ref={vp.svgRef}
         viewBox={vp.viewBoxString}
@@ -746,7 +1226,48 @@ export default function WorldMap() {
           if (vp.isPanning) vp.endPan();
         }}
       >
-        <rect x={-50} y={-50} width={200} height={200} fill="#0c1a2e" />
+        <defs>
+          <radialGradient id="sid-ocean" gradientUnits="userSpaceOnUse" cx={world / 2} cy={world * 0.42} r={world * 0.85}>
+            <stop offset="0" stopColor="#16335a" />
+            <stop offset="0.55" stopColor="#0e2444" />
+            <stop offset="1" stopColor="#081629" />
+          </radialGradient>
+          <radialGradient id="sid-place" cx="0.35" cy="0.3" r="0.9">
+            <stop offset="0" stopColor="#33405f" />
+            <stop offset="1" stopColor="#0b1120" />
+          </radialGradient>
+          <pattern id="sid-graticule" width={10} height={10} patternUnits="userSpaceOnUse">
+            <path d="M10 0H0V10" fill="none" stroke="#9fc4ff" strokeOpacity={0.07} strokeWidth={0.08} />
+          </pattern>
+        </defs>
+        {/* Hors du monde : le vide. Le cadre montre où la carte s'arrête. */}
+        <rect x={-world} y={-world} width={world * 3} height={world * 3} fill="#050b16" />
+        <rect x={0} y={0} width={world} height={world} fill="url(#sid-ocean)" />
+        <rect x={0} y={0} width={world} height={world} fill="url(#sid-graticule)" style={{ pointerEvents: 'none' }} />
+        <rect
+          x={0}
+          y={0}
+          width={world}
+          height={world}
+          fill="none"
+          stroke="#e7c34a"
+          strokeOpacity={0.35}
+          strokeWidth={Math.max(0.15, vp.viewBox.w * 0.0015)}
+          style={{ pointerEvents: 'none' }}
+        />
+
+        {/* Rose des vents, dans l'angle bas-droit du monde. */}
+        <g transform={`translate(${world - 9} ${world - 9})`} opacity={0.5} style={{ pointerEvents: 'none' }}>
+          <circle r={5.2} fill="none" stroke="#e7c34a" strokeOpacity={0.5} strokeWidth={0.1} />
+          <circle r={3.6} fill="none" stroke="#e7c34a" strokeOpacity={0.3} strokeWidth={0.08} strokeDasharray="0.4 0.4" />
+          {[0, 90, 180, 270].map((a) => (
+            <path key={a} d="M0 -5 L0.9 0 L0 0.9 L-0.9 0 Z" fill="#e7c34a" fillOpacity={a === 0 ? 0.9 : 0.45} transform={`rotate(${a})`} />
+          ))}
+          {[45, 135, 225, 315].map((a) => (
+            <path key={a} d="M0 -3 L0.5 0 L-0.5 0 Z" fill="#f4e9c8" fillOpacity={0.35} transform={`rotate(${a})`} />
+          ))}
+          <text y={-5.9} textAnchor="middle" fontSize={1.5} fill="#e7c34a" className="font-display">N</text>
+        </g>
 
         {showBiomes &&
           biomes.map((b) => (
@@ -755,8 +1276,9 @@ export default function WorldMap() {
               points={pointsToSvg(b.path_points)}
               fill={b.color}
               fillOpacity={showTextures && findTexture(biomeTextureId(b), customTextures)?.bg ? 0 : 0.55}
-              stroke={deleteMode && editLayer === 'biome' ? '#b3261e' : '#00000033'}
-              strokeWidth={deleteMode && editLayer === 'biome' ? 0.3 : 0.1}
+              stroke={isSel('biome', b.id) ? '#e7c34a' : deleteMode && editLayer === 'biome' ? '#d2463b' : '#00000033'}
+              strokeWidth={isSel('biome', b.id) ? 0.45 : deleteMode && editLayer === 'biome' ? 0.3 : 0.1}
+              transform={selShift('biome', b.id)}
               className={editLayer === 'biome' ? 'cursor-pointer' : ''}
               onClick={(e) => {
                 if (editLayer !== 'biome') return;
@@ -774,8 +1296,9 @@ export default function WorldMap() {
               points={pointsToSvg(r.path_points)}
               fill={reliefColor(r.elevation)}
               fillOpacity={showTextures && findTexture(reliefTextureId(r), customTextures)?.bg ? 0 : 0.4}
-              stroke={deleteMode && editLayer === 'relief' ? '#b3261e' : '#00000022'}
-              strokeWidth={deleteMode && editLayer === 'relief' ? 0.3 : 0.1}
+              stroke={isSel('relief', r.id) ? '#e7c34a' : deleteMode && editLayer === 'relief' ? '#d2463b' : '#00000022'}
+              strokeWidth={isSel('relief', r.id) ? 0.45 : deleteMode && editLayer === 'relief' ? 0.3 : 0.1}
+              transform={selShift('relief', r.id)}
               className={editLayer === 'relief' ? 'cursor-pointer' : ''}
               onClick={(e) => {
                 if (editLayer !== 'relief') return;
@@ -802,13 +1325,17 @@ export default function WorldMap() {
             points={pointsToSvg(z.path_points)}
             fill={z.color}
             fillOpacity={0.75}
-            stroke={deleteMode ? '#b3261e' : '#00000066'}
-            strokeWidth={deleteMode ? 0.3 : 0.15}
+            stroke={isSel('zone', z.id) ? '#e7c34a' : deleteMode ? '#d2463b' : '#f4e9c8'}
+            strokeOpacity={isSel('zone', z.id) || deleteMode ? 1 : 0.4}
+            strokeWidth={isSel('zone', z.id) ? 0.45 : deleteMode ? 0.3 : 0.18}
+            strokeLinejoin="round"
+            strokeDasharray={isSel('zone', z.id) ? '1.2 0.6' : undefined}
+            transform={selShift('zone', z.id)}
             className="cursor-pointer transition hover:brightness-110"
             onClick={(e) => {
               e.stopPropagation();
               if (deleteMode && editLayer === 'map') return deleteZone(z);
-              if (!activeTool) setSelected({ kind: 'zone', entity: z });
+              if (!activeTool && !measureMode) setSelected({ kind: 'zone', entity: z });
             }}
           />
         ))}
@@ -816,8 +1343,40 @@ export default function WorldMap() {
         {zones.map((z) => {
           const label = groupsHook.labelFor(z.controlling_group_id);
           if (!label) return null;
-          const c = centroid(z.path_points);
+          const c = zoneAnchors.get(z.id)?.point ?? centroid(z.path_points);
           return <TerritoryFlag key={`flag-${z.id}`} x={c.x} y={c.y} label={label} />;
+        })}
+
+        {/* Nom des régions, en lettres espacées comme sur un atlas. */}
+        {zones.map((z) => {
+          if (!z.name || z.path_points.length < 3) return null;
+          // Région entièrement recouverte par d'autres : pas de nom plutôt qu'un nom mal placé.
+          const anchor = zoneAnchors.get(z.id);
+          if (!anchor) return null;
+          const xs = z.path_points.map((p) => p.x);
+          const width = Math.max(...xs) - Math.min(...xs);
+          // Le texte doit tenir dans l'espace libre autour du point d'ancrage.
+          const fit = (anchor.clearance * 2.6) / Math.max(4, z.name.length);
+          const size = Math.max(0.9, Math.min(3.2, (width * 0.7) / Math.max(4, z.name.length), fit));
+          const c = anchor.point;
+          const flag = !!groupsHook.labelFor(z.controlling_group_id);
+          return (
+            <text
+              key={`name-${z.id}`}
+              x={c.x}
+              y={c.y + (flag ? size * 2.2 : size * 0.35)}
+              textAnchor="middle"
+              fontSize={size}
+              letterSpacing={size * 0.22}
+              fill="#f4e9c8"
+              fillOpacity={0.62}
+              className="select-none font-display uppercase"
+              style={{ pointerEvents: 'none', paintOrder: 'stroke', stroke: '#06101f', strokeOpacity: 0.45, strokeWidth: size * 0.12 }}
+              transform={selShift('zone', z.id)}
+            >
+              {z.name}
+            </text>
+          );
         })}
 
         {showGrid && <GridOverlay viewBox={vp.viewBox} />}
@@ -829,15 +1388,15 @@ export default function WorldMap() {
               key={r.id}
               points={pointsToSvg(r.path_points)}
               fill="none"
-              stroke={deleteMode ? '#b3261e' : isHighlighted ? '#4ade80' : r.color}
+              stroke={deleteMode ? '#d2463b' : isHighlighted ? '#4ade80' : r.color}
               strokeWidth={isHighlighted ? 0.6 : 0.35}
               strokeDasharray={isHighlighted ? undefined : '1.4 0.9'}
               strokeLinecap="round"
-              className="cursor-pointer"
+              className={`cursor-pointer ${isHighlighted ? 'route-glow' : 'route-flow'}`}
               onClick={(e) => {
                 e.stopPropagation();
                 if (deleteMode && editLayer === 'map') return deleteRoute(r);
-                if (!activeTool) setSelectedRoute(r);
+                if (!activeTool && !measureMode) setSelectedRoute(r);
               }}
             />
           );
@@ -858,7 +1417,7 @@ export default function WorldMap() {
             <polyline
               points={pointsToSvg(tempPoints)}
               fill="none"
-              stroke="#b3261e"
+              stroke="#d2463b"
               strokeWidth={0.25}
               strokeDasharray="0.7"
             />
@@ -868,7 +1427,7 @@ export default function WorldMap() {
                 cx={p.x}
                 cy={p.y}
                 r={i === 0 && closeSnapReady ? 0.9 : 0.45}
-                fill={i === 0 && closeSnapReady ? '#b3261e' : '#e7e5db'}
+                fill={i === 0 && closeSnapReady ? '#d2463b' : '#e7e5db'}
               />
             ))}
           </>
@@ -877,21 +1436,21 @@ export default function WorldMap() {
         {previewBoxPoints && (
           <polygon
             points={pointsToSvg(previewBoxPoints)}
-            fill="#b3261e"
+            fill="#d2463b"
             fillOpacity={0.3}
-            stroke="#b3261e"
+            stroke="#d2463b"
             strokeWidth={0.25}
           />
         )}
         {activeTool === 'freehand' && freehandPoints.length > 1 && (
-          <polyline points={pointsToSvg(freehandPoints)} fill="none" stroke="#b3261e" strokeWidth={0.3} />
+          <polyline points={pointsToSvg(freehandPoints)} fill="none" stroke="#d2463b" strokeWidth={0.3} />
         )}
 
         {pointPreview && 'r' in pointPreview && (
-          <circle cx={pointPreview.cx} cy={pointPreview.cy} r={pointPreview.r} fill="#b3261e" fillOpacity={0.3} stroke="#b3261e" strokeWidth={0.25} />
+          <circle cx={pointPreview.cx} cy={pointPreview.cy} r={pointPreview.r} fill="#d2463b" fillOpacity={0.3} stroke="#d2463b" strokeWidth={0.25} />
         )}
         {pointPreview && 'rectX' in pointPreview && (
-          <rect x={pointPreview.rectX} y={pointPreview.rectY} width={pointPreview.w} height={pointPreview.h} fill="#b3261e" fillOpacity={0.3} stroke="#b3261e" strokeWidth={0.25} />
+          <rect x={pointPreview.rectX} y={pointPreview.rectY} width={pointPreview.w} height={pointPreview.h} fill="#d2463b" fillOpacity={0.3} stroke="#d2463b" strokeWidth={0.25} />
         )}
 
         {places.map((p) => {
@@ -904,8 +1463,8 @@ export default function WorldMap() {
           return (
             <g
               key={p.id}
-              transform={`translate(${p.x}, ${p.y})`}
-              className="cursor-pointer"
+              transform={`translate(${p.x + (isSel('place', p.id) ? moveDx : 0)}, ${p.y + (isSel('place', p.id) ? moveDy : 0)})`}
+              className="map-place cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 if (deleteMode && editLayer === 'map') return deletePlace(p);
@@ -919,23 +1478,38 @@ export default function WorldMap() {
                   width={w}
                   height={h}
                   rx={0.6}
-                  fill="#151312"
-                  stroke={deleteMode ? '#b3261e' : '#b3261e'}
-                  strokeWidth={deleteMode ? 0.35 : 0.15}
+                  fill="url(#sid-place)"
+                  stroke={deleteMode ? '#d2463b' : '#d9b65a'}
+                  strokeWidth={deleteMode ? 0.35 : 0.16}
                 />
               ) : (
-                <circle r={r} fill="#151312" fillOpacity={0.9} stroke="#b3261e" strokeWidth={deleteMode ? 0.35 : 0.15} />
+                <circle r={r} fill="url(#sid-place)" stroke={deleteMode ? '#d2463b' : '#d9b65a'} strokeWidth={deleteMode ? 0.35 : 0.16} />
               )}
-              <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
-                {p.icon || placeTypes.iconFor(p.type)}
-              </text>
+              {isSel('place', p.id) &&
+                (p.shape === 'rect' ? (
+                  <rect x={-w / 2 - 0.7} y={-h / 2 - 0.7} width={w + 1.4} height={h + 1.4} rx={1} fill="none" stroke="#e7c34a" strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
+                ) : (
+                  <circle r={r + 0.8} fill="none" stroke="#e7c34a" strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
+                ))}
+              {(() => {
+                const icon = p.icon || placeTypes.iconFor(p.type);
+                // Image importée : dessinée dans le rond, un peu plus grande qu'un emoji.
+                const s = iconSize * 1.55;
+                return isImageIcon(icon) ? (
+                  <image href={icon} x={-s / 2} y={-s / 2} width={s} height={s} preserveAspectRatio="xMidYMid meet" style={{ pointerEvents: 'none' }} />
+                ) : (
+                  <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
+                    {icon}
+                  </text>
+                );
+              })()}
               <text
                 textAnchor="middle"
                 dy={labelOffset}
                 fontSize="1.3"
                 fill="#e7e5db"
                 className="select-none"
-                style={{ paintOrder: 'stroke', stroke: '#0c1a2e', strokeWidth: 0.3 }}
+                style={{ paintOrder: 'stroke', stroke: '#081629', strokeWidth: 0.3 }}
               >
                 {p.name}
               </text>
@@ -949,6 +1523,41 @@ export default function WorldMap() {
           const offset = (p.shape === 'rect' ? (p.height ?? 6) / 2 : p.radius ?? 3) + 4;
           return <TerritoryFlag key={`flag-${p.id}`} x={p.x} y={p.y - offset} label={label} />;
         })}
+
+        {selDrag?.mode === 'marquee' && (
+          <rect
+            x={Math.min(selDrag.start.x, selDrag.cur.x)}
+            y={Math.min(selDrag.start.y, selDrag.cur.y)}
+            width={Math.abs(selDrag.cur.x - selDrag.start.x)}
+            height={Math.abs(selDrag.cur.y - selDrag.start.y)}
+            fill="#e7c34a"
+            fillOpacity={0.1}
+            stroke="#e7c34a"
+            strokeWidth={Math.max(0.1, vp.viewBox.w * 0.0015)}
+            strokeDasharray="1 0.6"
+            style={{ pointerEvents: 'none' }}
+          />
+        )}
+
+        {measureMode && measurePts.length > 0 && (
+          <g style={{ pointerEvents: 'none' }}>
+            {measurePts.length === 2 && (
+              <line
+                x1={measurePts[0].x}
+                y1={measurePts[0].y}
+                x2={measurePts[1].x}
+                y2={measurePts[1].y}
+                stroke="#e7c34a"
+                strokeWidth={0.35}
+                strokeDasharray="1 0.6"
+                strokeLinecap="round"
+              />
+            )}
+            {measurePts.map((p, i) => (
+              <circle key={i} cx={p.x} cy={p.y} r={0.7} fill="#e7c34a" stroke="#081629" strokeWidth={0.2} />
+            ))}
+          </g>
+        )}
 
         <QuestMarkers quests={quests} places={places} openId={openQuestId} onToggle={(id) => setOpenQuestId((c) => (c === id ? null : id))} />
 
@@ -1001,6 +1610,8 @@ export default function WorldMap() {
           onClose={() => setSelected(null)}
           onDeleted={load}
           positionsHook={positionsHook}
+          isFavorite={favorites.has(selected.entity.id)}
+          onToggleFavorite={() => favorites.toggle(selected.entity.id)}
         />
       )}
 
@@ -1078,7 +1689,8 @@ export default function WorldMap() {
           <TexturePicker
             value={retexture.value}
             onChange={async (v) => {
-              await supabase.from(retexture.table).update({ texture_id: v }).eq('id', retexture.id);
+              const { error } = await supabase.from(retexture.table).update({ texture_id: v }).eq('id', retexture.id);
+              if (error) return showToast(`Texture non enregistrée : ${error.message}`, 'error');
               setRetexture(null);
               load();
             }}
@@ -1086,20 +1698,45 @@ export default function WorldMap() {
         </Modal>
       )}
 
-      {flightMode && (
-        <div className="glass absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-accent">
-          🕊️ Vol libre — clique un lieu de destination
-          <button
-            onClick={() => {
-              setFlightMode(false);
-              setFlightTarget(null);
-            }}
-            className="rounded-full border border-white/20 px-2 py-0.5 text-paper/70 hover:text-accent"
-          >
-            Quitter
-          </button>
+      {modeHint && (
+        <div
+          role="status"
+          className="anim-drop glass-strong absolute left-1/2 top-36 z-20 md:bottom-3 md:top-auto flex w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-2xl px-3.5 py-2 text-xs text-paper/90"
+        >
+          <span className="min-w-0">{modeHint}</span>
+          {measureMode ? (
+            <button
+              onClick={() => {
+                setMeasureMode(false);
+                setMeasurePts([]);
+              }}
+              className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent"
+            >
+              Quitter
+            </button>
+          ) : flightMode ? (
+            <button
+              onClick={() => {
+                setFlightMode(false);
+                setFlightTarget(null);
+              }}
+              className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent"
+            >
+              Quitter
+            </button>
+          ) : deleteMode ? (
+            <button onClick={toggleDeleteMode} className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent">
+              Désactiver
+            </button>
+          ) : activeTool ? (
+            <button onClick={resetDrawing} className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent">
+              Annuler
+            </button>
+          ) : null}
         </div>
       )}
+
+      <MapCoach tip={coachTip} onDismiss={guide.dismiss} />
 
       {flightMode && flightTarget && myPlaceForFlight && activeMountForFlight && (
         <FlightPanel
@@ -1115,7 +1752,7 @@ export default function WorldMap() {
       )}
 
       {showLayers && (
-        <Modal title="🗂️ Calques" onClose={() => setShowLayers(false)} maxWidth="max-w-xs">
+        <Modal title="🗂️ Calques" windowId="layers" onClose={() => setShowLayers(false)} maxWidth="max-w-xs">
           <div className="space-y-2">
             {[
               { label: '🏔 Relief', v: showRelief, set: setShowRelief },
@@ -1124,7 +1761,7 @@ export default function WorldMap() {
             ].map((l) => (
               <label key={l.label} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-paper/80">
                 {l.label}
-                <input type="checkbox" checked={l.v} onChange={(e) => l.set(e.target.checked)} className="h-4 w-4 accent-[#b3261e]" />
+                <input type="checkbox" checked={l.v} onChange={(e) => l.set(e.target.checked)} className="h-4 w-4 accent-[#d2463b]" />
               </label>
             ))}
           </div>
@@ -1132,7 +1769,7 @@ export default function WorldMap() {
       )}
 
       {showBlackMarkets && (
-        <Modal title="🕶️ Marchés noirs" onClose={() => setShowBlackMarkets(false)} maxWidth="max-w-xs">
+        <Modal title="🕶️ Marchés noirs" windowId="blackmarket" onClose={() => setShowBlackMarkets(false)} maxWidth="max-w-xs">
           <div className="space-y-1.5">
             {places.filter((p) => p.allows_black_market).length === 0 && (
               <p className="text-xs text-paper/50">Aucun lieu n'autorise de marché noir pour l'instant.</p>
@@ -1148,7 +1785,7 @@ export default function WorldMap() {
                   }}
                   className="block w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left text-sm text-paper/80 hover:border-accent"
                 >
-                  {p.icon ?? '📍'} {p.name}
+                  <Icon value={p.icon ?? '📍'} /> {p.name}
                 </button>
               ))}
           </div>
@@ -1174,8 +1811,8 @@ export default function WorldMap() {
         />
       )}
 
-      <MapActionStack>
-        <div className="glass flex gap-1 rounded-full p-1">
+      <MapActionStack raised={canEdit && toolbarOpen && editMode}>
+        <div data-guide="layers" className="glass flex gap-1 rounded-full p-1">
           <button
             onClick={() => setShowRelief((v) => !v)}
             className={`rounded-full px-2.5 py-1 font-display text-[10px] uppercase tracking-wide transition ${
@@ -1219,34 +1856,71 @@ export default function WorldMap() {
             }
           ]}
         />
-        <PresencePanel
-          positions={positionsHook.positions}
-          places={places}
-          routes={routes}
-          onFocusPlace={(placeId) => {
-            const p = places.find((pl) => pl.id === placeId);
-            if (p) selectPlaceAndShare(p);
-          }}
-        />
-      </MapActionStack>
-
-      {showPlanner && (
-        <div className="absolute bottom-40 right-4 z-20 md:bottom-3 md:right-24">
-          <RoutePlannerPanel
+        <div data-guide="presence">
+          <PresencePanel
+            positions={positionsHook.positions}
             places={places}
             routes={routes}
-            onClose={() => setShowPlanner(false)}
-            onHighlight={setHighlightedPlan}
+            onFocusPlace={(placeId) => {
+              const p = places.find((pl) => pl.id === placeId);
+              if (p) selectPlaceAndShare(p);
+            }}
           />
         </div>
-      )}
+      </MapActionStack>
 
-      <div className="absolute left-1/2 top-6 z-20 -translate-x-1/2">
-        <PlaceSearch places={places} onSelect={selectPlaceAndShare} />
+      {extraApps.includes('directory') && (
+        <DirectoryApp
+          places={places}
+          positions={positionsHook.positions}
+          favoriteIds={favorites.ids}
+          typeLabel={placeTypes.labelFor}
+          typeIcon={placeTypes.iconFor}
+          onGo={selectPlaceAndShare}
+          onClose={() => closeExtra('directory')}
+        />
+      )}
+      {extraApps.includes('nearby') && (
+        <NearbyApp
+          places={places}
+          routes={routes}
+          myPlaceId={myPos?.place_id ?? null}
+          settings={mapSettings.settings}
+          speedMultiplier={activeMountForFlight?.speed_multiplier ?? 1}
+          onGo={selectPlaceAndShare}
+          onOpenPosition={() => {
+            closeExtra('nearby');
+            setShowPositionPicker(true);
+          }}
+          onClose={() => closeExtra('nearby')}
+        />
+      )}
+      {extraApps.includes('notes') && <NotesApp currentPlaceName={places.find((p) => p.id === myPos?.place_id)?.name ?? null} onClose={() => closeExtra('notes')} />}
+
+      {showPlanner &&
+        (isDesktop ? (
+          <Modal
+            title="🧭 Itinéraire"
+            windowId="itinerary"
+            maxWidth="max-w-xs"
+            onClose={() => {
+              setHighlightedPlan(null);
+              setShowPlanner(false);
+            }}
+          >
+            <RoutePlannerPanel bare places={places} routes={routes} onClose={() => setShowPlanner(false)} onHighlight={setHighlightedPlan} />
+          </Modal>
+        ) : (
+          <div className="absolute bottom-40 right-4 z-20">
+            <RoutePlannerPanel places={places} routes={routes} onClose={() => setShowPlanner(false)} onHighlight={setHighlightedPlan} />
+          </div>
+        ))}
+
+      <div data-guide="search" className="absolute left-1/2 top-6 z-20 -translate-x-1/2">
+        <PlaceSearch places={places} onSelect={selectPlaceAndShare} favoriteIds={favorites.ids} />
       </div>
 
       {(() => {
-        const myPos = positionsHook.myPosition;
         if (!myPos?.place_id || !myPos.arrived_at || myPos.travel_started_at) return null;
         const questHere = quests.find((q) => q.place_id === myPos.place_id);
         if (!questHere) return null;
@@ -1255,26 +1929,16 @@ export default function WorldMap() {
         const remaining = Math.ceil(60 - elapsedMin);
         return (
           <div className="glass absolute bottom-20 left-1/2 z-10 -translate-x-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-accent md:bottom-16">
-            📜 Quête "{questHere.title}" — validation dans {remaining} min
+            📜 Quête "{questHere.title}" — présence confirmée dans {remaining} min
           </div>
         );
       })()}
 
-      <div className="glass absolute bottom-3 left-1/2 z-10 hidden -translate-x-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/60 md:block">
-        {deleteMode
-          ? 'Clique un élément pour le supprimer'
-          : editMode && activeTool === 'polygon'
-          ? 'Clique pour ajouter un point · reclique sur le premier pour fermer'
-          : editMode && activeTool === 'route'
-          ? routeDraft
-            ? "Clique des points intermédiaires, puis un lieu d'arrivée pour terminer"
-            : 'Clique un lieu de départ'
-          : editMode && (activeTool === 'point-circle' || activeTool === 'point-rect')
-          ? 'Clique-glisse pour définir la taille, ou clique simple pour une taille par défaut'
-          : editMode && activeTool
-          ? 'Clique-glisse pour dessiner'
-          : "Glisse pour naviguer · molette pour zoomer · clique un élément pour l'explorer"}
-      </div>
+      {!modeHint && (
+        <div className="glass absolute bottom-3 left-1/2 z-10 hidden -translate-x-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/60 md:block">
+          Glisse pour naviguer · molette pour zoomer · clique un élément pour l'explorer
+        </div>
+      )}
       </div>
     </div>
   );
