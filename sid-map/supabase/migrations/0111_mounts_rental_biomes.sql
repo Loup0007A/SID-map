@@ -63,7 +63,7 @@ declare
   i int;
   steps int;
   s int;
-  ax numeric; ay numeric; bx numeric; by numeric;
+  ax numeric; ay numeric; bx numeric; by_ numeric;
   px numeric; py numeric;
   b record;
 begin
@@ -72,11 +72,11 @@ begin
   end if;
   for i in 0..n-2 loop
     ax := (p_points->i->>'x')::numeric;   ay := (p_points->i->>'y')::numeric;
-    bx := (p_points->(i+1)->>'x')::numeric; by := (p_points->(i+1)->>'y')::numeric;
-    steps := greatest(1, ceil(sqrt(power(bx-ax,2)+power(by-ay,2)) / 0.5)::int);
+    bx := (p_points->(i+1)->>'x')::numeric; by_ := (p_points->(i+1)->>'y')::numeric;
+    steps := greatest(1, ceil(sqrt(power(bx-ax,2)+power(by_-ay,2)) / 0.5)::int);
     for s in 0..steps loop
       px := ax + (bx-ax) * s / steps;
-      py := ay + (by-ay) * s / steps;
+      py := ay + (by_-ay) * s / steps;
       for b in select biome_type, path_points from map_biomes
                where is_published and not (biome_type = any(p_allowed)) loop
         if point_in_poly(px, py, b.path_points) then
