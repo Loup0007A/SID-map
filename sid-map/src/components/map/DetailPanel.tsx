@@ -63,7 +63,11 @@ export default function DetailPanel({
   }
 
   return (
-    <aside className="anim-slide-right absolute right-0 top-0 z-30 h-full w-full max-w-sm overflow-y-auto scrollbar-thin glass-strong sm:rounded-l-2xl p-5">
+    <aside className="detail-sheet absolute inset-x-0 bottom-0 z-30 max-h-[58%] overflow-y-auto overscroll-contain scrollbar-thin glass-strong rounded-t-2xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:inset-x-auto sm:right-0 sm:top-0 sm:h-full sm:max-h-none sm:w-full sm:max-w-sm sm:rounded-none sm:rounded-l-2xl sm:pb-5">
+      {/* Poignée (téléphone) : le panneau monte du bas, la carte reste visible au-dessus. */}
+      <div aria-hidden className="-mt-2 mb-3 flex justify-center sm:hidden">
+        <span className="h-1 w-10 rounded-full bg-white/25" />
+      </div>
       <div className="mb-4 flex items-center justify-between">
         <button onClick={onClose} className="text-sm text-paper/60 hover:text-accent">
           ✕ Fermer

@@ -80,7 +80,7 @@ export default function Navbar() {
             href={l.href}
             className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 font-display text-[11px] uppercase tracking-wide transition md:px-3 md:text-xs ${
               pathname === l.href
-                ? 'bg-accent/20 text-accent'
+                ? 'hidden bg-accent/20 text-accent md:inline-block'
                 : 'text-paper/70 hover:bg-white/10 hover:text-accent'
             }`}
           >
@@ -92,13 +92,18 @@ export default function Navbar() {
           data-guide="help"
           className="shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 font-display text-[11px] uppercase tracking-wide text-paper/80 transition hover:border-accent hover:text-accent md:px-3 md:text-xs"
         >
-          ? Aide
+          ?<span className="hidden md:inline"> Aide</span>
         </button>
         <button
           onClick={logout}
+          aria-label="Déconnexion"
+          title="Déconnexion"
           className="ml-1 shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 font-display text-[11px] text-paper/60 transition hover:border-accent hover:text-accent md:px-3 md:text-xs"
         >
-          Déconnexion
+          <span className="md:hidden" aria-hidden>
+            ⏻
+          </span>
+          <span className="hidden md:inline">Déconnexion</span>
         </button>
         <button
           onClick={toggle}

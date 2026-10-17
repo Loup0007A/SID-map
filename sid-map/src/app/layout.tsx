@@ -10,6 +10,7 @@ import '@fontsource/jetbrains-mono/700.css';
 import { ToastProvider } from '@/components/ui/Toast';
 import TermsBanner from '@/components/legal/TermsBanner';
 import { GuideProvider } from '@/components/guide/GuideProvider';
+import EventDecor from '@/components/EventDecor';
 import './globals.css';
 
 
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <GuideProvider>{children}</GuideProvider>
         </ToastProvider>
         <TermsBanner />
+        <EventDecor variant="map" />
       </body>
     </html>
   );

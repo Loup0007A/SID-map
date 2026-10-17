@@ -3,6 +3,7 @@
 import Icon from '@/components/ui/Icon';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { usePermission } from '@/lib/hooks/usePermission';
@@ -33,9 +34,6 @@ import {
 import { centroid, labelAnchor } from '@/lib/geometry';
 import { isImageIcon } from '@/lib/icons';
 import type { RoutePlan } from '@/lib/pathfinding';
-import DetailPanel from './DetailPanel';
-import ZoneFormModal from './ZoneFormModal';
-import PlaceFormModal from './PlaceFormModal';
 import ShapeToolbar from './ShapeToolbar';
 import ZoomControls from './ZoomControls';
 import GridOverlay from './GridOverlay';
@@ -43,30 +41,19 @@ import MapLegend from './MapLegend';
 import MapActionStack from './MapActionStack';
 import PresenceMarkers from './PresenceMarkers';
 import PresencePanel from './PresencePanel';
-import PositionPickerModal from './PositionPickerModal';
-import RouteFormModal from './RouteFormModal';
-import RouteInfoModal from './RouteInfoModal';
-import ReliefFormModal from './ReliefFormModal';
-import BiomeFormModal from './BiomeFormModal';
 import QuestMarkers from './QuestMarkers';
-import QuestPopup from './QuestPopup';
 import TextureOverlays from './TextureOverlays';
-import TexturePicker from './TexturePicker';
 import ScaleBar from './ScaleBar';
 import { useMapSettings } from '@/lib/hooks/useMapSettings';
 import { biomeTextureId, reliefTextureId, findTexture } from '@/lib/textures';
 import Modal from '@/components/ui/Modal';
 import { useTextures } from '@/lib/hooks/useTextures';
-import CrystalsModal from './CrystalsModal';
-import MountsModal from './MountsModal';
-import FlightPanel from './FlightPanel';
 import { APP_EVENT } from '@/lib/apps';
 import { exportMapPng } from '@/lib/exportMap';
 import { useMountTypes } from '@/lib/hooks/useMountTypes';
 import { isQuestFinished } from '@/lib/types';
 import TerritoryFlag from './TerritoryFlag';
 import PlaceSearch from './PlaceSearch';
-import RoutePlannerPanel from './RoutePlannerPanel';
 import Navbar from '@/components/layout/Navbar';
 import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
 import { usePositions } from '@/lib/hooks/usePositions';
@@ -81,7 +68,26 @@ import { distanceUnits, formatDistance } from '@/lib/mapScale';
 import { useFavorites } from '@/lib/hooks/useFavorites';
 import { useIsDesktop } from '@/components/ui/Modal';
 import { SEL_TABLE, parseSel, pointInPolygon, selKey, shiftPoint, shiftPoints, type SelKind } from '@/lib/selection';
-import { DirectoryApp, NearbyApp, NotesApp } from '@/components/apps/ExtraApps';
+
+// Fenêtres et formulaires chargés à la demande : la carte s'affiche plus vite
+// sur téléphone (moins de code à télécharger et à lire au démarrage).
+const ZoneFormModal = dynamic(() => import('./ZoneFormModal'), { ssr: false });
+const PlaceFormModal = dynamic(() => import('./PlaceFormModal'), { ssr: false });
+const PositionPickerModal = dynamic(() => import('./PositionPickerModal'), { ssr: false });
+const RouteFormModal = dynamic(() => import('./RouteFormModal'), { ssr: false });
+const RouteInfoModal = dynamic(() => import('./RouteInfoModal'), { ssr: false });
+const ReliefFormModal = dynamic(() => import('./ReliefFormModal'), { ssr: false });
+const BiomeFormModal = dynamic(() => import('./BiomeFormModal'), { ssr: false });
+const QuestPopup = dynamic(() => import('./QuestPopup'), { ssr: false });
+const TexturePicker = dynamic(() => import('./TexturePicker'), { ssr: false });
+const CrystalsModal = dynamic(() => import('./CrystalsModal'), { ssr: false });
+const MountsModal = dynamic(() => import('./MountsModal'), { ssr: false });
+const FlightPanel = dynamic(() => import('./FlightPanel'), { ssr: false });
+const RoutePlannerPanel = dynamic(() => import('./RoutePlannerPanel'), { ssr: false });
+const DetailPanel = dynamic(() => import('./DetailPanel'), { ssr: false });
+const DirectoryApp = dynamic(() => import('@/components/apps/ExtraApps').then((m) => m.DirectoryApp), { ssr: false });
+const NearbyApp = dynamic(() => import('@/components/apps/ExtraApps').then((m) => m.NearbyApp), { ssr: false });
+const NotesApp = dynamic(() => import('@/components/apps/ExtraApps').then((m) => m.NotesApp), { ssr: false });
 
 const CLOSE_SNAP_PX = 14;
 type PointTool = 'point-circle' | 'point-rect';
@@ -114,7 +120,8 @@ export default function WorldMap() {
   const vp = useSvgViewport(world);
   const placeTypes = useTypeConfig('place');
   const positionsHook = usePositions();
-  const now = useNow(1000);
+  // Les comptes à rebours affichent des minutes : inutile de tout redessiner chaque seconde.
+  const now = useNow(15000);
   const groupsHook = useGroups();
   const { showToast } = useToast();
 
@@ -204,7 +211,7 @@ export default function WorldMap() {
       const p = places.find((pl) => pl.id === placeId);
       if (p) {
         setSelected({ kind: 'place', entity: p });
-        vp.panTo(p.x, p.y, 30);
+        vp.panTo(p.x, p.y, 30, isDesktop ? 0.5 : 0.28);
       }
     }
     setDidInitialFocus(true);
@@ -218,7 +225,7 @@ export default function WorldMap() {
       return;
     }
     setSelected({ kind: 'place', entity: p });
-    vp.panTo(p.x, p.y, 30);
+    vp.panTo(p.x, p.y, 30, isDesktop ? 0.5 : 0.28);
     const params = new URLSearchParams(searchParams.toString());
     params.set('lieu', p.id);
     router.replace(`/carte?${params.toString()}`, { scroll: false });
@@ -986,6 +993,252 @@ export default function WorldMap() {
     return tips.find((t) => !guide.state.dismissed.includes(t.id)) ?? null;
   })();
 
+
+  // ---------------------------------------------------------------------
+  // Calques mémorisés : ils ne sont redessinés que si leurs données ou la
+  // sélection changent (pas à chaque tic d'horloge, ni pendant un geste).
+  // Les clics passent par `act`, toujours à jour.
+  // ---------------------------------------------------------------------
+  const act = useRef({
+    biome: (_e: React.MouseEvent, _b: MapBiome) => {},
+    relief: (_e: React.MouseEvent, _r: MapRelief) => {},
+    zone: (_e: React.MouseEvent, _z: MapZone) => {},
+    route: (_e: React.MouseEvent, _r: MapRoute) => {},
+    place: (_e: React.MouseEvent, _p: MapPlace) => {}
+  });
+  act.current = {
+    biome: (e, b) => {
+      if (editLayer !== 'biome') return;
+      e.stopPropagation();
+      if (deleteMode) deleteBiome(b);
+      else if (editMode && !activeTool) setRetexture({ table: 'map_biomes', id: b.id, value: b.texture_id ?? null });
+    },
+    relief: (e, r) => {
+      if (editLayer !== 'relief') return;
+      e.stopPropagation();
+      if (deleteMode) deleteRelief(r);
+      else if (editMode && !activeTool) setRetexture({ table: 'map_relief', id: r.id, value: r.texture_id ?? null });
+    },
+    zone: (e, z) => {
+      e.stopPropagation();
+      if (deleteMode && editLayer === 'map') return deleteZone(z);
+      if (!activeTool && !measureMode) setSelected({ kind: 'zone', entity: z });
+    },
+    route: (e, r) => {
+      e.stopPropagation();
+      if (deleteMode && editLayer === 'map') return deleteRoute(r);
+      if (!activeTool && !measureMode) setSelectedRoute(r);
+    },
+    place: (e, p) => {
+      e.stopPropagation();
+      if (deleteMode && editLayer === 'map') return deletePlace(p);
+      if (!activeTool) selectPlaceAndShare(p);
+    }
+  };
+  const selSig = activeTool === 'select' ? sel.join(',') : '';
+  const groupSig = groupsHook.groups.map((g) => `${g.id}:${g.label}`).join('|');
+  const iconSig = placeTypes.items.map((i) => `${i.key}:${i.icon}`).join('|');
+
+  const biomeLayer = useMemo(
+    () =>
+      showBiomes &&
+      biomes.map((b) => (
+        <polygon
+          key={b.id}
+          points={pointsToSvg(b.path_points)}
+          fill={b.color}
+          fillOpacity={showTextures && findTexture(biomeTextureId(b), customTextures)?.bg ? 0 : 0.55}
+          stroke={isSel('biome', b.id) ? '#e7c34a' : deleteMode && editLayer === 'biome' ? '#d2463b' : '#00000033'}
+          strokeWidth={isSel('biome', b.id) ? 0.45 : deleteMode && editLayer === 'biome' ? 0.3 : 0.1}
+          transform={selShift('biome', b.id)}
+          className={editLayer === 'biome' ? 'cursor-pointer' : ''}
+          onClick={(e) => act.current.biome(e, b)}
+        />
+      )),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showBiomes, biomes, showTextures, customTextures, selSig, moveDx, moveDy, deleteMode, editLayer]
+  );
+
+  const reliefLayer = useMemo(
+    () =>
+      showRelief &&
+      relief.map((r) => (
+        <polygon
+          key={r.id}
+          points={pointsToSvg(r.path_points)}
+          fill={reliefColor(r.elevation)}
+          fillOpacity={showTextures && findTexture(reliefTextureId(r), customTextures)?.bg ? 0 : 0.4}
+          stroke={isSel('relief', r.id) ? '#e7c34a' : deleteMode && editLayer === 'relief' ? '#d2463b' : '#00000022'}
+          strokeWidth={isSel('relief', r.id) ? 0.45 : deleteMode && editLayer === 'relief' ? 0.3 : 0.1}
+          transform={selShift('relief', r.id)}
+          className={editLayer === 'relief' ? 'cursor-pointer' : ''}
+          onClick={(e) => act.current.relief(e, r)}
+        />
+      )),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showRelief, relief, showTextures, customTextures, selSig, moveDx, moveDy, deleteMode, editLayer]
+  );
+
+  const textureLayer = useMemo(
+    () =>
+      showTextures && (
+        <TextureOverlays biomes={biomes} relief={relief} custom={customTextures} showBiomes={showBiomes} showRelief={showRelief} />
+      ),
+    [showTextures, biomes, relief, customTextures, showBiomes, showRelief]
+  );
+
+  const zoneLayer = useMemo(
+    () => (
+      <>
+        {zones.map((z) => (
+          <polygon
+            key={z.id}
+            points={pointsToSvg(z.path_points)}
+            fill={z.color}
+            fillOpacity={0.75}
+            stroke={isSel('zone', z.id) ? '#e7c34a' : deleteMode ? '#d2463b' : '#f4e9c8'}
+            strokeOpacity={isSel('zone', z.id) || deleteMode ? 1 : 0.4}
+            strokeWidth={isSel('zone', z.id) ? 0.45 : deleteMode ? 0.3 : 0.18}
+            strokeLinejoin="round"
+            strokeDasharray={isSel('zone', z.id) ? '1.2 0.6' : undefined}
+            transform={selShift('zone', z.id)}
+            className="zone-poly cursor-pointer"
+            onClick={(e) => act.current.zone(e, z)}
+          />
+        ))}
+        {zones.map((z) => {
+          const label = groupsHook.labelFor(z.controlling_group_id);
+          if (!label) return null;
+          const c = zoneAnchors.get(z.id)?.point ?? centroid(z.path_points);
+          return <TerritoryFlag key={`flag-${z.id}`} x={c.x} y={c.y} label={label} />;
+        })}
+        {/* Nom des régions, en lettres espacées comme sur un atlas. */}
+        {zones.map((z) => {
+          if (!z.name || z.path_points.length < 3) return null;
+          // Région entièrement recouverte par d'autres : pas de nom plutôt qu'un nom mal placé.
+          const anchor = zoneAnchors.get(z.id);
+          if (!anchor) return null;
+          const xs = z.path_points.map((p) => p.x);
+          const width = Math.max(...xs) - Math.min(...xs);
+          // Le texte doit tenir dans l'espace libre autour du point d'ancrage.
+          const fit = (anchor.clearance * 2.6) / Math.max(4, z.name.length);
+          const size = Math.max(0.9, Math.min(3.2, (width * 0.7) / Math.max(4, z.name.length), fit));
+          const c = anchor.point;
+          const flag = !!groupsHook.labelFor(z.controlling_group_id);
+          return (
+            <text
+              key={`name-${z.id}`}
+              x={c.x}
+              y={c.y + (flag ? size * 2.2 : size * 0.35)}
+              textAnchor="middle"
+              fontSize={size}
+              letterSpacing={size * 0.22}
+              fill="#f4e9c8"
+              fillOpacity={0.62}
+              className="select-none font-display uppercase"
+              style={{ pointerEvents: 'none', paintOrder: 'stroke', stroke: '#06101f', strokeOpacity: 0.45, strokeWidth: size * 0.12 }}
+              transform={selShift('zone', z.id)}
+            >
+              {z.name}
+            </text>
+          );
+        })}
+      </>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [zones, zoneAnchors, groupSig, selSig, moveDx, moveDy, deleteMode]
+  );
+
+  const routeLayer = useMemo(
+    () =>
+      routes.map((r) => {
+        const isHighlighted = highlightedPlan?.steps.some((s) => s.route.id === r.id);
+        return (
+          <polyline
+            key={r.id}
+            points={pointsToSvg(r.path_points)}
+            fill="none"
+            stroke={deleteMode ? '#d2463b' : isHighlighted ? '#4ade80' : r.color}
+            strokeWidth={isHighlighted ? 0.6 : 0.35}
+            strokeDasharray={isHighlighted ? undefined : '1.4 0.9'}
+            strokeLinecap="round"
+            className={`cursor-pointer ${isHighlighted ? 'route-glow' : 'route-flow'}`}
+            onClick={(e) => act.current.route(e, r)}
+          />
+        );
+      }),
+    [routes, highlightedPlan, deleteMode]
+  );
+
+  const placeLayer = useMemo(
+    () => (
+      <>
+        {places.map((p) => {
+          const r = p.radius ?? 3;
+          const w = p.width ?? r * 2;
+          const h = p.height ?? r * 2;
+          const iconSize = p.shape === 'rect' ? Math.min(w, h) * 0.4 : r * 0.85;
+          const labelOffset = (p.shape === 'rect' ? h / 2 : r) + 2;
+          const icon = p.icon || placeTypes.iconFor(p.type);
+          // Image importée : dessinée dans le rond, un peu plus grande qu'un emoji.
+          const s = iconSize * 1.55;
+          return (
+            <g
+              key={p.id}
+              transform={`translate(${p.x + (isSel('place', p.id) ? moveDx : 0)}, ${p.y + (isSel('place', p.id) ? moveDy : 0)})`}
+              className="map-place cursor-pointer"
+              onClick={(e) => act.current.place(e, p)}
+            >
+              {p.shape === 'rect' ? (
+                <rect x={-w / 2} y={-h / 2} width={w} height={h} rx={0.6} fill="url(#sid-place)" stroke={deleteMode ? '#d2463b' : '#d9b65a'} strokeWidth={deleteMode ? 0.35 : 0.16} />
+              ) : (
+                <circle r={r} fill="url(#sid-place)" stroke={deleteMode ? '#d2463b' : '#d9b65a'} strokeWidth={deleteMode ? 0.35 : 0.16} />
+              )}
+              {isSel('place', p.id) &&
+                (p.shape === 'rect' ? (
+                  <rect x={-w / 2 - 0.7} y={-h / 2 - 0.7} width={w + 1.4} height={h + 1.4} rx={1} fill="none" stroke="#e7c34a" strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
+                ) : (
+                  <circle r={r + 0.8} fill="none" stroke="#e7c34a" strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
+                ))}
+              {isImageIcon(icon) ? (
+                <image href={icon} x={-s / 2} y={-s / 2} width={s} height={s} preserveAspectRatio="xMidYMid meet" style={{ pointerEvents: 'none' }} />
+              ) : (
+                <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
+                  {icon}
+                </text>
+              )}
+              <text
+                textAnchor="middle"
+                dy={labelOffset}
+                fontSize="1.3"
+                fill="#e7e5db"
+                className="place-label select-none"
+                style={{ paintOrder: 'stroke', stroke: '#081629', strokeWidth: 0.3 }}
+              >
+                {p.name}
+              </text>
+            </g>
+          );
+        })}
+        {places.map((p) => {
+          const label = groupsHook.labelFor(p.controlling_group_id);
+          if (!label) return null;
+          const offset = (p.shape === 'rect' ? (p.height ?? 6) / 2 : p.radius ?? 3) + 4;
+          return <TerritoryFlag key={`flag-${p.id}`} x={p.x} y={p.y - offset} label={label} />;
+        })}
+      </>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [places, iconSig, groupSig, selSig, moveDx, moveDy, deleteMode]
+  );
+
+  // Page de la carte : l'aurore animée du fond est inutile (cachée par la
+  // carte) et coûteuse sur téléphone.
+  useEffect(() => {
+    document.documentElement.classList.add('map-page');
+    return () => document.documentElement.classList.remove('map-page');
+  }, []);
+
   return (
     <div className="flex h-[100dvh] w-full flex-col overflow-hidden">
       <Navbar />
@@ -1207,7 +1460,7 @@ export default function WorldMap() {
       <svg
         ref={vp.svgRef}
         viewBox={vp.viewBoxString}
-        style={{ touchAction: 'none' }}
+        style={{ touchAction: 'none', transformOrigin: '0 0' }}
         className={`h-full w-full select-none ${
           deleteMode
             ? 'cursor-not-allowed'
@@ -1269,138 +1522,15 @@ export default function WorldMap() {
           <text y={-5.9} textAnchor="middle" fontSize={1.5} fill="#e7c34a" className="font-display">N</text>
         </g>
 
-        {showBiomes &&
-          biomes.map((b) => (
-            <polygon
-              key={b.id}
-              points={pointsToSvg(b.path_points)}
-              fill={b.color}
-              fillOpacity={showTextures && findTexture(biomeTextureId(b), customTextures)?.bg ? 0 : 0.55}
-              stroke={isSel('biome', b.id) ? '#e7c34a' : deleteMode && editLayer === 'biome' ? '#d2463b' : '#00000033'}
-              strokeWidth={isSel('biome', b.id) ? 0.45 : deleteMode && editLayer === 'biome' ? 0.3 : 0.1}
-              transform={selShift('biome', b.id)}
-              className={editLayer === 'biome' ? 'cursor-pointer' : ''}
-              onClick={(e) => {
-                if (editLayer !== 'biome') return;
-                e.stopPropagation();
-                if (deleteMode) deleteBiome(b);
-                else if (editMode && !activeTool) setRetexture({ table: 'map_biomes', id: b.id, value: b.texture_id ?? null });
-              }}
-            />
-          ))}
+        {biomeLayer}
+        {reliefLayer}
+        {textureLayer}
 
-        {showRelief &&
-          relief.map((r) => (
-            <polygon
-              key={r.id}
-              points={pointsToSvg(r.path_points)}
-              fill={reliefColor(r.elevation)}
-              fillOpacity={showTextures && findTexture(reliefTextureId(r), customTextures)?.bg ? 0 : 0.4}
-              stroke={isSel('relief', r.id) ? '#e7c34a' : deleteMode && editLayer === 'relief' ? '#d2463b' : '#00000022'}
-              strokeWidth={isSel('relief', r.id) ? 0.45 : deleteMode && editLayer === 'relief' ? 0.3 : 0.1}
-              transform={selShift('relief', r.id)}
-              className={editLayer === 'relief' ? 'cursor-pointer' : ''}
-              onClick={(e) => {
-                if (editLayer !== 'relief') return;
-                e.stopPropagation();
-                if (deleteMode) deleteRelief(r);
-                else if (editMode && !activeTool) setRetexture({ table: 'map_relief', id: r.id, value: r.texture_id ?? null });
-              }}
-            />
-          ))}
-
-        {showTextures && (
-          <TextureOverlays
-            biomes={biomes}
-            relief={relief}
-            custom={customTextures}
-            showBiomes={showBiomes}
-            showRelief={showRelief}
-          />
-        )}
-
-        {zones.map((z) => (
-          <polygon
-            key={z.id}
-            points={pointsToSvg(z.path_points)}
-            fill={z.color}
-            fillOpacity={0.75}
-            stroke={isSel('zone', z.id) ? '#e7c34a' : deleteMode ? '#d2463b' : '#f4e9c8'}
-            strokeOpacity={isSel('zone', z.id) || deleteMode ? 1 : 0.4}
-            strokeWidth={isSel('zone', z.id) ? 0.45 : deleteMode ? 0.3 : 0.18}
-            strokeLinejoin="round"
-            strokeDasharray={isSel('zone', z.id) ? '1.2 0.6' : undefined}
-            transform={selShift('zone', z.id)}
-            className="cursor-pointer transition hover:brightness-110"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (deleteMode && editLayer === 'map') return deleteZone(z);
-              if (!activeTool && !measureMode) setSelected({ kind: 'zone', entity: z });
-            }}
-          />
-        ))}
-
-        {zones.map((z) => {
-          const label = groupsHook.labelFor(z.controlling_group_id);
-          if (!label) return null;
-          const c = zoneAnchors.get(z.id)?.point ?? centroid(z.path_points);
-          return <TerritoryFlag key={`flag-${z.id}`} x={c.x} y={c.y} label={label} />;
-        })}
-
-        {/* Nom des régions, en lettres espacées comme sur un atlas. */}
-        {zones.map((z) => {
-          if (!z.name || z.path_points.length < 3) return null;
-          // Région entièrement recouverte par d'autres : pas de nom plutôt qu'un nom mal placé.
-          const anchor = zoneAnchors.get(z.id);
-          if (!anchor) return null;
-          const xs = z.path_points.map((p) => p.x);
-          const width = Math.max(...xs) - Math.min(...xs);
-          // Le texte doit tenir dans l'espace libre autour du point d'ancrage.
-          const fit = (anchor.clearance * 2.6) / Math.max(4, z.name.length);
-          const size = Math.max(0.9, Math.min(3.2, (width * 0.7) / Math.max(4, z.name.length), fit));
-          const c = anchor.point;
-          const flag = !!groupsHook.labelFor(z.controlling_group_id);
-          return (
-            <text
-              key={`name-${z.id}`}
-              x={c.x}
-              y={c.y + (flag ? size * 2.2 : size * 0.35)}
-              textAnchor="middle"
-              fontSize={size}
-              letterSpacing={size * 0.22}
-              fill="#f4e9c8"
-              fillOpacity={0.62}
-              className="select-none font-display uppercase"
-              style={{ pointerEvents: 'none', paintOrder: 'stroke', stroke: '#06101f', strokeOpacity: 0.45, strokeWidth: size * 0.12 }}
-              transform={selShift('zone', z.id)}
-            >
-              {z.name}
-            </text>
-          );
-        })}
+        {zoneLayer}
 
         {showGrid && <GridOverlay viewBox={vp.viewBox} />}
 
-        {routes.map((r) => {
-          const isHighlighted = highlightedPlan?.steps.some((s) => s.route.id === r.id);
-          return (
-            <polyline
-              key={r.id}
-              points={pointsToSvg(r.path_points)}
-              fill="none"
-              stroke={deleteMode ? '#d2463b' : isHighlighted ? '#4ade80' : r.color}
-              strokeWidth={isHighlighted ? 0.6 : 0.35}
-              strokeDasharray={isHighlighted ? undefined : '1.4 0.9'}
-              strokeLinecap="round"
-              className={`cursor-pointer ${isHighlighted ? 'route-glow' : 'route-flow'}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (deleteMode && editLayer === 'map') return deleteRoute(r);
-                if (!activeTool && !measureMode) setSelectedRoute(r);
-              }}
-            />
-          );
-        })}
+        {routeLayer}
 
         {routeDraft && (
           <polyline
@@ -1453,76 +1583,7 @@ export default function WorldMap() {
           <rect x={pointPreview.rectX} y={pointPreview.rectY} width={pointPreview.w} height={pointPreview.h} fill="#d2463b" fillOpacity={0.3} stroke="#d2463b" strokeWidth={0.25} />
         )}
 
-        {places.map((p) => {
-          const r = p.radius ?? 3;
-          const w = p.width ?? r * 2;
-          const h = p.height ?? r * 2;
-          const iconSize = p.shape === 'rect' ? Math.min(w, h) * 0.4 : r * 0.85;
-          const labelOffset = (p.shape === 'rect' ? h / 2 : r) + 2;
-
-          return (
-            <g
-              key={p.id}
-              transform={`translate(${p.x + (isSel('place', p.id) ? moveDx : 0)}, ${p.y + (isSel('place', p.id) ? moveDy : 0)})`}
-              className="map-place cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (deleteMode && editLayer === 'map') return deletePlace(p);
-                if (!activeTool) selectPlaceAndShare(p);
-              }}
-            >
-              {p.shape === 'rect' ? (
-                <rect
-                  x={-w / 2}
-                  y={-h / 2}
-                  width={w}
-                  height={h}
-                  rx={0.6}
-                  fill="url(#sid-place)"
-                  stroke={deleteMode ? '#d2463b' : '#d9b65a'}
-                  strokeWidth={deleteMode ? 0.35 : 0.16}
-                />
-              ) : (
-                <circle r={r} fill="url(#sid-place)" stroke={deleteMode ? '#d2463b' : '#d9b65a'} strokeWidth={deleteMode ? 0.35 : 0.16} />
-              )}
-              {isSel('place', p.id) &&
-                (p.shape === 'rect' ? (
-                  <rect x={-w / 2 - 0.7} y={-h / 2 - 0.7} width={w + 1.4} height={h + 1.4} rx={1} fill="none" stroke="#e7c34a" strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
-                ) : (
-                  <circle r={r + 0.8} fill="none" stroke="#e7c34a" strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
-                ))}
-              {(() => {
-                const icon = p.icon || placeTypes.iconFor(p.type);
-                // Image importée : dessinée dans le rond, un peu plus grande qu'un emoji.
-                const s = iconSize * 1.55;
-                return isImageIcon(icon) ? (
-                  <image href={icon} x={-s / 2} y={-s / 2} width={s} height={s} preserveAspectRatio="xMidYMid meet" style={{ pointerEvents: 'none' }} />
-                ) : (
-                  <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
-                    {icon}
-                  </text>
-                );
-              })()}
-              <text
-                textAnchor="middle"
-                dy={labelOffset}
-                fontSize="1.3"
-                fill="#e7e5db"
-                className="select-none"
-                style={{ paintOrder: 'stroke', stroke: '#081629', strokeWidth: 0.3 }}
-              >
-                {p.name}
-              </text>
-            </g>
-          );
-        })}
-
-        {places.map((p) => {
-          const label = groupsHook.labelFor(p.controlling_group_id);
-          if (!label) return null;
-          const offset = (p.shape === 'rect' ? (p.height ?? 6) / 2 : p.radius ?? 3) + 4;
-          return <TerritoryFlag key={`flag-${p.id}`} x={p.x} y={p.y - offset} label={label} />;
-        })}
+        {placeLayer}
 
         {selDrag?.mode === 'marquee' && (
           <rect

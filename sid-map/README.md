@@ -91,6 +91,36 @@ indispensable pour dessiner/naviguer sur la carte depuis un téléphone :
 - Navbar et panneaux latéraux adaptés (plein écran sur mobile plutôt que
   colonne étroite avec coin arrondi qui ne fait plus sens).
 
+### Fluidité sur téléphone (octobre 2026)
+- **Gestes sans React** (`useSvgViewport`) : pendant un glisser, un
+  pincement, la molette ou un zoom animé, la carte déjà dessinée est
+  déplacée par la carte graphique (`transform` CSS) ; le vrai `viewBox`
+  n'est recalculé que lorsqu'un bord vide apparaît, que l'échelle change
+  beaucoup ou que le doigt s'arrête, puis à la fin du geste (un seul rendu
+  React). Le doigt restant après un pincement continue sans saut.
+- **Calques mémorisés** : régions, lieux, routes, reliefs, biomes et
+  textures ne sont redessinés que si leurs données ou la sélection
+  changent (clics passés par une référence). L'horloge de la page passe de
+  1 s à 15 s (les comptes à rebours sont en minutes).
+- **Animations continues coupées** sur écran tactile (routes qui coulent,
+  sceau, liseré, aurore du fond) et en pause pendant les gestes ; verre
+  moins flou sur téléphone ; survols réservés à la souris.
+- **Niveau de détail** : de loin, les noms des lieux sont masqués.
+- **Vue de départ** : sur un écran en hauteur, la carte remplit l'écran
+  (pleine hauteur) au lieu d'un petit carré au milieu.
+- **Panneau d'un lieu** : monte du bas (58 % de l'écran) et le lieu est
+  centré dans la partie visible au-dessus ; zoom +/- et centrage animés.
+- **Chargement** : les fenêtres et formulaires rares (édition, montures,
+  cristaux, vol, itinéraire, annuaire…) sont chargés à la demande.
+- Barre du haut compacte sur téléphone (« ? », « ⏻ »).
+
+### Affichage événementiel
+Halloween (toile d'araignée, chauves-souris, sceau en citrouille, bords
+teintés), réglé depuis le Dossier Central : **Modération → Affichage
+événementiel** (automatique du 15 octobre au 2 novembre, toujours, ou
+désactivé). Composant `src/components/EventDecor.tsx` (identique dans le
+wiki), fonction `site_decor` (migration 0063 du site principal).
+
 ## Ce qui est fonctionnel dans ce scaffold
 
 - **Design** : thème sombre glassmorphism (dégradé de fond, panneaux translucides floutés, coins arrondis), inspiré du site 1 (`sid-quest.vercel.app`).
