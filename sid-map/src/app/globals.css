@@ -6,6 +6,11 @@
   color-scheme: dark;
 }
 
+:root {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
 body {
   overflow-x: hidden;
   min-height: 100vh;
@@ -93,3 +98,12 @@ textarea:focus-visible,
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Pages légales (CGU, confidentialité) — texte commun aux trois sites */
+.legal { line-height: 1.65; font-size: 0.95rem; }
+.legal p, .legal ul { margin: 0.6rem 0; }
+.legal ul { list-style: disc; padding-left: 1.3rem; }
+.legal li { margin: 0.3rem 0; }
+.legal a { text-decoration: underline; }
+.legal .legal-h2 { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.95rem; color: #e7e5db; margin: 1.6rem 0 0.4rem; }
+.legal .legal-meta { font-family: var(--font-mono); font-size: 0.72rem; opacity: 0.6; }

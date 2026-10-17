@@ -1,10 +1,16 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+// Polices servies par le site lui-même (paquets @fontsource).
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/500.css';
+import '@fontsource/jetbrains-mono/700.css';
 import { ToastProvider } from '@/components/ui/Toast';
+import TermsBanner from '@/components/legal/TermsBanner';
 import './globals.css';
 
-const sans = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', weight: ['400', '500', '700'] });
 
 export const metadata: Metadata = {
   title: 'S.I.D. — Cartographie',
@@ -27,9 +33,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${sans.variable} ${mono.variable}`}>
+    <html lang="fr">
       <body className="bg-ink text-paper font-body antialiased">
         <ToastProvider>{children}</ToastProvider>
+        <TermsBanner />
       </body>
     </html>
   );

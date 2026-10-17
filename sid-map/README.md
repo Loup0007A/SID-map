@@ -284,3 +284,17 @@ supabase/migrations/     schéma SQL additif
 - **Ajouter une application** : une entrée dans `APPS` (`src/lib/apps.ts`) + un `case` dans `runApp()` de `WorldMap.tsx`. Depuis une autre page, le lanceur redirige vers `/carte?app=<id>`.
 - Les anciens boutons flottants (position, cristaux, montures, itinéraire, export) sont devenus des applications.
 - **Vol libre** : application « Vol libre » (monture volante équipée requise) → clique n'importe quel lieu : trait pointillé, distance, durée, portée et biomes, puis « Décoller ».
+
+## CGU et confidentialité
+- Pages publiques `/cgu` et `/confidentialite` (liens sur l'écran de
+  connexion et en bas du lanceur d'applications). Le texte est partagé avec
+  le Dossier Central et le Wiki : `src/components/legal/LegalContent.tsx`
+  (copie identique dans les trois dépôts).
+- Les membres qui n'ont pas accepté la version en cours voient une carte
+  « J'accepte » (colonne `profiles.terms_version`, migration 0060 du site
+  principal).
+- Export des données et demande de suppression : page **Mes données** du
+  Dossier Central (couvre aussi la carte).
+- Polices auto-hébergées (`@fontsource`), plus d'appel à Google Fonts.
+- Facultatif : `NEXT_PUBLIC_CONTACT_EMAIL` pour afficher une adresse de
+  contact dans les textes.

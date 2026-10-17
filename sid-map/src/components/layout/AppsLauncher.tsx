@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { usePermission } from '@/lib/hooks/usePermission';
 import { APPS, CATEGORIES, openApp, type AppCategory } from '@/lib/apps';
 import AppIcon from './AppIcon';
+import { LegalLinks } from '@/components/legal/LegalPage';
 
 // Panneau « Applications » ouvert depuis la barre du haut.
 export default function AppsLauncher({ onClose }: { onClose: () => void }) {
@@ -92,6 +93,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
                 </div>
               </section>
             ))}
+          <LegalLinks className="border-t border-white/10 pt-3" />
         </div>
       </div>
     </div>

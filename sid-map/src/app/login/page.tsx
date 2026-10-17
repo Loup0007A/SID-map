@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { LegalLinks } from '@/components/legal/LegalPage';
 
 export default function LoginPage() {
   return (
@@ -112,6 +113,7 @@ function LoginForm() {
             <p className="text-center text-[11px] text-paper/40">
               Utilise le même dossier que sur le site principal S.I.D.
             </p>
+            <LegalLinks />
           </form>
         </div>
       </div>
