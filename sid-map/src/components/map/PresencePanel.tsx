@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { CharacterPosition, MapPlace, MapRoute } from '@/lib/types';
 import { useNow } from '@/lib/hooks/useNow';
-import { computeProgress } from '@/lib/travel';
+import { computeProgress, tripInfo } from '@/lib/travel';
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -32,14 +32,8 @@ export default function PresencePanel({
   function locationLabel(p: CharacterPosition): string {
     if (p.travel_started_at) {
       const pct = Math.round(computeProgress(p, now) * 100);
-      let destName = '?';
-      if (p.flight_target_place_id) {
-        destName = places.find((pl) => pl.id === p.flight_target_place_id)?.name ?? '?';
-      } else if (p.route_id) {
-        const route = routes.find((r) => r.id === p.route_id);
-        const destId = route ? (route.from_place_id === p.place_id ? route.to_place_id : route.from_place_id) : null;
-        destName = places.find((pl) => pl.id === destId)?.name ?? '?';
-      }
+      const destId = tripInfo(p, routes, now)?.destinationId ?? null;
+      const destName = places.find((pl) => pl.id === destId)?.name ?? '?';
       return `${p.flight_target_place_id ? '🕊️' : '🛣'} En route vers ${destName} (${pct}%)`;
     }
     if (p.place_id) {

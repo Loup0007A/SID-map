@@ -71,6 +71,20 @@ export function usePositions() {
     return { error: error?.message ?? data?.error ?? null, data };
   }
 
+  /** Itinéraire à plusieurs étapes, depuis la position actuelle. */
+  async function startRoutePlan(steps: { routeId: string; toPlaceId: string }[]) {
+    const { data, error } = await supabase.rpc('start_route_plan', {
+      p_planned_path: steps.map((s) => ({ route_id: s.routeId, to_place_id: s.toPlaceId }))
+    });
+    if (!error) load();
+    const d = data as { error?: string; message?: string; duration_minutes?: number } | null;
+    return {
+      error: error ? 'rpc' : d?.error ?? null,
+      message: error ? 'Le serveur n’a pas pu lancer le trajet (migration 0113 manquante ?).' : d?.message ?? null,
+      data: d
+    };
+  }
+
   async function setCurrentBuilding(buildingId: string | null) {
     const { data, error } = await supabase.rpc('set_current_building', { p_building_id: buildingId });
     if (!error) load();
@@ -110,6 +124,7 @@ export function usePositions() {
     loading,
     setInitialPlace,
     startJourney,
+    startRoutePlan,
     setCurrentBuilding,
     setStatus,
     rentMount,

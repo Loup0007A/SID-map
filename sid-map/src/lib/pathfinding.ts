@@ -8,11 +8,12 @@ function pathLength(points: Point[]): number {
   return total;
 }
 
-function routeWeight(r: MapRoute): number {
+/** Durée à pied d'une route (min) — même formule que le serveur (0113). */
+export function routeWeight(r: MapRoute): number {
   // Utilise le temps de trajet RP s'il est renseigné, sinon une
   // estimation à partir de la longueur du tracé (pour départager les
   // itinéraires quand aucun temps n'est précisé).
-  return r.travel_minutes ?? Math.max(5, Math.round(pathLength(r.path_points) * 2));
+  return r.travel_minutes ?? Math.max(5, pathLength(r.path_points ?? []) * 2);
 }
 
 export interface RouteStep {

@@ -7,6 +7,7 @@ import Modal from '@/components/ui/Modal';
 import type { CharacterPosition, MapPlace, MapRoute } from '@/lib/types';
 import { distanceKm, formatDistance, type MapSettings } from '@/lib/mapScale';
 import { formatMinutes } from '@/lib/travel';
+import { routeWeight } from '@/lib/pathfinding';
 
 const row = 'flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left hover:border-[#e7c34a]/50 hover:bg-white/10';
 const chip = (active: boolean) =>
@@ -154,7 +155,7 @@ export function NearbyApp({
                   <span className="block truncate text-sm text-paper">{p.name}</span>
                   <span className="block truncate text-[11px] text-paper/50">
                     {route
-                      ? `🛣 Route directe · ${formatMinutes((route.travel_minutes ?? 30) / (speedMultiplier || 1))}`
+                      ? `🛣 Route directe · ${formatMinutes(routeWeight(route) / (speedMultiplier || 1))}`
                       : 'Pas de route directe'}
                   </span>
                 </span>

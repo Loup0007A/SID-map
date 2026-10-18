@@ -63,7 +63,7 @@ import { useToast } from '@/components/ui/Toast';
 import { useGuide } from '@/components/guide/GuideProvider';
 import MapCoach, { type CoachTip } from '@/components/guide/MapCoach';
 import { DEFAULT_SETTINGS } from '@/lib/mapScale';
-import { computeRemainingMinutes, formatMinutes, travelerScreenPosition } from '@/lib/travel';
+import { computeRemainingMinutes, formatMinutes, travelerScreenPosition, tripInfo } from '@/lib/travel';
 import { distanceUnits, formatDistance } from '@/lib/mapScale';
 import { useFavorites } from '@/lib/hooks/useFavorites';
 import { useIsDesktop } from '@/components/ui/Modal';
@@ -154,6 +154,8 @@ export default function WorldMap() {
   const [flightBusy, setFlightBusy] = useState(false);
   const mountTypes = useMountTypes();
   const [showPlanner, setShowPlanner] = useState(false);
+  const [plannerTo, setPlannerTo] = useState<string | null>(null);
+  const [plannerKey, setPlannerKey] = useState(0);
   const [highlightedPlan, setHighlightedPlan] = useState<RoutePlan | null>(null);
 
   const [editMode, setEditMode] = useState(false);
@@ -364,6 +366,34 @@ export default function WorldMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, loadError, positionsHook.loading, myPos?.place_id, myPos?.active_mount_id, myPos?.status, zones.length, places.length, routes.length, biomes.length, relief.length, scaleSet, mountTypes.mountTypes.length]);
   useEffect(() => () => guide.setFacts(null), []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function startPlannedRoute(plan: RoutePlan): Promise<boolean> {
+    const { error, message, data } = await positionsHook.startRoutePlan(
+      plan.steps.map((st) => ({ routeId: st.route.id, toPlaceId: st.toPlaceId }))
+    );
+    if (error) {
+      showToast(message ?? 'Impossible de partir.', 'error');
+      return false;
+    }
+    const dest = places.find((p) => p.id === plan.placeIds[plan.placeIds.length - 1]);
+    showToast(`En route vers ${dest?.name ?? 'ta destination'} — arrivée dans ${formatMinutes(data?.duration_minutes ?? plan.totalMinutes)}.`);
+    return true;
+  }
+  const plannerProps = {
+    initialToId: plannerTo,
+    places,
+    routes,
+    onClose: () => {
+      setShowPlanner(false);
+      setPlannerTo(null);
+    },
+    onHighlight: setHighlightedPlan,
+    myPlaceId: myPos?.travel_started_at ? null : myPos?.place_id ?? null,
+    traveling: !!myPos?.travel_started_at,
+    speedMultiplier: activeMountForFlight?.speed_multiplier ?? 1,
+    mountName: activeMountForFlight?.name ?? null,
+    onStart: startPlannedRoute
+  };
 
   async function confirmFlight() {
     if (!flightTarget) return;
@@ -932,17 +962,15 @@ export default function WorldMap() {
       };
     if (positionsHook.loading || permLoading) return null;
     if (myPos?.travel_started_at) {
-      const destRoute = routes.find((r) => r.id === myPos.route_id);
-      const destId =
-        myPos.flight_target_place_id ??
-        (destRoute ? (destRoute.from_place_id === myPos.place_id ? destRoute.to_place_id : destRoute.from_place_id) : null);
-      const dest = places.find((p) => p.id === destId);
-      const remaining = computeRemainingMinutes(myPos, now);
+      const trip = tripInfo(myPos, routes, now);
+      const dest = places.find((p) => p.id === trip?.destinationId);
+      const stop = trip && trip.legCount > 1 ? places.find((p) => p.id === trip.nextStopId) : null;
+      const remaining = trip?.remainingMinutes ?? computeRemainingMinutes(myPos, now);
       return {
         id: 'traveling',
         emoji: myPos.flight_target_place_id ? '🕊️' : '🛣',
         sticky: true,
-        text: `En voyage vers ${dest?.name ?? 'ta destination'} — ${remaining <= 0 ? 'arrivée imminente' : `arrivée dans ${formatMinutes(remaining)}`}. Le trajet se termine tout seul.`,
+        text: `En voyage vers ${dest?.name ?? 'ta destination'} — ${remaining <= 0 ? 'arrivée imminente' : `arrivée dans ${formatMinutes(remaining)}`}${stop ? ` (prochaine étape : ${stop.name})` : ''}. Le trajet continue même page fermée.`,
         secondary: { label: 'Détails', run: () => setShowPositionPicker(true) }
       };
     }
@@ -1673,6 +1701,12 @@ export default function WorldMap() {
           positionsHook={positionsHook}
           isFavorite={favorites.has(selected.entity.id)}
           onToggleFavorite={() => favorites.toggle(selected.entity.id)}
+          onGoHere={(id) => {
+            setPlannerTo(id);
+            setPlannerKey((k) => k + 1);
+            setShowPlanner(true);
+            setSelected(null);
+          }}
         />
       )}
 
@@ -1969,11 +2003,11 @@ export default function WorldMap() {
               setShowPlanner(false);
             }}
           >
-            <RoutePlannerPanel bare places={places} routes={routes} onClose={() => setShowPlanner(false)} onHighlight={setHighlightedPlan} />
+            <RoutePlannerPanel bare key={plannerKey} {...plannerProps} />
           </Modal>
         ) : (
           <div className="absolute bottom-40 right-4 z-20">
-            <RoutePlannerPanel places={places} routes={routes} onClose={() => setShowPlanner(false)} onHighlight={setHighlightedPlan} />
+            <RoutePlannerPanel key={plannerKey} {...plannerProps} />
           </div>
         ))}
 

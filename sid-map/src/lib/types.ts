@@ -118,6 +118,8 @@ export interface CharacterPosition {
   flight_target_place_id: string | null;
   travel_started_at: string | null;
   travel_duration_minutes: number | null;
+  /** étapes restantes (étape en cours comprise), durée figée au départ */
+  planned_path?: { route_id: string; to_place_id: string; minutes?: number }[] | null;
   arrived_at: string | null;
   active_mount_id: string | null;
   mount_expires_at?: string | null;

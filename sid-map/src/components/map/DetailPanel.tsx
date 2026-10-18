@@ -22,8 +22,11 @@ export default function DetailPanel({
   onDeleted,
   positionsHook,
   isFavorite,
-  onToggleFavorite
+  onToggleFavorite,
+  onGoHere
 }: {
+  /** ouvre l'itinéraire vers ce lieu */
+  onGoHere?: (placeId: string) => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   entity: MapZone | MapPlace;
@@ -201,6 +204,15 @@ export default function DetailPanel({
             </Link>
           )}
         </>
+      )}
+
+      {kind === 'place' && onGoHere && positionsHook?.myPosition?.place_id !== entity.id && (
+        <button
+          onClick={() => onGoHere(entity.id)}
+          className="btn-accent mt-4 w-full rounded-lg py-2 text-sm font-semibold text-paper"
+        >
+          🧭 Y aller
+        </button>
       )}
 
       {kind === 'place' && positionsHook && (

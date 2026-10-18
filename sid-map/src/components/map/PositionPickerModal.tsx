@@ -8,7 +8,8 @@ import { useToast } from '@/components/ui/Toast';
 import { useNow } from '@/lib/hooks/useNow';
 import { useMountTypes } from '@/lib/hooks/useMountTypes';
 import { usePositions } from '@/lib/hooks/usePositions';
-import { computeRemainingMinutes, formatMinutes } from '@/lib/travel';
+import { computeRemainingMinutes, formatMinutes, tripInfo } from '@/lib/travel';
+import { routeWeight } from '@/lib/pathfinding';
 import type { CityBuilding, MapBiome, MapPlace, MapRoute } from '@/lib/types';
 import { BIOME_LABELS } from '@/lib/types';
 import { blockedBiome } from '@/lib/biomePath';
@@ -73,6 +74,7 @@ export default function PositionPickerModal({
     setBusy(false);
     if (error === 'already_traveling') showToast('Tu es déjà en voyage.', 'error');
     else if (error === 'forbidden_biome') showToast('Ta monture ne peut pas traverser un biome de ce trajet.', 'error');
+    else if (error === 'route_not_connected') showToast('Cette route ne part pas d’ici.', 'error');
     else if (error) showToast('Impossible de partir.', 'error');
     else showToast('En route !');
   }
@@ -89,18 +91,11 @@ export default function PositionPickerModal({
 
   // --- Cas 1 : voyage en cours ---
   if (isTraveling && myPosition) {
-    const remaining = computeRemainingMinutes(myPosition, now);
-    const total = myPosition.travel_duration_minutes ?? 1;
-    const pct = Math.round(((total - remaining) / total) * 100);
-    const destRoute = routes.find((r) => r.id === myPosition.route_id);
-    const destPlace = myPosition.flight_target_place_id
-      ? places.find((p) => p.id === myPosition.flight_target_place_id)
-      : destRoute
-      ? places.find(
-          (p) =>
-            p.id === (destRoute.from_place_id === myPosition.place_id ? destRoute.to_place_id : destRoute.from_place_id)
-        )
-      : null;
+    const trip = tripInfo(myPosition, routes, now);
+    const destPlace = places.find((p) => p.id === trip?.destinationId);
+    const stopPlace = trip && trip.legCount > 1 ? places.find((p) => p.id === trip.nextStopId) : null;
+    const remaining = trip?.remainingMinutes ?? computeRemainingMinutes(myPosition, now);
+    const pct = Math.round((trip?.legProgress ?? 0) * 100);
 
     return (
       <Modal title="En voyage…" windowId="position" onClose={onClose} maxWidth="max-w-sm">
@@ -109,6 +104,11 @@ export default function PositionPickerModal({
           <p className="text-sm text-paper/80">
             En route vers <span className="text-accent">{destPlace?.name ?? '?'}</span>
           </p>
+          {stopPlace && (
+            <p className="text-xs text-paper/60">
+              Étape en cours : vers {stopPlace.name} · encore {trip!.legCount - 1} étape{trip!.legCount - 1 > 1 ? 's' : ''} après
+            </p>
+          )}
           <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
             <div className="h-full bg-accent transition-all" style={{ width: `${pct}%` }} />
           </div>
@@ -116,7 +116,7 @@ export default function PositionPickerModal({
             {remaining <= 0 ? 'Arrivée imminente…' : `Arrivée dans ${formatMinutes(remaining)}`}
           </p>
           <p className="text-[11px] text-paper/30">
-            Impossible de faire autre chose en attendant — le voyage se termine automatiquement.
+            Le trajet continue même si tu fermes la page : tu arriveras à l’heure prévue.
           </p>
         </div>
       </Modal>
@@ -262,7 +262,7 @@ export default function PositionPickerModal({
             {connectedRoutes.map((r) => {
               const destId = r.from_place_id === myPosition.place_id ? r.to_place_id : r.from_place_id;
               const dest = places.find((p) => p.id === destId);
-              const baseMinutes = r.travel_minutes ?? 30;
+              const baseMinutes = routeWeight(r);
               const duration = baseMinutes / (activeMount?.speed_multiplier ?? 1);
               const from = places.find((p) => p.id === r.from_place_id);
               const to = places.find((p) => p.id === r.to_place_id);
