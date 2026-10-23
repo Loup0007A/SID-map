@@ -468,3 +468,72 @@ html.ev-noel .map-vignette {
     radial-gradient(ellipse at center, transparent 50%, rgba(150, 200, 255, 0.14) 78%, rgba(225, 240, 255, 0.34) 100%),
     radial-gradient(ellipse 60% 40% at 50% 112%, rgba(255, 190, 110, 0.18), transparent 70%);
 }
+
+/* =====================================================================
+   Affichage événementiel : fêtes de l'année (Saint-Valentin, poisson
+   d'avril, Pâques, 1er mai, fête de la musique, 14 juillet, 11 novembre).
+   Même réglage que le Dossier Central. Rien ne capte les clics.
+   ===================================================================== */
+.hy-wire { fill: none; stroke: #3a3140; stroke-width: 1.3; }
+.hy-garland-bunting .hy-wire, .hy-garland-bleuets .hy-wire { stroke: #c8ccd8; stroke-width: 1; }
+.hy-garland-muguet .hy-wire { stroke: #3f7a4a; }
+.hy-g-heart { filter: drop-shadow(0 0 3px rgba(255, 90, 150, 0.6)); }
+.hy-g-heart.hy-c0, .hy-float-heart { fill: #ff4d7a; } .hy-g-heart.hy-c1 { fill: #ffb3c8; } .hy-g-heart.hy-c2 { fill: #e2325f; }
+.hy-g-fish.hy-c0 { fill: #ff9a76; } .hy-g-fish.hy-c1 { fill: #7fd8ff; } .hy-g-fish.hy-c2 { fill: #ffd86b; } .hy-g-fish.hy-c3 { fill: #8ef0b8; }
+.hy-g-egg.hy-c0 { fill: #ffb3c7; } .hy-g-egg.hy-c1 { fill: #b8e0ff; } .hy-g-egg.hy-c2 { fill: #ffe08a; } .hy-g-egg.hy-c3 { fill: #c7f0b8; } .hy-g-egg.hy-c4 { fill: #d9c2ff; }
+.hy-g-bell { fill: #fbfff7; filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.6)); }
+.hy-g-note { font-size: 15px; } .hy-g-note.hy-c0, .hy-flying-note.hy-c0 { fill: #c9a6ff; } .hy-g-note.hy-c1, .hy-flying-note.hy-c1 { fill: #ff9c6e; } .hy-g-note.hy-c2, .hy-flying-note.hy-c2 { fill: #6ec8ff; }
+.hy-f0 { fill: #2f5bd8; } .hy-f1 { fill: #f2f2f2; } .hy-f2 { fill: #e23a3a; }
+.hy-bleuet { fill: #4a78e8; } .hy-bleuet-heart { fill: #25307a; }
+.hy-garland-bleuets .hy-bleuet { fill: #5d86ee; }
+
+/* Survol : une fois par visite. */
+.hy-fly { position: absolute; top: 120px; right: 0; width: clamp(140px, 16vw, 210px); opacity: 0; animation: ev-sleigh 14s cubic-bezier(.4, .05, .55, .95) both; }
+.hy-fly-art { width: 100%; height: auto; overflow: visible; display: block; }
+.hy-fly-armistice { animation-duration: 20s; }
+.hy-fly-poisson_avril { width: clamp(70px, 8vw, 100px); }
+.hy-fly-quatorze_juillet { width: clamp(220px, 28vw, 380px); top: 96px; animation-duration: 9s; }
+/* Ces dessins regardent vers la droite : on les retourne (le vol va vers la gauche). */
+.hy-fly-premier_mai .hy-fly-art, .hy-fly-armistice .hy-fly-art, .hy-fly-quatorze_juillet .hy-fly-art { transform: scaleX(-1); }
+.hy-winged .hy-wing { fill: #fff; opacity: 0.92; transform-box: fill-box; animation: ev-flap 0.3s ease-in-out infinite alternate; }
+.hy-winged .hy-wing-l { transform-origin: 100% 100%; } .hy-winged .hy-wing-r { transform-origin: 0 100%; }
+.hy-fly-heart { fill: #ff4d7a; filter: drop-shadow(0 0 5px rgba(255, 90, 150, 0.9)); }
+.hy-bell path:first-child { fill: #ffd257; }
+.hy-bell { filter: drop-shadow(0 0 4px rgba(255, 210, 87, 0.7)); }
+.hy-bell-clapper { fill: #b88a1c; }
+.hy-ribbon { fill: none; stroke: #ff7aa8; stroke-width: 2.4; stroke-linecap: round; }
+.hy-bird { fill: #e9edf4; filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5)); }
+.hy-pigeon { fill: #9aa3b5; }
+.hy-bird .hy-wing { transform-box: fill-box; transform-origin: 50% 100%; animation: ev-flap 0.35s ease-in-out infinite alternate; }
+.hy-dove .hy-wing { animation-duration: 0.6s; }
+.hy-olive { fill: none; stroke: #7da35a; stroke-width: 1.6; stroke-linecap: round; }
+.hy-flying-note { font-size: 26px; filter: drop-shadow(0 0 4px rgba(201, 166, 255, 0.9)); }
+.hy-jet { fill: #d6dcea; }
+.hy-smoke { opacity: 0.7; filter: blur(1.5px); }
+@media (prefers-reduced-motion: reduce) {
+  .hy-fly { display: none; }
+}
+/* Carte : sceau et bords teintés selon la fête. */
+html.ev-holiday .brand-seal { font-size: 0; }
+html.ev-holiday .brand-seal::after { font-size: 0.85rem; }
+html.ev-saint_valentin .brand-seal { background: radial-gradient(circle at 35% 30%, #ff9cc0, #c21f5a 72%); }
+html.ev-saint_valentin .brand-seal::after { content: '💘'; }
+html.ev-poisson_avril .brand-seal { background: radial-gradient(circle at 35% 30%, #9fe4ff, #1f6fb3 72%); }
+html.ev-poisson_avril .brand-seal::after { content: '🐟'; }
+html.ev-paques .brand-seal { background: radial-gradient(circle at 35% 30%, #fff0a8, #d8a21f 72%); }
+html.ev-paques .brand-seal::after { content: '🥚'; }
+html.ev-premier_mai .brand-seal { background: radial-gradient(circle at 35% 30%, #c6f5d0, #2f8a4f 72%); }
+html.ev-premier_mai .brand-seal::after { content: '🌿'; }
+html.ev-fete_musique .brand-seal { background: radial-gradient(circle at 35% 30%, #dcc4ff, #6b3fc4 72%); }
+html.ev-fete_musique .brand-seal::after { content: '🎵'; }
+html.ev-quatorze_juillet .brand-seal { background: linear-gradient(90deg, #2f5bd8 0 33%, #f2f2f2 33% 66%, #e23a3a 66%); }
+html.ev-quatorze_juillet .brand-seal::after { content: '🎆'; }
+html.ev-armistice .brand-seal { background: radial-gradient(circle at 35% 30%, #c9d6f2, #3a4f86 72%); }
+html.ev-armistice .brand-seal::after { content: '🕊️'; }
+html.ev-saint_valentin .map-vignette { background: radial-gradient(ellipse at center, transparent 50%, rgba(255, 80, 140, 0.16) 80%, rgba(180, 20, 70, 0.34) 100%); }
+html.ev-poisson_avril .map-vignette { background: radial-gradient(ellipse at center, transparent 52%, rgba(60, 170, 230, 0.16) 82%, rgba(20, 90, 160, 0.3) 100%); }
+html.ev-paques .map-vignette { background: radial-gradient(ellipse at center, transparent 52%, rgba(255, 220, 120, 0.14) 80%, rgba(140, 210, 140, 0.24) 100%); }
+html.ev-premier_mai .map-vignette { background: radial-gradient(ellipse at center, transparent 52%, rgba(200, 255, 210, 0.12) 80%, rgba(40, 130, 70, 0.3) 100%); }
+html.ev-fete_musique .map-vignette { background: radial-gradient(ellipse at center, transparent 50%, rgba(170, 120, 255, 0.16) 80%, rgba(255, 120, 80, 0.24) 100%); }
+html.ev-quatorze_juillet .map-vignette { background: linear-gradient(90deg, rgba(47, 91, 216, 0.22), transparent 14%, transparent 86%, rgba(226, 58, 58, 0.22)); }
+html.ev-armistice .map-vignette { background: radial-gradient(ellipse at center, transparent 52%, rgba(120, 140, 190, 0.16) 80%, rgba(40, 50, 80, 0.36) 100%); }

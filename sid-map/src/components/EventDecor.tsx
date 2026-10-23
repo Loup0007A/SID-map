@@ -1,7 +1,9 @@
 'use client';
 
 /**
- * Affichage événementiel (Halloween, Noël) — même réglage que le Dossier
+ * Affichage événementiel (Halloween, Noël et les fêtes de l'année : Saint-
+ * Valentin, poisson d'avril, Pâques, 1er mai, fête de la musique, 14 juillet,
+ * 11 novembre) — même réglage que le Dossier
  * Central (fonction site_decor, Modération → Affichage événementiel).
  * Fichier identique dans la Cartographie et le Wiki ; seul le style change
  * (variant). Rien ne capte les clics ; rien ne tourne en boucle sur la carte.
@@ -11,7 +13,9 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 
-type Decor = { halloween: boolean; noel: boolean };
+const HOLIDAYS = ['saint_valentin', 'poisson_avril', 'paques', 'premier_mai', 'fete_musique', 'quatorze_juillet', 'armistice'] as const;
+type HolidayKey = (typeof HOLIDAYS)[number];
+type Decor = { halloween: boolean; noel: boolean } & Partial<Record<HolidayKey, boolean>>;
 let cache: { at: number; value: Decor } | null = null;
 
 export function useEventDecor(): Decor | null {
@@ -27,6 +31,7 @@ export function useEventDecor(): Decor | null {
       .then(({ data, error }) => {
         const d = (error ? null : data) as Partial<Decor> | null;
         const value: Decor = { halloween: !!d?.halloween, noel: !!d?.noel };
+        for (const k of HOLIDAYS) value[k] = !!d?.[k];
         cache = { at: Date.now(), value };
         if (alive) setDecor(value);
       });
@@ -114,6 +119,7 @@ export default function EventDecor({ variant }: { variant: 'map' | 'wiki' }) {
     <>
       <HalloweenLayer variant={variant} on={!!decor?.halloween} />
       <NoelLayer variant={variant} on={!!decor?.noel} />
+      <HolidayLayer variant={variant} which={HOLIDAYS.find((k) => decor?.[k]) ?? null} />
     </>
   );
 }
@@ -338,6 +344,332 @@ function NoelLayer({ variant, on }: { variant: 'map' | 'wiki'; on: boolean }) {
         {sleigh && (
           <div className="ev-sleigh-fly">
             <Sleigh />
+          </div>
+        )}
+      </div>
+    </>,
+    document.body
+  );
+}
+
+/* =====================================================================
+   Fêtes de l'année (une à la fois : la première affichée de la liste)
+   ===================================================================== */
+
+type GarlandKind = 'hearts' | 'fish' | 'eggs' | 'muguet' | 'notes' | 'bunting' | 'bleuets';
+type FloatKind = 'heart' | 'fish' | 'egg' | 'muguet' | 'note' | 'flag' | 'bleuet';
+
+const HOLIDAY_SPEC: Record<HolidayKey, { garland: GarlandKind; float: FloatKind; per?: number }> = {
+  saint_valentin: { garland: 'hearts', float: 'heart' },
+  poisson_avril: { garland: 'fish', float: 'fish' },
+  paques: { garland: 'eggs', float: 'egg' },
+  premier_mai: { garland: 'muguet', float: 'muguet' },
+  fete_musique: { garland: 'notes', float: 'note' },
+  quatorze_juillet: { garland: 'bunting', float: 'flag' },
+  armistice: { garland: 'bleuets', float: 'bleuet', per: 2 },
+};
+
+function SmallBleuet({ r = 1 }: { r?: number }) {
+  return (
+    <g transform={`scale(${r})`}>
+      {Array.from({ length: 8 }, (_, i) => (
+        <path key={i} d="M0 -1.5 L-2 -7.5 L-0.7 -6.5 L0 -8.5 L0.7 -6.5 L2 -7.5 Z" className="hy-bleuet" transform={`rotate(${i * 45})`} />
+      ))}
+      <circle r="1.7" className="hy-bleuet-heart" />
+    </g>
+  );
+}
+
+function GarlandItem({ kind, i }: { kind: GarlandKind; i: number }) {
+  switch (kind) {
+    case 'hearts':
+      return <path d="M0 13 C-5 9 -7.5 6 -7.5 3.5 C-7.5 1.5 -6 0 -4 0 C-2.4 0 -1 1 0 2.4 C1 1 2.4 0 4 0 C6 0 7.5 1.5 7.5 3.5 C7.5 6 5 9 0 13 Z" className={`hy-g-heart hy-c${i % 3}`} transform="translate(0 4)" />;
+    case 'fish':
+      return (
+        <g transform={`translate(0 6) rotate(${i % 2 ? 8 : -8})`}>
+          <path d="M-9 0 C-6 -5 2 -6 6 -2 L10 -5 L9.5 0 L10 5 L6 2 C2 6 -6 5 -9 0 Z" className={`hy-g-fish hy-c${i % 4}`} />
+          <circle cx="-5.5" cy="-0.8" r="1" fill="#1b1b24" />
+        </g>
+      );
+    case 'eggs':
+      return <ellipse cx="0" cy="9" rx="5" ry="6.6" className={`hy-g-egg hy-c${i % 5}`} />;
+    case 'muguet':
+      return (
+        <g transform="translate(0 2)">
+          <path d="M0 0 Q2 6 0 12" fill="none" stroke="#4f9a5d" strokeWidth="1" />
+          <path d="M0 12 Q-3 13 -3.4 16.4 L-2.2 15.6 L-1 16.6 L0 15.8 L1 16.6 L2.2 15.6 L3.4 16.4 Q3 13 0 12 Z" className="hy-g-bell" />
+        </g>
+      );
+    case 'notes':
+      return (
+        <text y="16" textAnchor="middle" className={`hy-g-note hy-c${i % 3}`}>
+          {['♪', '♫', '♬'][i % 3]}
+        </text>
+      );
+    case 'bunting':
+      return <path d="M-7 1 L7 1 L0 15 Z" className={`hy-g-flag hy-f${i % 3}`} />;
+    case 'bleuets':
+      return (
+        <g transform="translate(0 10)">
+          <SmallBleuet />
+        </g>
+      );
+  }
+}
+
+function HolidayGarland({ kind, top, width, per: perWide }: { kind: GarlandKind; top: number; width: number; per?: number }) {
+  const swag = width < 640 ? 120 : 170;
+  const n = Math.ceil(width / swag);
+  const sag = width < 640 ? 7 : 10;
+  const per = perWide ?? (width < 640 ? 3 : 4);
+  let wire = 'M0 1';
+  const items: { x: number; y: number; i: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    const x0 = i * swag;
+    wire += ` Q${x0 + swag / 2} ${1 + sag * 2} ${x0 + swag} 1`;
+    for (let k = 1; k <= per; k++) {
+      const t = k / (per + 1);
+      items.push({ x: x0 + swag * t, y: 1 + 4 * sag * t * (1 - t), i: i * per + k });
+    }
+  }
+  return (
+    <svg className={`ev-garland hy-garland hy-garland-${kind}`} style={{ top }} width={width} height={sag * 2 + 26} viewBox={`0 0 ${width} ${sag * 2 + 26}`} aria-hidden>
+      <path d={wire} className="hy-wire" />
+      {items.map((b) => (
+        <g key={b.i} transform={`translate(${b.x.toFixed(1)} ${b.y.toFixed(1)})`}>
+          <GarlandItem kind={kind} i={b.i} />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function FloatItem({ kind, i, style, small }: { kind: FloatKind; i: number; style: React.CSSProperties; small?: boolean }) {
+  const cls = `hy-float${small ? ' ev-small' : ''}`;
+  switch (kind) {
+    case 'heart':
+      return (
+        <svg viewBox="0 0 32 30" className={`${cls} hy-float-heart`} style={style} aria-hidden>
+          <path d="M16 28 C6 20 1 14 1 8.5 C1 4 4.5 1 8.5 1 C11.6 1 14.3 2.8 16 5.6 C17.7 2.8 20.4 1 23.5 1 C27.5 1 31 4 31 8.5 C31 14 26 20 16 28 Z" />
+        </svg>
+      );
+    case 'fish':
+      return (
+        <svg viewBox="0 0 64 34" className={`${cls} hy-float-fish`} style={style} aria-hidden>
+          <path d="M6 17 C14 4 34 2 46 12 L58 4 L56 17 L58 30 L46 22 C34 32 14 30 6 17 Z" className={`hy-g-fish hy-c${i % 4}`} />
+          <circle cx="14" cy="15" r="2.6" fill="#fff" />
+          <circle cx="13.4" cy="15.2" r="1.3" fill="#1b1b24" />
+        </svg>
+      );
+    case 'egg':
+      return (
+        <svg viewBox="0 0 24 30" className={`${cls} hy-float-egg`} style={style} aria-hidden>
+          <path d="M12 1 C5 1 1 12 1 18 C1 25 6 29 12 29 C18 29 23 25 23 18 C23 12 19 1 12 1 Z" className={`hy-g-egg hy-c${i % 5}`} />
+          <path d="M2 15 Q7 12 12 15 T22 15 L22.6 18.5 Q17 15.5 12 18.5 T1.4 18.5 Z" className={`hy-g-egg hy-c${(i + 2) % 5}`} />
+        </svg>
+      );
+    case 'muguet':
+      return (
+        <svg viewBox="0 0 40 60" className={`${cls} hy-float-muguet`} style={style} aria-hidden>
+          <path d="M8 58 C2 40 6 18 16 6 C12 22 12 40 14 58 Z" fill="#2f8a4f" />
+          <path d="M30 58 C38 42 34 22 26 12 C28 28 28 42 24 58 Z" fill="#3aa35e" />
+          <path d="M19 58 C19 40 21 24 28 12" fill="none" stroke="#5fae6e" strokeWidth="1.4" />
+          {[
+            [27, 15],
+            [25, 22],
+            [23.5, 29],
+            [22.5, 36],
+          ].map(([x, y], k) => (
+            <path key={k} transform={`translate(${x} ${y})`} d="M0 0 Q-2.5 1 -3 4.2 L-2 3.6 L-1 4.6 L0 3.8 L1 4.6 L2 3.6 L3 4.2 Q2.5 1 0 0 Z" fill="#fbfff7" />
+          ))}
+        </svg>
+      );
+    case 'note':
+      return (
+        <svg viewBox="0 0 30 34" className={`${cls} hy-float-note`} style={style} aria-hidden>
+          <text x="15" y="28" textAnchor="middle" className={`hy-g-note hy-c${i % 3}`}>
+            {['♫', '♪', '♬'][i % 3]}
+          </text>
+        </svg>
+      );
+    case 'flag':
+      return (
+        <svg viewBox="0 0 30 34" className={`${cls} hy-float-flag`} style={style} aria-hidden>
+          <path d="M5 2 V33" stroke="#c8ccd8" strokeWidth="1.6" />
+          <rect x="6" y="3" width="7" height="13" className="hy-f0" />
+          <rect x="13" y="3" width="7" height="13" className="hy-f1" />
+          <rect x="20" y="3" width="7" height="13" className="hy-f2" />
+        </svg>
+      );
+    case 'bleuet':
+      return (
+        <svg viewBox="-10 -10 20 20" className={`${cls} hy-float-bleuet`} style={style} aria-hidden>
+          <SmallBleuet />
+        </svg>
+      );
+  }
+}
+
+function HolidayFly({ which }: { which: HolidayKey }) {
+  switch (which) {
+    case 'saint_valentin':
+      return (
+        <svg viewBox="0 0 80 50" className="hy-fly-art hy-winged" aria-hidden>
+          <path className="hy-wing hy-wing-l" d="M38 22 C30 6 14 4 6 12 C18 14 22 20 24 28 C30 24 34 24 38 26 Z" />
+          <path className="hy-wing hy-wing-r" d="M42 22 C50 6 66 4 74 12 C62 14 58 20 56 28 C50 24 46 24 42 26 Z" />
+          <path className="hy-fly-heart" d="M40 44 C30 37 26 32 26 27 C26 23 29 20.5 32.5 20.5 C35.5 20.5 38 22 40 25 C42 22 44.5 20.5 47.5 20.5 C51 20.5 54 23 54 27 C54 32 50 37 40 44 Z" />
+        </svg>
+      );
+    case 'poisson_avril':
+      return (
+        <svg viewBox="0 0 64 34" className="hy-fly-art" aria-hidden>
+          <path d="M6 17 C14 4 34 2 46 12 L58 4 L56 17 L58 30 L46 22 C34 32 14 30 6 17 Z" className="hy-g-fish hy-c0" />
+          <path d="M22 7 C26 12 26 22 22 27 M30 6 C34 12 34 22 30 28" fill="none" stroke="rgb(0 0 0 / 0.18)" strokeWidth="1.6" />
+          <circle cx="14" cy="15" r="2.6" fill="#fff" />
+          <circle cx="13.4" cy="15.2" r="1.3" fill="#1b1b24" />
+        </svg>
+      );
+    case 'paques':
+      return (
+        <svg viewBox="0 0 120 80" className="hy-fly-art" aria-hidden>
+          {[
+            [40, 28, -12],
+            [78, 22, 10],
+          ].map(([x, y, r], k) => (
+            <g key={k} transform={`translate(${x} ${y}) rotate(${r})`} className="hy-bell">
+              <path d="M-16 18 C-16 2 -10 -12 0 -12 C10 -12 16 2 16 18 L20 22 L-20 22 Z" />
+              <circle cy="25" r="4" className="hy-bell-clapper" />
+              <path d="M-6 -12 C-14 -24 -4 -26 0 -16 C4 -26 14 -24 6 -12" className="hy-ribbon" />
+            </g>
+          ))}
+        </svg>
+      );
+    case 'premier_mai':
+    case 'armistice':
+      return (
+        <svg viewBox="0 0 110 60" className={`hy-fly-art hy-bird ${which === 'premier_mai' ? 'hy-pigeon' : 'hy-dove'}`} aria-hidden>
+          <path d="M24 34 C36 26 58 24 72 30 C78 24 86 24 90 28 C84 30 82 34 82 38 C70 46 42 46 24 34 Z" />
+          <path className="hy-wing" d="M46 30 C40 10 56 2 70 8 C60 14 58 22 58 30 Z" />
+          <path d="M24 34 L10 28 L16 36 L8 42 L26 40 Z" />
+          <circle cx="84" cy="29" r="1.1" fill="#1b1b24" />
+          {which === 'armistice' ? (
+            <path d="M92 32 C98 34 102 30 106 33 M96 31 L98 27 M100 32 L102 28" className="hy-olive" />
+          ) : (
+            <g transform="translate(92 26) rotate(20)">
+              <path d="M0 0 Q2 6 0 12" fill="none" stroke="#4f9a5d" strokeWidth="1" />
+              <path d="M0 12 Q-3 13 -3.4 16.4 L-2.2 15.6 L-1 16.6 L0 15.8 L1 16.6 L2.2 15.6 L3.4 16.4 Q3 13 0 12 Z" fill="#fbfff7" />
+            </g>
+          )}
+        </svg>
+      );
+    case 'fete_musique':
+      return (
+        <svg viewBox="0 0 160 60" className="hy-fly-art" aria-hidden>
+          {['♪', '♫', '♬', '♪', '♩', '♫'].map((g, k) => (
+            <text key={k} x={k * 26 + 6} y={30 + Math.sin(k * 1.3) * 16} className={`hy-flying-note hy-c${k % 3}`} style={{ animationDelay: `${k * 0.12}s` }}>
+              {g}
+            </text>
+          ))}
+        </svg>
+      );
+    case 'quatorze_juillet': {
+      const v = [
+        [0, 0],
+        [-14, -8],
+        [-14, 8],
+        [-28, -16],
+        [-28, 16],
+        [-28, 0],
+        [-42, 0],
+      ];
+      return (
+        <svg viewBox="-200 -40 260 80" className="hy-fly-art hy-patrouille" aria-hidden>
+          <rect x="-200" y="-7" width="160" height="4" className="hy-smoke hy-f0" />
+          <rect x="-200" y="-1.5" width="160" height="4" className="hy-smoke hy-f1" />
+          <rect x="-200" y="4" width="160" height="4" className="hy-smoke hy-f2" />
+          {v.map(([x, y], k) => (
+            <path key={k} transform={`translate(${x + 20} ${y})`} className="hy-jet" d="M8 0 L-2 -1.6 L-6 -7 L-8 -7 L-6 -1.6 L-12 -1.4 L-14 -4 L-15 -4 L-14.2 0 L-15 4 L-14 4 L-12 1.4 L-6 1.6 L-8 7 L-6 7 L-2 1.6 Z" />
+          ))}
+        </svg>
+      );
+    }
+  }
+}
+
+function HolidayLayer({ variant, which }: { variant: 'map' | 'wiki'; which: HolidayKey | null }) {
+  const [mounted, setMounted] = useState(false);
+  const [fly, setFly] = useState(false);
+  const [bar, setBar] = useState<{ top: number; width: number } | null>(null);
+
+  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    if (!which) return;
+    const root = document.documentElement;
+    root.classList.add('ev-holiday', `ev-${which}`);
+    const measure = () => {
+      const el = document.querySelector(variant === 'map' ? 'nav' : 'header');
+      setBar({ top: el ? Math.round(el.getBoundingClientRect().bottom) : 0, width: document.documentElement.clientWidth });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    let t: ReturnType<typeof setTimeout> | undefined;
+    if (!reduce) {
+      const key = `sid-ev-fly-${which}`;
+      try {
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, '1');
+          t = setTimeout(() => setFly(true), 1600);
+        }
+      } catch {
+        t = setTimeout(() => setFly(true), 1600);
+      }
+    }
+    // Le survol s'en va : plus rien n'est animé ensuite (sur la carte en tout cas).
+    const gone = setTimeout(() => setFly(false), which === 'armistice' ? 22_000 : 16_000);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(gone);
+      window.removeEventListener('resize', measure);
+      root.classList.remove('ev-holiday', `ev-${which}`);
+    };
+  }, [which, variant]);
+
+  if (!mounted || !which) return null;
+  const spec = HOLIDAY_SPEC[which];
+  return createPortal(
+    <>
+      {variant === 'wiki' && (
+        <div className={`ev-back hy-back hy-back-${which}`} aria-hidden>
+          {which === 'quatorze_juillet' && (
+            <div className="hy-fireworks">
+              {[
+                [18, 22, 0, 'hy-f0'],
+                [74, 14, 2.6, 'hy-f2'],
+                [52, 30, 5.1, 'hy-f1'],
+              ].map(([x, y, d, c], k) => (
+                <span key={k} className={`hy-fw ${c}`} style={{ left: `${x}%`, top: `${y}%` }}>
+                  {Array.from({ length: 12 }, (_, j) => (
+                    <i key={j} style={{ '--a': `${j * 30}deg`, animationDelay: `${d}s` } as React.CSSProperties} />
+                  ))}
+                </span>
+              ))}
+            </div>
+          )}
+          {which === 'saint_valentin' && <div className="hy-glow hy-glow-love" />}
+          {which === 'paques' && <div className="hy-glow hy-glow-sun" />}
+          <div className="hy-floats">
+            <FloatItem kind={spec.float} i={0} style={{ left: '10%', animationDelay: '-1.2s' }} />
+            <FloatItem kind={spec.float} i={1} small style={{ left: '50%', animationDelay: '-2.8s' }} />
+            <FloatItem kind={spec.float} i={2} style={{ left: '84%', animationDelay: '-0.5s' }} />
+          </div>
+        </div>
+      )}
+      <div className={`ev-front ev-${variant}`} aria-hidden>
+        {bar && <HolidayGarland kind={spec.garland} top={bar.top} width={bar.width} per={spec.per} />}
+        {fly && (
+          <div className={`hy-fly hy-fly-${which}`}>
+            <HolidayFly which={which} />
           </div>
         )}
       </div>
