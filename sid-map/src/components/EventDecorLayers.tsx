@@ -2,11 +2,11 @@
 
 /**
  * Dessins et animations des décors d'événement (Halloween, Noël, fêtes de
- * l'année). Chargé seulement quand un événement est affiché : voir
- * EventDecor.tsx. Fichier identique dans la Cartographie et le Wiki.
+ * l'année, Grande Chasse). Chargé seulement quand un événement est affiché :
+ * voir EventDecor.tsx. Fichier identique dans la Cartographie et le Wiki.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 export const HOLIDAYS = ['saint_valentin', 'poisson_avril', 'paques', 'premier_mai', 'fete_musique', 'quatorze_juillet', 'armistice'] as const;
@@ -630,6 +630,173 @@ export function HolidayLayer({ variant, which }: { variant: 'map' | 'wiki'; whic
           <div className={`hy-fly hy-fly-${which}`}>
             <HolidayFly which={which} />
           </div>
+        )}
+      </div>
+    </>,
+    document.body
+  );
+}
+
+
+/* =====================================================================
+   La Grande Chasse (9–15 mars) : Brasombre, la wyverne des cendres.
+   Créature originale du S.I.D. (même dessin que sur le Dossier Central).
+   ===================================================================== */
+
+function BrWing({ far = false }: { far?: boolean }) {
+  return (
+    <g className={`br-wing ${far ? 'br-wing-far' : 'br-wing-near'}`}>
+      <path
+        className="br-membrane"
+        d="M236 122 L214 74 L201 20 C186 14 166 8 150 8 C152 22 142 30 128 30 C120 30 112 30 106 32 C112 46 100 58 88 64 C98 80 100 92 98 104 C118 112 142 122 168 132 Z"
+      />
+      <path className="br-tatter" d="M150 8 L146 16 L140 12 L134 22 L128 30 M106 32 L100 40 L95 37 L92 48 L88 64 M98 104 L104 110 L112 108 L118 116" />
+      <path className="br-bone" d="M236 122 L214 74 L201 20 M201 20 L150 8 M201 20 L106 32 M201 20 L88 64 M201 20 L98 104" />
+    </g>
+  );
+}
+
+function Brasombre({ pose = 'perch', className = '' }: { pose?: 'perch' | 'fly'; className?: string }) {
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  return (
+    <svg viewBox="0 0 420 280" className={`brasombre br-${pose} ${className}`} aria-hidden>
+      <defs>
+        <radialGradient id={`${uid}-eye`}>
+          <stop offset="0" stopColor="var(--br-glow2)" />
+          <stop offset="0.5" stopColor="var(--br-glow)" stopOpacity="0.8" />
+          <stop offset="1" stopColor="var(--br-glow)" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <BrWing far />
+      <path className="br-body" d="M162 138 C122 132 82 140 50 156 C36 163 24 170 10 178 C24 177 38 173 52 170 C86 166 122 166 162 168 Z" />
+      <path className="br-spike" d="M128 135 l5 -13 l6 12 Z M104 139 l5 -12 l5 12 Z M80 146 l4 -11 l5 11 Z M58 154 l4 -10 l4 10 Z M38 162 l3 -8 l4 8 Z" />
+      <path className="br-tail-fan" d="M16 178 C4 174 -4 166 -6 156 C2 162 8 166 14 168 C6 160 4 150 8 140 C12 152 18 162 24 168 C22 160 24 152 30 146 C30 158 30 166 32 172 Z" />
+      {pose === 'perch' ? (
+        <path className="br-dark" d="M196 168 C206 176 210 190 204 208 L198 236 L212 246 L192 248 L182 244 L188 230 L186 208 C180 194 184 178 196 168 Z" />
+      ) : (
+        <path className="br-dark" d="M196 168 C206 174 210 184 202 194 L184 210 L172 214 L176 206 L190 194 C184 186 186 176 196 168 Z" />
+      )}
+      <path className="br-body" d="M150 140 C170 108 230 100 270 112 C292 118 304 132 300 150 C296 172 270 186 236 188 C200 190 168 184 152 170 C144 162 144 150 150 140 Z" />
+      <path className="br-plate" d="M176 122 C196 112 222 110 246 114 L240 122 C222 118 200 120 182 128 Z M188 134 C206 126 230 124 252 128 L246 136 C228 132 208 134 194 140 Z" />
+      <path className="br-spike" d="M178 116 l4 -14 l7 12 Z M200 109 l5 -15 l7 13 Z M224 107 l5 -14 l6 13 Z M248 110 l5 -12 l5 11 Z" />
+      <path className="br-fissure" d="M186 176 C204 182 230 182 254 176 M200 160 L212 166 L224 158 L238 166 M252 150 L262 142 L274 152" />
+      {pose === 'perch' ? (
+        <path className="br-body" d="M222 166 C238 170 248 186 242 206 L234 236 L250 248 L228 250 L216 246 L224 230 L220 206 C212 192 210 176 222 166 Z" />
+      ) : (
+        <path className="br-body" d="M222 166 C238 170 246 182 238 194 L220 210 L206 216 L210 206 L224 194 C214 186 212 174 222 166 Z" />
+      )}
+      <path className="br-body" d="M268 120 C286 104 300 92 318 84 L334 94 C320 102 308 114 300 134 Z" />
+      <path className="br-horn" d="M330 75 C320 58 306 51 288 54 C302 60 314 68 322 81 Z" />
+      <path className="br-horn" d="M341 72 C337 52 327 39 311 32 C322 45 330 58 332 76 Z" />
+      <path className="br-body" d="M316 78 C330 70 350 69 366 75 L392 86 C397 88 397 92 392 94 L372 98 L389 104 C382 109 370 109 360 107 C346 105 330 100 318 94 C309 90 309 82 316 78 Z" />
+      <path className="br-fissure" d="M330 84 L340 88 L352 86 M362 92 L372 90" />
+      <circle className="br-eye-halo" cx="352" cy="82" r="11" fill={`url(#${uid}-eye)`} />
+      <circle className="br-eye" cx="352" cy="82" r="3.2" />
+      <BrWing />
+    </svg>
+  );
+}
+
+function ChassePennants({ top, width }: { top: number; width: number }) {
+  const swag = width < 640 ? 120 : 170;
+  const n = Math.ceil(width / swag);
+  const sag = width < 640 ? 7 : 10;
+  const per = width < 640 ? 3 : 4;
+  let wire = 'M0 1';
+  const items: { x: number; y: number; i: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    const x0 = i * swag;
+    wire += ` Q${x0 + swag / 2} ${1 + sag * 2} ${x0 + swag} 1`;
+    for (let k = 1; k <= per; k++) {
+      const t = k / (per + 1);
+      items.push({ x: x0 + swag * t, y: 1 + 4 * sag * t * (1 - t), i: i * per + k });
+    }
+  }
+  return (
+    <svg className="ev-garland gc-garland" style={{ top }} width={width} height={sag * 2 + 30} viewBox={`0 0 ${width} ${sag * 2 + 30}`} aria-hidden>
+      <path d={wire} className="gc-wire" />
+      {items.map((b) => (
+        <g key={b.i} transform={`translate(${b.x.toFixed(1)} ${b.y.toFixed(1)})`}>
+          {b.i % 4 === 0 ? (
+            <path className="gc-fang" d="M-2 1 C-3 8 -1 14 0 18 C1 14 3 8 2 1 Z" />
+          ) : (
+            <g className={`gc-pennant gc-p${b.i % 3}`}>
+              <path className="gc-cloth" d="M-8 1 L8 1 L6 14 L0 22 L-6 14 Z" />
+              <path className="gc-mark" d="M-3 6 L-1 14 M0 5 L1 14 M3 6 L3 13" />
+            </g>
+          )}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+export function ChasseLayer({ variant }: { variant: 'map' | 'wiki' }) {
+  const [mounted, setMounted] = useState(false);
+  const [fly, setFly] = useState(false);
+  const [bar, setBar] = useState<{ top: number; width: number } | null>(null);
+
+  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add('ev-grande_chasse');
+    const measure = () => {
+      const el = document.querySelector(variant === 'map' ? 'nav' : 'header');
+      setBar({ top: el ? Math.round(el.getBoundingClientRect().bottom) : 0, width: document.documentElement.clientWidth });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    let t: ReturnType<typeof setTimeout> | undefined;
+    if (!reduce) {
+      try {
+        if (!sessionStorage.getItem('sid-ev-fly-grande_chasse')) {
+          sessionStorage.setItem('sid-ev-fly-grande_chasse', '1');
+          t = setTimeout(() => setFly(true), 1400);
+        }
+      } catch {
+        t = setTimeout(() => setFly(true), 1400);
+      }
+    }
+    // Elle est passée : plus rien n'est animé ensuite (sur la carte en tout cas).
+    const gone = setTimeout(() => setFly(false), 10_000);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(gone);
+      window.removeEventListener('resize', measure);
+      root.classList.remove('ev-grande_chasse');
+    };
+  }, [variant]);
+
+  if (!mounted) return null;
+  return createPortal(
+    <>
+      {variant === 'wiki' && (
+        <div className="ev-back gc-back" aria-hidden>
+          <div className="gc-glow" />
+          <svg className="gc-spire" viewBox="0 0 220 200" aria-hidden>
+            <path className="gc-rock" d="M40 200 L70 120 L84 126 L98 70 L112 78 L126 40 L150 92 L164 86 L184 150 L200 200 Z" />
+            <path className="gc-lava" d="M126 40 L120 70 L128 96 L122 130 M150 92 L146 120" />
+          </svg>
+          <div className="gc-perch">
+            <Brasombre pose="perch" className="gc-silhouette" />
+          </div>
+          <div className="gc-embers">
+            {Array.from({ length: 9 }, (_, i) => (
+              <i key={i} style={{ left: `${6 + ((i * 37) % 90)}%`, animationDelay: `${-i * 1.1}s`, animationDuration: `${6 + (i % 4)}s` }} />
+            ))}
+          </div>
+        </div>
+      )}
+      <div className={`ev-front ev-${variant}`} aria-hidden>
+        {bar && <ChassePennants top={bar.top} width={bar.width} />}
+        {fly && (
+          <>
+            <div className="gc-pass-shadow" />
+            <div className="gc-pass">
+              <Brasombre pose="fly" />
+            </div>
+          </>
         )}
       </div>
     </>,

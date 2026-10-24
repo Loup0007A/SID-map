@@ -537,3 +537,58 @@ html.ev-premier_mai .map-vignette { background: radial-gradient(ellipse at cente
 html.ev-fete_musique .map-vignette { background: radial-gradient(ellipse at center, transparent 50%, rgba(170, 120, 255, 0.16) 80%, rgba(255, 120, 80, 0.24) 100%); }
 html.ev-quatorze_juillet .map-vignette { background: linear-gradient(90deg, rgba(47, 91, 216, 0.22), transparent 14%, transparent 86%, rgba(226, 58, 58, 0.22)); }
 html.ev-armistice .map-vignette { background: radial-gradient(ellipse at center, transparent 52%, rgba(120, 140, 190, 0.16) 80%, rgba(40, 50, 80, 0.36) 100%); }
+
+/* =====================================================================
+   Affichage événementiel : la Grande Chasse (9–15 mars). Brasombre, la
+   wyverne des cendres (créature originale du S.I.D.). Rien ne capte les clics.
+   ===================================================================== */
+.brasombre {
+  --br-body: #3a2a26; --br-plate: #54403a; --br-dark: #221814; --br-horn: #d8c6a4; --br-membrane: #5b2b1c; --br-glow: #ff8a2a; --br-glow2: #ffd36b;
+  overflow: visible; display: block; width: 100%; height: auto;
+}
+.brasombre .br-body { fill: var(--br-body); }
+.brasombre .br-dark, .brasombre .br-spike { fill: var(--br-dark); }
+.brasombre .br-plate { fill: var(--br-plate); }
+.brasombre .br-horn { fill: var(--br-horn); }
+.brasombre .br-tail-fan { fill: var(--br-glow); filter: drop-shadow(0 0 4px var(--br-glow)); }
+.brasombre .br-fissure { fill: none; stroke: var(--br-glow); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 3px var(--br-glow)); opacity: 0.85; }
+.brasombre .br-membrane { fill: var(--br-membrane); opacity: 0.92; stroke: var(--br-dark); stroke-width: 1.4; stroke-linejoin: round; }
+.brasombre .br-tatter { fill: none; stroke: var(--br-dark); stroke-width: 1.4; opacity: 0.8; }
+.brasombre .br-bone { fill: none; stroke: var(--br-plate); stroke-width: 3.2; stroke-linecap: round; }
+.brasombre .br-wing-far { opacity: 0.7; }
+.brasombre .br-wing-far .br-membrane { fill: var(--br-dark); }
+.brasombre .br-eye { fill: var(--br-glow2); }
+.brasombre .br-wing { transform-box: view-box; transform-origin: 236px 122px; }
+.br-perch .br-wing-far { transform: rotate(-12deg); }
+.br-fly .br-wing-near { animation: br-flap 0.9s ease-in-out infinite; }
+.br-fly .br-wing-far { animation: br-flap-far 0.9s ease-in-out infinite; }
+@keyframes br-flap { 0%, 100% { transform: rotate(-22deg) scaleY(1); } 50% { transform: rotate(28deg) scaleY(0.82); } }
+@keyframes br-flap-far { 0%, 100% { transform: rotate(-30deg) scaleY(0.95); } 50% { transform: rotate(16deg) scaleY(0.78); } }
+
+/* Fanions de chasse sous la barre du haut. */
+.gc-wire { fill: none; stroke: #6a4a2c; stroke-width: 1.3; }
+.gc-cloth { stroke: rgba(0, 0, 0, 0.25); stroke-width: 0.6; }
+.gc-p0 .gc-cloth { fill: #b4441c; } .gc-p1 .gc-cloth { fill: #e8c88a; } .gc-p2 .gc-cloth { fill: #5a3a24; }
+.gc-mark { fill: none; stroke: rgba(255, 240, 210, 0.85); stroke-width: 1.1; stroke-linecap: round; }
+.gc-p1 .gc-mark { stroke: #5a2a14; }
+.gc-fang { fill: #efe3c8; stroke: rgba(0, 0, 0, 0.3); stroke-width: 0.5; }
+
+/* Passage de Brasombre (une fois par visite) et son ombre. */
+.gc-pass { position: absolute; top: 90px; left: 0; width: clamp(220px, 34vw, 420px); animation: gc-pass 7s cubic-bezier(.35, .1, .55, .9) both; }
+.gc-pass .brasombre { transform: scaleX(-1); filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.55)); }
+.gc-pass-shadow {
+  position: absolute; top: 30vh; left: 0; width: 60vw; height: 46vh; border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.18) 45%, transparent 70%);
+  animation: gc-pass-shadow 7s cubic-bezier(.35, .1, .55, .9) both;
+}
+@keyframes gc-pass { 0% { transform: translate(105vw, 4vh) scale(0.75); } 50% { transform: translate(35vw, -2vh) scale(0.9); } 100% { transform: translate(-45vw, -6vh) scale(0.8); } }
+@keyframes gc-pass-shadow { 0% { transform: translateX(110vw) scale(0.8); opacity: 0; } 15%, 85% { opacity: 1; } 100% { transform: translateX(-70vw) scale(1.1); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .gc-pass, .gc-pass-shadow { display: none; } }
+/* Carte : sceau en cor de chasse, bords couleur de braise. */
+html.ev-grande_chasse .brand-seal { font-size: 0; background: radial-gradient(circle at 35% 30%, #ffc27a, #b4441c 72%); }
+html.ev-grande_chasse .brand-seal::after { content: '🏹'; font-size: 0.85rem; }
+html.ev-grande_chasse .map-vignette {
+  background:
+    radial-gradient(ellipse at center, transparent 50%, rgba(120, 40, 20, 0.2) 80%, rgba(60, 20, 10, 0.46) 100%),
+    radial-gradient(ellipse 60% 40% at 50% 112%, rgba(255, 120, 40, 0.22), transparent 70%);
+}
