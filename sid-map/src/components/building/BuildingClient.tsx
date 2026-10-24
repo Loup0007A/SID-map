@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { currentUser } from '@/lib/supabase/session';
 import { usePermission } from '@/lib/hooks/usePermission';
 import CommentsBox from '@/components/map/CommentsBox';
 import FloorView from './FloorView';
@@ -34,7 +35,7 @@ export default function BuildingClient({ buildingId }: { buildingId: string }) {
 
       const {
         data: { user }
-      } = await supabase.auth.getUser();
+      } = await currentUser();
       setIsOwner(!!user && data.building?.owner_id === user.id);
     }
     setLoading(false);

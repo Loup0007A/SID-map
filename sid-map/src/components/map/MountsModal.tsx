@@ -5,6 +5,7 @@ import Icon from '@/components/ui/Icon';
 import { useCallback, useEffect, useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
+import { currentUser } from '@/lib/supabase/session';
 import { useToast } from '@/components/ui/Toast';
 import { usePermission } from '@/lib/hooks/usePermission';
 import { useMountTypes } from '@/lib/hooks/useMountTypes';
@@ -89,7 +90,7 @@ export default function MountsModal({
     setSaving(true);
     const {
       data: { user }
-    } = await supabase.auth.getUser();
+    } = await currentUser();
     const payload = {
       name: draft.name.trim(),
       icon: draft.icon,

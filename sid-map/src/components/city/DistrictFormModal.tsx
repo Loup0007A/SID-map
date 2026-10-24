@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
+import { currentUser } from '@/lib/supabase/session';
 import type { Point } from '@/lib/types';
 
 export default function DistrictFormModal({
@@ -28,7 +29,7 @@ export default function DistrictFormModal({
 
     const {
       data: { user }
-    } = await supabase.auth.getUser();
+    } = await currentUser();
 
     await supabase.from('city_districts').insert({
       city_id: cityId,

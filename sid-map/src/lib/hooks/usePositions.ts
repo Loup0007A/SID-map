@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { currentUser } from '@/lib/supabase/session';
 import type { CharacterPosition } from '@/lib/types';
 import { computeRemainingMinutes } from '@/lib/travel';
 
@@ -19,7 +20,7 @@ export function usePositions() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setMyUserId(data.user?.id ?? null));
+    currentUser().then(({ data }) => setMyUserId(data.user?.id ?? null));
     load();
 
     const channel = supabase

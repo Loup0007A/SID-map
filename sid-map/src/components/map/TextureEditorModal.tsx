@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
+import { currentUser } from '@/lib/supabase/session';
 import { useToast } from '@/components/ui/Toast';
 import { simplifyPath } from '@/lib/geometry';
 import { MOTIFS, type DrawnStroke, type MapTexture } from '@/lib/textures';
@@ -94,7 +95,7 @@ export default function TextureEditorModal({
     setSaving(true);
     const {
       data: { user }
-    } = await supabase.auth.getUser();
+    } = await currentUser();
     const payload = {
       name: name.trim().slice(0, 40),
       motif,

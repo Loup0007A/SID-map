@@ -11,6 +11,7 @@ import { ToastProvider } from '@/components/ui/Toast';
 import TermsBanner from '@/components/legal/TermsBanner';
 import { GuideProvider } from '@/components/guide/GuideProvider';
 import EventDecor from '@/components/EventDecor';
+import SessionGuard from '@/components/auth/SessionGuard';
 import './globals.css';
 
 
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ToastProvider>
           <GuideProvider>{children}</GuideProvider>
         </ToastProvider>
+        <SessionGuard />
         <TermsBanner />
         <EventDecor variant="map" />
       </body>

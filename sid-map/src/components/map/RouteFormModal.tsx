@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
+import { currentUser } from '@/lib/supabase/session';
 import { useToast } from '@/components/ui/Toast';
 import type { Point } from '@/lib/types';
 
@@ -30,7 +31,7 @@ export default function RouteFormModal({
     setSaving(true);
     const {
       data: { user }
-    } = await supabase.auth.getUser();
+    } = await currentUser();
 
     const { error } = await supabase.from('map_routes').insert({
       name: name.trim() || null,

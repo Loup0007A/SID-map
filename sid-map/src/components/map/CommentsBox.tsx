@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { currentUser } from '@/lib/supabase/session';
 import type { MapComment } from '@/lib/types';
 
 export default function CommentsBox({
@@ -37,7 +38,7 @@ export default function CommentsBox({
     setPosting(true);
     const {
       data: { user }
-    } = await supabase.auth.getUser();
+    } = await currentUser();
     if (!user) return;
 
     await supabase.from('map_comments').insert({

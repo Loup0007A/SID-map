@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
+import { currentUser } from '@/lib/supabase/session';
 import { uploadMapImage } from '@/lib/uploadImage';
 import type { MapZone, MarkerShape, PlaceType, Point } from '@/lib/types';
 import { PLACE_LABELS } from '@/lib/types';
@@ -53,7 +54,7 @@ export default function PlaceFormModal({
 
     const {
       data: { user }
-    } = await supabase.auth.getUser();
+    } = await currentUser();
 
     await supabase.from('map_places').insert({
       name: name.trim(),

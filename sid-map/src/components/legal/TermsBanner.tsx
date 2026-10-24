@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { currentUser } from '@/lib/supabase/session';
 import { TERMS_VERSION } from './LegalContent';
 
 /**
@@ -11,6 +12,10 @@ import { TERMS_VERSION } from './LegalContent';
  * aux trois sites du S.I.D. : l'acceptation vaut partout). Petite carte
  * flottante, pour ne pas cacher la carte.
  */
+// Membre dont on sait déjà que les conditions sont acceptées (pour cette visite) :
+// pas de nouvelle requête à chaque changement de page.
+let termsOkFor: string | null = null;
+
 export default function TermsBanner() {
   const pathname = usePathname();
   const [show, setShow] = useState(false);
@@ -20,10 +25,11 @@ export default function TermsBanner() {
     if (pathname.startsWith('/login') || pathname.startsWith('/cgu') || pathname.startsWith('/confidentialite')) return;
     (async () => {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: { user } } = await currentUser();
+      if (!user || termsOkFor === user.id) return;
       const { data, error } = await supabase.from('profiles').select('terms_version').eq('id', user.id).maybeSingle();
       if (!error && data && data.terms_version !== TERMS_VERSION) setShow(true);
+      else if (!error && data) termsOkFor = user.id;
     })();
   }, [pathname]);
 
@@ -33,7 +39,10 @@ export default function TermsBanner() {
     setBusy(true);
     const { error } = await createClient().rpc('accept_terms', { p_version: TERMS_VERSION });
     setBusy(false);
-    if (!error) setShow(false);
+    if (!error) {
+      setShow(false);
+      termsOkFor = (await currentUser()).data.user?.id ?? null;
+    }
   }
 
   return (

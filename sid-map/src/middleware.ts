@@ -1,54 +1,32 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { sessionExpiry } from '@/lib/supabase/sessionCookie';
 
-type CookieToSet = { name: string; value: string; options: CookieOptions };
-
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request: { headers: request.headers } });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet: CookieToSet[]) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request: { headers: request.headers } });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        }
-      }
-    }
-  );
-
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login');
+/**
+ * Garde de la Cartographie : sans session, direction /login.
+ *
+ * Volontairement sans appel réseau (rapidité) : on regarde seulement si le
+ * cookie de session est là. Toutes les pages de la carte se chargent dans le
+ * navigateur, dont le client Supabase rafraîchit lui-même le jeton ; les
+ * données restent protégées par la base (RLS). Avant, chaque page attendait
+ * ici un aller-retour vers le serveur d'authentification de Supabase.
+ */
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const isAuthRoute = pathname.startsWith('/login');
   // Pages légales : lisibles sans être connecté.
-  const isPublic = ['/cgu', '/confidentialite'].some((p) => request.nextUrl.pathname.startsWith(p));
+  const isPublic = ['/cgu', '/confidentialite'].some((p) => pathname.startsWith(p));
 
-  if (!user && !isAuthRoute && !isPublic) {
+  if (sessionExpiry(request) === null && !isAuthRoute && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
-    url.searchParams.set('next', request.nextUrl.pathname);
+    url.search = '';
+    url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
   }
-
-  if (user && isAuthRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/carte';
-    return NextResponse.redirect(url);
-  }
-
-  return response;
+  // (Déjà connecté sur /login : la page renvoie elle-même vers la carte.)
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)']
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|glb|json)$).*)']
 };

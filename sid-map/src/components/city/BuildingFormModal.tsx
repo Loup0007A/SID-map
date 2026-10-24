@@ -5,6 +5,7 @@ import { iconText } from '@/lib/icons';
 import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
+import { currentUser } from '@/lib/supabase/session';
 import { uploadMapImage } from '@/lib/uploadImage';
 import type { BuildingType, MarkerShape, Point } from '@/lib/types';
 import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
@@ -50,7 +51,7 @@ export default function BuildingFormModal({
 
     const {
       data: { user }
-    } = await supabase.auth.getUser();
+    } = await currentUser();
 
     await supabase.from('city_buildings').insert({
       city_id: cityId,

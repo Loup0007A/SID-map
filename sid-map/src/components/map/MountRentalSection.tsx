@@ -5,6 +5,7 @@ import { iconText } from '@/lib/icons';
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { currentUser } from '@/lib/supabase/session';
 import { useToast } from '@/components/ui/Toast';
 import { useMountTypes } from '@/lib/hooks/useMountTypes';
 import MountsModal from './MountsModal';
@@ -54,7 +55,7 @@ export default function MountRentalSection({
     if (!selectedMountType) return;
     const {
       data: { user }
-    } = await supabase.auth.getUser();
+    } = await currentUser();
     const { error } = await supabase.from('mount_rentals').insert({
       place_id: placeId,
       mount_type_id: selectedMountType,

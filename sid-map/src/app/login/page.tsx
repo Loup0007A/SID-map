@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { LegalLinks } from '@/components/legal/LegalPage';
@@ -22,6 +22,17 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Retour vers la page demandée (chemin interne seulement).
+  const nextParam = params.get('next');
+  const next = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/carte';
+
+  // Déjà connecté : directement à la carte.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) router.replace(next);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,8 +48,9 @@ function LoginForm() {
     }
 
     const {
-      data: { user }
-    } = await supabase.auth.getUser();
+      data: { session }
+    } = await supabase.auth.getSession();
+    const user = session?.user;
 
     if (user) {
       const { data: profile } = await supabase
@@ -55,7 +67,7 @@ function LoginForm() {
       }
     }
 
-    router.push(params.get('next') || '/carte');
+    router.push(next);
     router.refresh();
   }
 

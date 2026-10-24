@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { currentUser } from '@/lib/supabase/session';
 import { DEFAULT_BUILDING_ICONS, DEFAULT_PLACE_ICONS } from '@/lib/icons';
 import { BUILDING_LABELS, PLACE_LABELS } from '@/lib/types';
 
@@ -63,7 +64,7 @@ export function useTypeConfig(category: 'place' | 'building') {
     const sort_order = items.length + 1;
     const {
       data: { user }
-    } = await supabase.auth.getUser();
+    } = await currentUser();
     await supabase.from('map_icon_config').insert({
       category,
       key,
