@@ -8,6 +8,11 @@
 
 import { useEffect, useId, useState } from 'react';
 import { createPortal } from 'react-dom';
+import dynamic from 'next/dynamic';
+
+// Horizons du Wiki (chargés seulement sur le Wiki, pendant une fête).
+const Horizon = dynamic(() => import('./EventHorizons').then((m) => m.Horizon), { ssr: false });
+const HorizonFireworks = dynamic(() => import('./EventHorizons').then((m) => m.HorizonFireworks), { ssr: false });
 
 export const HOLIDAYS = ['saint_valentin', 'poisson_avril', 'paques', 'premier_mai', 'fete_musique', 'quatorze_juillet', 'armistice'] as const;
 export type HolidayKey = (typeof HOLIDAYS)[number];
@@ -118,6 +123,7 @@ export function HalloweenLayer({ variant, on }: { variant: 'map' | 'wiki'; on: b
     <>
       {variant === 'wiki' && (
         <div className="ev-back" aria-hidden>
+          <Horizon kind="halloween" />
           <div className="ev-moon" />
           <div className="ev-pumpkins">
             <Pumpkin style={{ left: '8%', animationDelay: '-1.2s' }} />
@@ -279,6 +285,7 @@ export function NoelLayer({ variant, on }: { variant: 'map' | 'wiki'; on: boolea
     <>
       {variant === 'wiki' && (
         <div className="ev-back ev-back-noel" aria-hidden>
+          <Horizon kind="noel" />
           <NorthStar />
           <div className="ev-snow">
             <div className="ev-snow-layer ev-snow-far" />
@@ -600,21 +607,8 @@ export function HolidayLayer({ variant, which }: { variant: 'map' | 'wiki'; whic
     <>
       {variant === 'wiki' && (
         <div className={`ev-back hy-back hy-back-${which}`} aria-hidden>
-          {which === 'quatorze_juillet' && (
-            <div className="hy-fireworks">
-              {[
-                [18, 22, 0, 'hy-f0'],
-                [74, 14, 2.6, 'hy-f2'],
-                [52, 30, 5.1, 'hy-f1'],
-              ].map(([x, y, d, c], k) => (
-                <span key={k} className={`hy-fw ${c}`} style={{ left: `${x}%`, top: `${y}%` }}>
-                  {Array.from({ length: 12 }, (_, j) => (
-                    <i key={j} style={{ '--a': `${j * 30}deg`, animationDelay: `${d}s` } as React.CSSProperties} />
-                  ))}
-                </span>
-              ))}
-            </div>
-          )}
+          <Horizon kind={which} />
+          {which === 'quatorze_juillet' && <HorizonFireworks />}
           {which === 'saint_valentin' && <div className="hy-glow hy-glow-love" />}
           {which === 'paques' && <div className="hy-glow hy-glow-sun" />}
           <div className="hy-floats">
