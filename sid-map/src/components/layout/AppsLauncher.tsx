@@ -7,6 +7,7 @@ import { APPS, CATEGORIES, openApp, type AppCategory } from '@/lib/apps';
 import AppIcon from './AppIcon';
 import { LegalLinks } from '@/components/legal/LegalPage';
 import { useGuide } from '@/components/guide/GuideProvider';
+import { Glyph } from '@/components/icons/SidIcon';
 
 // Panneau « Applications » ouvert depuis la barre du haut.
 export default function AppsLauncher({ onClose }: { onClose: () => void }) {
@@ -63,7 +64,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
           </button>
           {categories.map((c) => (
             <button key={c.id} onClick={() => setCat(c.id)} className={chip(cat === c.id)}>
-              {c.emoji} {c.label}
+              <Glyph e={c.emoji} /> {c.label}
             </button>
           ))}
         </div>
@@ -76,7 +77,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
               <section key={c.id}>
                 {cat === 'all' && (
                   <h3 className="mb-2 text-[11px] uppercase tracking-wide text-paper/50">
-                    {c.emoji} {c.label}
+                    <Glyph e={c.emoji} /> {c.label}
                   </h3>
                 )}
                 <div className="anim-stagger grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">

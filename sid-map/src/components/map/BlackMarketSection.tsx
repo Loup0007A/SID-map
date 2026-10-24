@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import type { BlackMarketItem, BlackMarketStall } from '@/lib/types';
+import { SidIcon } from "@/components/icons/SidIcon";
 
 const ERRORS: Record<string, string> = {
   not_at_location: "Tu dois être sur place pour acheter.",
@@ -129,7 +130,7 @@ export default function BlackMarketSection({
 
   return (
     <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
-      <p className="text-[11px] uppercase tracking-wide text-paper/50">🕶️ Marché noir</p>
+      <p className="text-[11px] uppercase tracking-wide text-paper/50"><SidIcon name="shades" /> Marché noir</p>
 
       {canEdit && (
         <label className="mt-2 flex items-center gap-2 text-xs text-paper/70">
@@ -178,10 +179,10 @@ export default function BlackMarketSection({
                         </span>
                       </span>
                       <span className="flex shrink-0 items-center gap-1.5">
-                        <span className="text-accent">{i.price} 💰</span>
+                        <span className="text-accent">{i.price} <SidIcon name="coins" /></span>
                         {mine || canEdit ? (
                           <button onClick={() => removeItem(i.id)} className="text-paper/40 hover:text-accent">
-                            🗑
+                            <SidIcon name="trash" />
                           </button>
                         ) : (
                           <button

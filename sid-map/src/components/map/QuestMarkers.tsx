@@ -1,6 +1,7 @@
 'use client';
 
 import type { MapPlace, MapQuest } from '@/lib/types';
+import { SvgIcon } from "@/components/icons/SidIcon";
 
 export default function QuestMarkers({
   quests,
@@ -29,9 +30,7 @@ export default function QuestMarkers({
               }}
             >
               <circle r={openId === q.id ? 1.9 : 1.5} fill="#e7c34a" stroke="#151312" strokeWidth={0.2} />
-              <text textAnchor="middle" dy="0.55" fontSize="1.6">
-                📜
-              </text>
+              <SvgIcon name="scroll" size={2.1} />
             </g>
           </g>
         );

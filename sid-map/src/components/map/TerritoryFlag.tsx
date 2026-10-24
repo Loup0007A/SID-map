@@ -1,4 +1,5 @@
 'use client';
+import { SvgIcon } from "@/components/icons/SidIcon";
 
 export default function TerritoryFlag({ x, y, label }: { x: number; y: number; label: string }) {
   return (
@@ -11,9 +12,7 @@ export default function TerritoryFlag({ x, y, label }: { x: number; y: number; l
         rx={0.6}
         fill="#000000a0"
       />
-      <text x={-label.length * 0.62} textAnchor="start" dy="0.55" fontSize="1.8">
-        🏴
-      </text>
+      <SvgIcon name="flag" x={-label.length * 0.62 + 1} size={2.2} />
       <text x={-label.length * 0.62 + 2.6} textAnchor="start" dy="0.5" fontSize="1.5" fill="#f4f2ec">
         {label}
       </text>

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { currentUser } from '@/lib/supabase/session';
 import { TERMS_VERSION } from './LegalContent';
+import { SidIcon } from "@/components/icons/SidIcon";
 
 /**
  * Demande d'accepter les CGU et la politique de confidentialité (communes
@@ -48,7 +49,7 @@ export default function TermsBanner() {
   return (
     <div className="glass-strong fixed inset-x-2 bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-[60] mx-auto max-w-xl rounded-2xl p-4 text-sm text-paper/90 shadow-xl">
       <p>
-        📜 Le S.I.D. a des conditions d&apos;utilisation et une politique de confidentialité, communes au Dossier Central, à la
+        <SidIcon name="scroll" /> Le S.I.D. a des conditions d&apos;utilisation et une politique de confidentialité, communes au Dossier Central, à la
         Cartographie et au Wiki. Lis{' '}
         <Link href="/cgu" className="text-accent underline">les conditions</Link> et{' '}
         <Link href="/confidentialite" className="text-accent underline">ce que nous faisons de tes données</Link>.

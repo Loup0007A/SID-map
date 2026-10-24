@@ -1,6 +1,7 @@
 'use client';
 
 import { useToast } from '@/components/ui/Toast';
+import { SidIcon } from "@/components/icons/SidIcon";
 
 export default function ExportMapButton({
   svgRef,
@@ -57,7 +58,7 @@ export default function ExportMapButton({
       onClick={exportPng}
       className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/70 hover:text-accent"
     >
-      🖼 Exporter
+      <SidIcon name="frame" /> Exporter
     </button>
   );
 }

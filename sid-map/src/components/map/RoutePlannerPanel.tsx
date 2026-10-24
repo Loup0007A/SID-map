@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { MapPlace, MapRoute } from '@/lib/types';
 import { findShortestPath, type RoutePlan } from '@/lib/pathfinding';
 import { formatMinutes } from '@/lib/travel';
+import { SidIcon, GlyphText } from '@/components/icons/SidIcon';
 
 function PlacePicker({
   label,
@@ -123,7 +124,7 @@ export default function RoutePlannerPanel({
   return (
     <div className={bare ? 'space-y-3' : 'glass-strong w-72 space-y-3 rounded-2xl p-3'}>
       <div className={bare ? 'hidden' : 'flex items-center justify-between'}>
-        <p className="font-display text-[10px] uppercase tracking-wide text-accent">🧭 Itinéraire</p>
+        <p className="font-display text-[10px] uppercase tracking-wide text-accent"><SidIcon name="compass" /> Itinéraire</p>
         <button
           onClick={() => {
             onHighlight(null);
@@ -151,7 +152,7 @@ export default function RoutePlannerPanel({
             ) : (
               <>
                 <p className="text-accent">
-                  ⏱ {formatMinutes(plan.totalMinutes / speed)} de trajet {mountName && speed !== 1 ? `(${mountName})` : 'à pied'}
+                  <SidIcon name="clock" /> {formatMinutes(plan.totalMinutes / speed)} de trajet {mountName && speed !== 1 ? `(${mountName})` : 'à pied'}
                 </p>
                 <ol className="mt-1.5 space-y-1 text-xs text-paper/70">
                   {plan.placeIds.map((pid, i) => {
@@ -170,7 +171,7 @@ export default function RoutePlannerPanel({
                       disabled={!canStart || starting}
                       className="btn-accent w-full rounded-lg py-2 text-xs font-semibold text-paper disabled:opacity-40"
                     >
-                      {starting ? 'Départ…' : plan.steps.length > 1 ? `🚶 Partir (${plan.steps.length} étapes)` : '🚶 Partir'}
+                      <GlyphText text={starting ? 'Départ…' : plan.steps.length > 1 ? `🚶 Partir (${plan.steps.length} étapes)` : '🚶 Partir'} />
                     </button>
                     {traveling ? (
                       <p className="mt-1 text-[11px] text-paper/50">Tu es déjà en route : attends d’être arrivé.</p>

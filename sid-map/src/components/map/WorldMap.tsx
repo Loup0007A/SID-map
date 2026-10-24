@@ -68,6 +68,7 @@ import { distanceUnits, formatDistance } from '@/lib/mapScale';
 import { useFavorites } from '@/lib/hooks/useFavorites';
 import { useIsDesktop } from '@/components/ui/Modal';
 import { SEL_TABLE, parseSel, pointInPolygon, selKey, shiftPoint, shiftPoints, type SelKind } from '@/lib/selection';
+import { SidIcon, GlyphText } from '@/components/icons/SidIcon';
 
 // Fenêtres et formulaires chargés à la demande : la carte s'affiche plus vite
 // sur téléphone (moins de code à télécharger et à lire au démarrage).
@@ -1278,7 +1279,7 @@ export default function WorldMap() {
               onClick={() => setToolbarOpen(true)}
               className="glass-strong flex items-center gap-2 rounded-full px-4 py-2.5 font-display text-xs uppercase tracking-wide text-accent"
             >
-              🛠 Outils
+              <SidIcon name="tools" /> Outils
             </button>
           ) : (
             <div className="glass-strong space-y-2 rounded-2xl p-3">
@@ -1313,7 +1314,7 @@ export default function WorldMap() {
                             editLayer === layer ? 'bg-accent text-paper' : 'text-paper/60 hover:text-paper'
                           }`}
                         >
-                          {layer === 'map' ? '🗺️ Carte' : layer === 'relief' ? '🏔 Relief' : '🌿 Biomes'}
+                          <GlyphText text={layer === 'map' ? '🗺️ Carte' : layer === 'relief' ? '🏔 Relief' : '🌿 Biomes'} />
                         </button>
                       ))}
                     </div>
@@ -1348,7 +1349,7 @@ export default function WorldMap() {
                               : 'border-white/15 bg-white/5 text-paper/70'
                           }`}
                         >
-                          🛣 Route
+                          <SidIcon name="road" /> Route
                         </button>
                       </>
                     )}
@@ -1368,7 +1369,7 @@ export default function WorldMap() {
                           : 'border-accent/40 bg-accent/10 text-accent'
                       }`}
                     >
-                      🗑 {deleteMode ? 'Suppression active' : 'Mode suppression'}
+                      <SidIcon name="trash" /> {deleteMode ? 'Suppression active' : 'Mode suppression'}
                     </button>
                   </>
                 )}
@@ -1426,7 +1427,7 @@ export default function WorldMap() {
                       aria-label="Attribuer un territoire à la sélection"
                       className="glass-input shrink-0 rounded-lg px-2 py-1.5 text-xs text-paper/80 disabled:opacity-30"
                     >
-                      <option value="">🏴 Territoire…</option>
+                      <option value=""><SidIcon name="flag" /> Territoire…</option>
                       <option value="none">Aucun (neutre)</option>
                       {groupsHook.groups.map((g) => (
                         <option key={g.id} value={g.id}>
@@ -1440,7 +1441,7 @@ export default function WorldMap() {
                     disabled={sel.length === 0 || selBusy}
                     className="shrink-0 whitespace-nowrap rounded-lg border border-accent/50 bg-accent/10 px-2.5 py-1.5 text-xs text-accent disabled:opacity-30"
                   >
-                    🗑 Supprimer
+                    <SidIcon name="trash" /> Supprimer
                   </button>
                   {lastMove && (
                     <button
@@ -1479,7 +1480,7 @@ export default function WorldMap() {
 
       {loading && (
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3">
-          <span aria-hidden className="compass-spin text-3xl">🧭</span>
+          <span aria-hidden className="compass-spin text-3xl"><SidIcon name="compass" /></span>
           <p className="font-display text-xs uppercase tracking-widest2 text-paper/60">Chargement de la carte…</p>
         </div>
       )}
@@ -1671,7 +1672,7 @@ export default function WorldMap() {
         <div className="glass-strong absolute bottom-20 right-3 z-30 w-56 max-w-[calc(100%-1.5rem)] rounded-xl p-3 text-xs text-paper md:bottom-6">
           <div className="mb-1 flex items-center justify-between">
             <p className="font-semibold text-accent">
-              👤 {places.find((p) => p.id === openPresenceId)?.name ?? 'Lieu'}
+              <SidIcon name="profile" /> {places.find((p) => p.id === openPresenceId)?.name ?? 'Lieu'}
             </p>
             <button onClick={() => setOpenPresenceId(null)} className="text-paper/50 hover:text-accent">
               ✕
@@ -1798,7 +1799,7 @@ export default function WorldMap() {
           role="status"
           className="anim-drop glass-strong absolute left-1/2 top-36 z-20 md:bottom-3 md:top-auto flex w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-2xl px-3.5 py-2 text-xs text-paper/90"
         >
-          <span className="min-w-0">{modeHint}</span>
+          <span className="min-w-0"><GlyphText text={modeHint} /></span>
           {measureMode ? (
             <button
               onClick={() => {
@@ -1855,7 +1856,7 @@ export default function WorldMap() {
               { label: '🎨 Textures', v: showTextures, set: setShowTextures }
             ].map((l) => (
               <label key={l.label} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-paper/80">
-                {l.label}
+                <span><GlyphText text={l.label} /></span>
                 <input type="checkbox" checked={l.v} onChange={(e) => l.set(e.target.checked)} className="h-4 w-4 accent-[#d2463b]" />
               </label>
             ))}
@@ -1914,7 +1915,7 @@ export default function WorldMap() {
               showRelief ? 'bg-accent text-paper' : 'text-paper/60'
             }`}
           >
-            🏔 Relief
+            <SidIcon name="mountain" /> Relief
           </button>
           <button
             onClick={() => setShowBiomes((v) => !v)}
@@ -1922,7 +1923,7 @@ export default function WorldMap() {
               showBiomes ? 'bg-accent text-paper' : 'text-paper/60'
             }`}
           >
-            🌿 Biomes
+            <SidIcon name="muguet" /> Biomes
           </button>
           <button
             onClick={() => setShowTextures((v) => !v)}
@@ -1930,7 +1931,7 @@ export default function WorldMap() {
               showTextures ? 'bg-accent text-paper' : 'text-paper/60'
             }`}
           >
-            🎨 Textures
+            <SidIcon name="palette" /> Textures
           </button>
         </div>
         <MapLegend
@@ -2024,7 +2025,7 @@ export default function WorldMap() {
         const remaining = Math.ceil(60 - elapsedMin);
         return (
           <div className="glass absolute bottom-20 left-1/2 z-10 -translate-x-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-accent md:bottom-16">
-            📜 Quête "{questHere.title}" — présence confirmée dans {remaining} min
+            <SidIcon name="scroll" /> Quête "{questHere.title}" — présence confirmée dans {remaining} min
           </div>
         );
       })()}

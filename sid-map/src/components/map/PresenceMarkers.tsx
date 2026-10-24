@@ -3,6 +3,7 @@
 import type { CharacterPosition, MapPlace, MapRoute } from '@/lib/types';
 import { useNow } from '@/lib/hooks/useNow';
 import { travelerScreenPosition } from '@/lib/travel';
+import { SvgIcon } from "@/components/icons/SidIcon";
 
 export default function PresenceMarkers({
   positions,
@@ -47,9 +48,7 @@ export default function PresenceMarkers({
               }}
             >
               <circle r={1.6} fill="#1e9e5a" stroke="#081629" strokeWidth={0.2} />
-              <text textAnchor="middle" dy="0.6" fontSize="1.6">
-                👤
-              </text>
+              <SvgIcon name="profile" size={2.1} />
               {people.length > 1 && (
                 <>
                   <circle cx={1.3} cy={-1.3} r={1} fill="#d2463b" />
@@ -69,9 +68,7 @@ export default function PresenceMarkers({
         return (
           <g key={p.user_id} transform={`translate(${pos.x}, ${pos.y})`}>
             <circle r={1.4} fill="#e7c34a" stroke="#081629" strokeWidth={0.2} />
-            <text textAnchor="middle" dy="0.55" fontSize="1.5">
-              {p.active_mount_id ? '🐎' : '🚶'}
-            </text>
+            <SvgIcon name={p.active_mount_id ? 'horse' : 'walker'} size={2} />
           </g>
         );
       })}

@@ -14,6 +14,7 @@ import type { CityBuilding, MapBiome, MapPlace, MapRoute } from '@/lib/types';
 import { BIOME_LABELS } from '@/lib/types';
 import { blockedBiome } from '@/lib/biomePath';
 import { distanceKm, flightMinutes, formatDistance, type MapSettings } from '@/lib/mapScale';
+import { SidIcon } from '@/components/icons/SidIcon';
 
 export default function PositionPickerModal({
   settings,
@@ -100,7 +101,7 @@ export default function PositionPickerModal({
     return (
       <Modal title="En voyage…" windowId="position" onClose={onClose} maxWidth="max-w-sm">
         <div className="space-y-3 text-center">
-          <p className="text-3xl"><Icon value={myPosition.flight_target_place_id ? '🕊️' : activeMount ? activeMount.icon : '🚶'} /></p>
+          <p className="text-3xl">{myPosition.flight_target_place_id ? <SidIcon name="dove" /> : activeMount ? <Icon value={activeMount.icon} /> : <SidIcon name="walker" />}</p>
           <p className="text-sm text-paper/80">
             En route vers <span className="text-accent">{destPlace?.name ?? '?'}</span>
           </p>
@@ -250,7 +251,7 @@ export default function PositionPickerModal({
 
         <div className="border-t border-white/10 pt-3">
           <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50">
-            🛣 Voyager (à pied{activeMount ? ` / ${activeMount.name}` : ''})
+            <SidIcon name="road" /> Voyager (à pied{activeMount ? ` / ${activeMount.name}` : ''})
           </p>
           {connectedRoutes.length === 0 && (
             <p className="text-xs text-paper/40">
@@ -295,7 +296,7 @@ export default function PositionPickerModal({
 
         {activeMount?.can_fly && (
           <div className="border-t border-white/10 pt-3">
-            <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50">🕊️ Voler n'importe où (sans chemin){activeMount?.flight_range_km ? ` (portée ${activeMount.flight_range_km} ${settings.unit_label})` : ''}</p>
+            <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50"><SidIcon name="dove" /> Voler n'importe où (sans chemin){activeMount?.flight_range_km ? ` (portée ${activeMount.flight_range_km} ${settings.unit_label})` : ''}</p>
             <input
               value={flightQuery}
               onChange={(e) => setFlightQuery(e.target.value)}

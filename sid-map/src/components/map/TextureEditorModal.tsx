@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/Toast';
 import { simplifyPath } from '@/lib/geometry';
 import { MOTIFS, type DrawnStroke, type MapTexture } from '@/lib/textures';
 import { TexturePreview, strokePath } from './TextureDefs';
+import { SidIcon, GlyphText } from '@/components/icons/SidIcon';
 
 type Tool = 'pen' | 'shape' | 'erase';
 
@@ -130,7 +131,7 @@ export default function TextureEditorModal({
         tool === t ? 'btn-accent border-transparent text-paper' : 'border-white/15 bg-white/5 text-paper/70'
       }`}
     >
-      {label}
+      <GlyphText text={label} />
     </button>
   );
 
@@ -190,7 +191,7 @@ export default function TextureEditorModal({
             <div className="flex gap-1.5">
               {toolBtn('pen', '✏️ Trait')}
               {toolBtn('shape', '⬟ Forme pleine')}
-              {toolBtn('erase', '🧽 Gomme')}
+              {toolBtn('erase', '◌ Gomme')}
             </div>
             <svg
               ref={svgRef}
@@ -268,7 +269,7 @@ export default function TextureEditorModal({
                 onClick={() => setStrokes([])}
                 className="flex-1 rounded-lg border border-white/15 bg-white/5 px-2 py-1.5 text-xs text-paper/70 hover:text-accent"
               >
-                🗑 Tout effacer
+                <SidIcon name="trash" /> Tout effacer
               </button>
             </div>
             <p className="text-[10px] text-paper/40">

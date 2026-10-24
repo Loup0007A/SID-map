@@ -14,6 +14,7 @@ import { BIOME_LABELS, type CharacterPosition, type MountType } from '@/lib/type
 import { formatMinutes } from '@/lib/travel';
 import type { MapSettings } from '@/lib/mapScale';
 import IconPicker from './IconPicker';
+import { SidIcon, GlyphText } from '@/components/icons/SidIcon';
 
 interface LogRow {
   mount_type_id: string | null;
@@ -144,7 +145,7 @@ export default function MountsModal({
               <input type="number" step={0.5} min={0.5} value={draft.speed_multiplier} onChange={(e) => setDraft({ ...draft, speed_multiplier: Number(e.target.value) })} className={field} />
             </label>
             <label>
-              Prix (🪙)
+              Prix (<SidIcon name="coins" />)
               <input type="number" min={0} value={draft.rental_price} onChange={(e) => setDraft({ ...draft, rental_price: Number(e.target.value) })} className={field} />
             </label>
             <label>
@@ -194,7 +195,7 @@ export default function MountsModal({
       onClick={() => setTab(t)}
       className={`flex-1 rounded-lg px-2 py-1.5 text-xs ${tab === t ? 'bg-accent text-paper' : 'text-paper/60 hover:text-paper'}`}
     >
-      {label}
+      <GlyphText text={label} />
     </button>
   );
 
@@ -244,12 +245,12 @@ export default function MountsModal({
                   {isAdmin && (
                     <span className="flex gap-2">
                       <button onClick={() => setDraft(toDraft(m))} className="text-paper/60 hover:text-accent">✎</button>
-                      <button onClick={() => remove(m)} className="text-paper/60 hover:text-accent">🗑</button>
+                      <button onClick={() => remove(m)} className="text-paper/60 hover:text-accent"><SidIcon name="trash" /></button>
                     </span>
                   )}
                 </div>
                 <dl className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-paper/70">
-                  <dt className="text-paper/40">Déplacement</dt><dd>{m.can_fly ? '🕊️ Vol libre' : '🛣 Routes'}</dd>
+                  <dt className="text-paper/40">Déplacement</dt><dd><GlyphText text={m.can_fly ? '🕊️ Vol libre' : '🛣 Routes'} /></dd>
                   <dt className="text-paper/40">Vitesse</dt><dd>×{m.speed_multiplier} · {Math.round(effectiveKmh(m))} {settings.unit_label}/h</dd>
                   {m.can_fly && (
                     <>
@@ -257,7 +258,7 @@ export default function MountsModal({
                       <dd>{m.flight_range_km ? `${m.flight_range_km} ${settings.unit_label}` : 'Illimitée'}</dd>
                     </>
                   )}
-                  <dt className="text-paper/40">Location</dt><dd>{m.rental_price} 🪙 / {m.rental_hours ?? 24} h</dd>
+                  <dt className="text-paper/40">Location</dt><dd>{m.rental_price} <SidIcon name="coins" /> / {m.rental_hours ?? 24} h</dd>
                   <dt className="text-paper/40">Biomes</dt><dd>{biomes}</dd>
                   <dt className="text-paper/40">Locations</dt><dd>{isAdmin ? rows.length : mine}{isAdmin ? ` · ${revenue.toFixed(0)} 🪙 aux admins` : ' (les tiennes)'}</dd>
                 </dl>

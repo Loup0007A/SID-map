@@ -7,6 +7,7 @@ import { BIOME_LABELS } from '@/lib/types';
 import { blockedBiome } from '@/lib/biomePath';
 import { distanceKm, flightMinutes, formatDistance, type MapSettings } from '@/lib/mapScale';
 import { formatMinutes } from '@/lib/travel';
+import { SidIcon } from "@/components/icons/SidIcon";
 
 // Confirmation d'un vol libre : distance, durée, portée, biomes.
 export default function FlightPanel({
@@ -61,7 +62,7 @@ export default function FlightPanel({
           onClick={onConfirm}
           className="btn-accent flex-1 rounded-lg py-1.5 text-xs font-semibold text-paper disabled:opacity-40"
         >
-          🕊️ Décoller
+          <SidIcon name="dove" /> Décoller
         </button>
         <button onClick={onCancel} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-paper/70 hover:text-accent">
           Annuler

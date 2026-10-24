@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import AppsLauncher from './AppsLauncher';
 import { useGuide } from '@/components/guide/GuideProvider';
+import { SidIcon } from "@/components/icons/SidIcon";
 
 const LINKS = [{ href: '/carte', label: 'Carte du monde' }];
 const STORAGE_KEY = 'sid-navbar-collapsed';
@@ -101,7 +102,7 @@ export default function Navbar() {
           className="ml-1 shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 font-display text-[11px] text-paper/60 transition hover:border-accent hover:text-accent md:px-3 md:text-xs"
         >
           <span className="md:hidden" aria-hidden>
-            ⏻
+            <SidIcon name="power" />
           </span>
           <span className="hidden md:inline">Déconnexion</span>
         </button>

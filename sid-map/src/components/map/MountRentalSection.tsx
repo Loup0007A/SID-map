@@ -11,6 +11,7 @@ import { useMountTypes } from '@/lib/hooks/useMountTypes';
 import MountsModal from './MountsModal';
 import { useMapSettings } from '@/lib/hooks/useMapSettings';
 import type { MountRental } from '@/lib/types';
+import { SidIcon } from "@/components/icons/SidIcon";
 
 export default function MountRentalSection({
   placeId,
@@ -102,7 +103,7 @@ export default function MountRentalSection({
       <MountsModal settings={settings} myPosition={null} onClose={() => { setShowNewMountType(false); mounts.reload(); }} />
     )}
     <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
-      <p className="text-[11px] uppercase tracking-wide text-paper/50">🐴 Montures louables ici</p>
+      <p className="text-[11px] uppercase tracking-wide text-paper/50"><SidIcon name="horse" /> Montures louables ici</p>
 
       {rentals.length === 0 && !canEdit && (
         <p className="text-xs text-paper/40">Aucune monture disponible ici.</p>
@@ -120,7 +121,7 @@ export default function MountRentalSection({
           >
             <span>
               <Icon value={type.icon} /> {type.name}
-              {type.can_fly && ' · vol'} · x{type.speed_multiplier} · {price} 🪙
+              {type.can_fly && ' · vol'} · x{type.speed_multiplier} · {price} <SidIcon name="coins" />
             </span>
             <div className="flex items-center gap-1.5">
               {isActive ? (
@@ -170,7 +171,7 @@ export default function MountRentalSection({
                 <option value="">Choisir un type de monture…</option>
                 {mounts.mountTypes.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {iconText(m.icon)} {m.name} ({m.rental_price} 🪙)
+                    {iconText(m.icon)} {m.name} ({m.rental_price} <SidIcon name="coins" />)
                   </option>
                 ))}
               </select>
@@ -206,7 +207,7 @@ export default function MountRentalSection({
             onClick={() => setShowNewMountType(true)}
             className="w-full rounded-lg border border-dashed border-white/20 py-1.5 text-xs text-paper/60 hover:bg-white/5"
           >
-            ⚙ Gérer les types de monture
+            <SidIcon name="gear" /> Gérer les types de monture
           </button>
         </div>
       )}

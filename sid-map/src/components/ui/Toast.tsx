@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { SidIcon, GlyphText } from '@/components/icons/SidIcon';
 
 interface Toast {
   id: number;
@@ -45,8 +46,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             }`}
           >
             {t.kind === 'success' && '✓ '}
-            {t.kind === 'error' && '⚠ '}
-            {t.message}
+            {t.kind === 'error' && <><SidIcon name="warning" />{' '}</>}
+            <GlyphText text={t.message} />
           </div>
         ))}
       </div>

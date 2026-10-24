@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import { usePermission } from '@/lib/hooks/usePermission';
 import type { MapPlace, MapRoute } from '@/lib/types';
+import { SidIcon } from "@/components/icons/SidIcon";
 
 export default function RouteInfoModal({
   route,
@@ -38,7 +39,7 @@ export default function RouteInfoModal({
     <Modal title={route.name || 'Route'} onClose={onClose}>
       <div className="space-y-2 text-sm text-paper/80">
         <p>
-          🛣 {from?.name ?? '?'} → {to?.name ?? '?'}
+          <SidIcon name="road" /> {from?.name ?? '?'} → {to?.name ?? '?'}
         </p>
         {route.travel_minutes && <p className="text-paper/60">Temps de trajet RP : {route.travel_minutes} min</p>}
         {canEdit && (
@@ -46,7 +47,7 @@ export default function RouteInfoModal({
             onClick={handleDelete}
             className="mt-3 w-full rounded-lg border border-accent/40 py-2 text-xs text-accent hover:bg-accent/10"
           >
-            🗑 Supprimer cette route
+            <SidIcon name="trash" /> Supprimer cette route
           </button>
         )}
       </div>

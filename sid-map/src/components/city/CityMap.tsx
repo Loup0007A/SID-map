@@ -32,6 +32,7 @@ import { usePositions } from '@/lib/hooks/usePositions';
 import { useMapSettings } from '@/lib/hooks/useMapSettings';
 import { useToast } from '@/components/ui/Toast';
 import { isImageIcon } from '@/lib/icons';
+import { SidIcon } from '@/components/icons/SidIcon';
 
 const CLOSE_SNAP_PX = 14;
 type PointTool = 'point-circle' | 'point-rect';
@@ -345,7 +346,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
               onClick={() => setToolbarOpen(true)}
               className="glass-strong flex items-center gap-2 rounded-full px-4 py-2.5 font-display text-xs uppercase tracking-wide text-accent"
             >
-              🛠 Outils
+              <SidIcon name="tools" /> Outils
             </button>
           ) : (
             <div className="glass-strong space-y-2 rounded-2xl p-3">
@@ -392,7 +393,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
                           : 'border-accent/40 bg-accent/10 text-accent'
                       }`}
                     >
-                      🗑 {deleteMode ? 'Suppression active' : 'Mode suppression'}
+                      <SidIcon name="trash" /> {deleteMode ? 'Suppression active' : 'Mode suppression'}
                     </button>
                   </>
                 )}
@@ -678,7 +679,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
           onClick={() => setShowPositionPicker(true)}
           className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/70 hover:text-accent"
         >
-          📍 Ma position
+          <SidIcon name="pin" /> Ma position
         </button>
       </MapActionStack>
 
@@ -690,7 +691,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
         }`}
       >
         {deleteMode
-          ? '🗑 Suppression — clique un quartier ou un bâtiment (confirmation demandée)'
+          ? <><SidIcon name="trash" /> Suppression — clique un quartier ou un bâtiment (confirmation demandée)</>
           : editMode && activeTool === 'polygon'
           ? tempPoints.length < 3
             ? `Polygone — ${tempPoints.length} point${tempPoints.length > 1 ? 's' : ''}, il en faut au moins 3 (quartier)`

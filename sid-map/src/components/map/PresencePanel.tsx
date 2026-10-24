@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { CharacterPosition, MapPlace, MapRoute } from '@/lib/types';
 import { useNow } from '@/lib/hooks/useNow';
 import { computeProgress, tripInfo } from '@/lib/travel';
+import { SidIcon, GlyphText } from '@/components/icons/SidIcon';
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -68,7 +69,7 @@ export default function PresencePanel({
               )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-paper">{p.nickname ?? 'Membre'}</p>
-                <p className="truncate text-[11px] text-paper/50">{locationLabel(p)}</p>
+                <p className="truncate text-[11px] text-paper/50"><GlyphText text={locationLabel(p)} /></p>
                 {p.status && <p className="truncate text-[10px] italic text-paper/40">"{p.status}"</p>}
               </div>
               <span className="shrink-0 text-[9px] text-paper/30">{timeAgo(p.updated_at)}</span>
@@ -80,7 +81,7 @@ export default function PresencePanel({
         onClick={() => setOpen((v) => !v)}
         className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/70 hover:text-accent"
       >
-        👥 Présences {positions.length > 0 && `(${positions.length})`}
+        <SidIcon name="people" /> Présences {positions.length > 0 && `(${positions.length})`}
       </button>
     </div>
   );

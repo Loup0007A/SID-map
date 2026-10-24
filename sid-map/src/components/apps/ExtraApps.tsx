@@ -8,6 +8,7 @@ import type { CharacterPosition, MapPlace, MapRoute } from '@/lib/types';
 import { distanceKm, formatDistance, type MapSettings } from '@/lib/mapScale';
 import { formatMinutes } from '@/lib/travel';
 import { routeWeight } from '@/lib/pathfinding';
+import { SidIcon } from '@/components/icons/SidIcon';
 
 const row = 'flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left hover:border-[#e7c34a]/50 hover:bg-white/10';
 const chip = (active: boolean) =>
@@ -89,7 +90,7 @@ export function DirectoryApp({
             </span>
             {(here.get(p.id) ?? 0) > 0 && (
               <span className="shrink-0 rounded-full bg-emerald-400/15 px-2 py-0.5 text-[11px] text-emerald-300" title="Personnages présents">
-                👤 {here.get(p.id)}
+                <SidIcon name="profile" /> {here.get(p.id)}
               </span>
             )}
           </button>
@@ -154,9 +155,13 @@ export function NearbyApp({
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm text-paper">{p.name}</span>
                   <span className="block truncate text-[11px] text-paper/50">
-                    {route
-                      ? `🛣 Route directe · ${formatMinutes(routeWeight(route) / (speedMultiplier || 1))}`
-                      : 'Pas de route directe'}
+                    {route ? (
+                      <>
+                        <SidIcon name="road" /> Route directe · {formatMinutes(routeWeight(route) / (speedMultiplier || 1))}
+                      </>
+                    ) : (
+                      'Pas de route directe'
+                    )}
                   </span>
                 </span>
                 <span className="shrink-0 text-right text-xs text-[#e7c34a]">{formatDistance(km, settings.unit_label)}</span>

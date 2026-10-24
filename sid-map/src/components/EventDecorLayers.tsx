@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useId, useState } from 'react';
+import { Bird, BleuetHead, MiniArt, MuguetSprig, type MiniKind } from './eventArt';
 import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 
@@ -335,13 +336,14 @@ const HOLIDAY_SPEC: Record<HolidayKey, { garland: GarlandKind; float: FloatKind;
   armistice: { garland: 'bleuets', float: 'bleuet', per: 2 },
 };
 
+const HEART_C = ['#ff4d7a', '#ffb3c8', '#e2325f'];
+const NOTE_C = ['#c9a6ff', '#ff9c6e', '#6ec8ff'];
+const NOTE_K: MiniKind[] = ['note', 'notes', 'noteBeam'];
+
 function SmallBleuet({ r = 1 }: { r?: number }) {
   return (
-    <g transform={`scale(${r})`}>
-      {Array.from({ length: 8 }, (_, i) => (
-        <path key={i} d="M0 -1.5 L-2 -7.5 L-0.7 -6.5 L0 -8.5 L0.7 -6.5 L2 -7.5 Z" className="hy-bleuet" transform={`rotate(${i * 45})`} />
-      ))}
-      <circle r="1.7" className="hy-bleuet-heart" />
+    <g transform={`scale(${(r * 0.5).toFixed(3)})`}>
+      <BleuetHead />
     </g>
   );
 }
@@ -349,7 +351,7 @@ function SmallBleuet({ r = 1 }: { r?: number }) {
 function GarlandItem({ kind, i }: { kind: GarlandKind; i: number }) {
   switch (kind) {
     case 'hearts':
-      return <path d="M0 13 C-5 9 -7.5 6 -7.5 3.5 C-7.5 1.5 -6 0 -4 0 C-2.4 0 -1 1 0 2.4 C1 1 2.4 0 4 0 C6 0 7.5 1.5 7.5 3.5 C7.5 6 5 9 0 13 Z" className={`hy-g-heart hy-c${i % 3}`} transform="translate(0 4)" />;
+      return <MiniArt kind="heart" size={15} y={10} color={HEART_C[i % 3]} className="hy-g-heart" />;
     case 'fish':
       return (
         <g transform={`translate(0 6) rotate(${i % 2 ? 8 : -8})`}>
@@ -363,14 +365,12 @@ function GarlandItem({ kind, i }: { kind: GarlandKind; i: number }) {
       return (
         <g transform="translate(0 2)">
           <path d="M0 0 Q2 6 0 12" fill="none" stroke="#4f9a5d" strokeWidth="1" />
-          <path d="M0 12 Q-3 13 -3.4 16.4 L-2.2 15.6 L-1 16.6 L0 15.8 L1 16.6 L2.2 15.6 L3.4 16.4 Q3 13 0 12 Z" className="hy-g-bell" />
+          <MiniArt kind="bell" size={9} y={15} color="#fbfff7" className="hy-g-bell" />
         </g>
       );
     case 'notes':
       return (
-        <text y="16" textAnchor="middle" className={`hy-g-note hy-c${i % 3}`}>
-          {['♪', '♫', '♬'][i % 3]}
-        </text>
+        <MiniArt kind={NOTE_K[i % 3]} size={15} y={10} color={NOTE_C[i % 3]} />
       );
     case 'bunting':
       return <path d="M-7 1 L7 1 L0 15 Z" className={`hy-g-flag hy-f${i % 3}`} />;
@@ -415,8 +415,8 @@ function FloatItem({ kind, i, style, small }: { kind: FloatKind; i: number; styl
   switch (kind) {
     case 'heart':
       return (
-        <svg viewBox="0 0 32 30" className={`${cls} hy-float-heart`} style={style} aria-hidden>
-          <path d="M16 28 C6 20 1 14 1 8.5 C1 4 4.5 1 8.5 1 C11.6 1 14.3 2.8 16 5.6 C17.7 2.8 20.4 1 23.5 1 C27.5 1 31 4 31 8.5 C31 14 26 20 16 28 Z" />
+        <svg viewBox="-12 -12 24 24" className={`${cls} hy-float-heart`} style={style} overflow="visible" aria-hidden>
+          <MiniArt kind="heart" color={HEART_C[i % 3]} />
         </svg>
       );
     case 'fish':
@@ -435,27 +435,11 @@ function FloatItem({ kind, i, style, small }: { kind: FloatKind; i: number; styl
         </svg>
       );
     case 'muguet':
-      return (
-        <svg viewBox="0 0 40 60" className={`${cls} hy-float-muguet`} style={style} aria-hidden>
-          <path d="M8 58 C2 40 6 18 16 6 C12 22 12 40 14 58 Z" fill="#2f8a4f" />
-          <path d="M30 58 C38 42 34 22 26 12 C28 28 28 42 24 58 Z" fill="#3aa35e" />
-          <path d="M19 58 C19 40 21 24 28 12" fill="none" stroke="#5fae6e" strokeWidth="1.4" />
-          {[
-            [27, 15],
-            [25, 22],
-            [23.5, 29],
-            [22.5, 36],
-          ].map(([x, y], k) => (
-            <path key={k} transform={`translate(${x} ${y})`} d="M0 0 Q-2.5 1 -3 4.2 L-2 3.6 L-1 4.6 L0 3.8 L1 4.6 L2 3.6 L3 4.2 Q2.5 1 0 0 Z" fill="#fbfff7" />
-          ))}
-        </svg>
-      );
+      return <MuguetSprig className={`${cls} hy-float-muguet`} style={style} />;
     case 'note':
       return (
-        <svg viewBox="0 0 30 34" className={`${cls} hy-float-note`} style={style} aria-hidden>
-          <text x="15" y="28" textAnchor="middle" className={`hy-g-note hy-c${i % 3}`}>
-            {['♫', '♪', '♬'][i % 3]}
-          </text>
+        <svg viewBox="-12 -12 24 24" className={`${cls} hy-float-note`} style={style} overflow="visible" aria-hidden>
+          <MiniArt kind={NOTE_K[(i + 1) % 3]} color={NOTE_C[i % 3]} />
         </svg>
       );
     case 'flag':
@@ -512,29 +496,16 @@ function HolidayFly({ which }: { which: HolidayKey }) {
       );
     case 'premier_mai':
     case 'armistice':
-      return (
-        <svg viewBox="0 0 110 60" className={`hy-fly-art hy-bird ${which === 'premier_mai' ? 'hy-pigeon' : 'hy-dove'}`} aria-hidden>
-          <path d="M24 34 C36 26 58 24 72 30 C78 24 86 24 90 28 C84 30 82 34 82 38 C70 46 42 46 24 34 Z" />
-          <path className="hy-wing" d="M46 30 C40 10 56 2 70 8 C60 14 58 22 58 30 Z" />
-          <path d="M24 34 L10 28 L16 36 L8 42 L26 40 Z" />
-          <circle cx="84" cy="29" r="1.1" fill="#1b1b24" />
-          {which === 'armistice' ? (
-            <path d="M92 32 C98 34 102 30 106 33 M96 31 L98 27 M100 32 L102 28" className="hy-olive" />
-          ) : (
-            <g transform="translate(92 26) rotate(20)">
-              <path d="M0 0 Q2 6 0 12" fill="none" stroke="#4f9a5d" strokeWidth="1" />
-              <path d="M0 12 Q-3 13 -3.4 16.4 L-2.2 15.6 L-1 16.6 L0 15.8 L1 16.6 L2.2 15.6 L3.4 16.4 Q3 13 0 12 Z" fill="#fbfff7" />
-            </g>
-          )}
-        </svg>
-      );
+      return which === 'premier_mai' ? <Bird kind="pigeon" carry="muguet" className="hy-bird hy-pigeon" /> : <Bird kind="dove" carry="olive" className="hy-bird hy-dove" />;
     case 'fete_musique':
       return (
         <svg viewBox="0 0 160 60" className="hy-fly-art" aria-hidden>
-          {['♪', '♫', '♬', '♪', '♩', '♫'].map((g, k) => (
-            <text key={k} x={k * 26 + 6} y={30 + Math.sin(k * 1.3) * 16} className={`hy-flying-note hy-c${k % 3}`} style={{ animationDelay: `${k * 0.12}s` }}>
-              {g}
-            </text>
+          {(['note', 'notes', 'noteBeam', 'note', 'noteQuarter', 'notes'] as MiniKind[]).map((g, k) => (
+            <g key={k} transform={`translate(${k * 26 + 14} ${(22 + Math.sin(k * 1.3) * 16).toFixed(1)})`}>
+              <g className="hy-flying-note" style={{ animationDelay: `${k * 0.12}s` }}>
+                <MiniArt kind={g} size={26} color={NOTE_C[k % 3]} />
+              </g>
+            </g>
           ))}
         </svg>
       );

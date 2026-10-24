@@ -7,6 +7,7 @@ import type { MapTexture } from '@/lib/textures';
 import { useTextures } from '@/lib/hooks/useTextures';
 import { usePermission } from '@/lib/hooks/usePermission';
 import { TexturePreview } from './TextureDefs';
+import { SidIcon } from "@/components/icons/SidIcon";
 
 // L'éditeur n'est chargé qu'à la demande (allège le premier chargement).
 const TextureEditorModal = dynamic(() => import('./TextureEditorModal'), { ssr: false });
@@ -41,7 +42,7 @@ export default function TexturePicker({
       <label className="text-[11px] uppercase tracking-wide text-paper/50">Texture</label>
       <div className="grid max-h-44 grid-cols-4 gap-1.5 overflow-y-auto scrollbar-thin pr-1">
         <button type="button" onClick={() => onChange(null)} className={`${base} ${value === null ? on : off}`}>
-          <span className="flex h-10 w-10 items-center justify-center text-lg">✨</span>
+          <span className="flex h-10 w-10 items-center justify-center text-lg"><SidIcon name="sparkle" /></span>
           Auto
         </button>
         <button type="button" onClick={() => onChange('none')} className={`${base} ${value === 'none' ? on : off}`}>
@@ -74,7 +75,7 @@ export default function TexturePicker({
                     onClick={() => remove(t)}
                     className="rounded bg-black/50 px-1 text-[10px] text-paper/80 hover:text-accent"
                   >
-                    🗑
+                    <SidIcon name="trash" />
                   </button>
                 )}
               </span>
@@ -91,7 +92,7 @@ export default function TexturePicker({
           }}
           className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-paper/70 hover:border-accent hover:text-accent"
         >
-          ➕ Créer / dessiner une texture
+          + Créer / dessiner une texture
         </button>
       )}
       {showEditor && (

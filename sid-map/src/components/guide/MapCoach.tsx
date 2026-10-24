@@ -1,4 +1,5 @@
 'use client';
+import { Glyph } from '@/components/icons/SidIcon';
 
 // « Et maintenant ? » — une seule suggestion à la fois, la plus utile
 // selon l'état réel de la carte et du personnage. Chaque suggestion peut
@@ -24,7 +25,7 @@ export default function MapCoach({ tip, onDismiss }: { tip: CoachTip | null; onD
         tip.tone === 'error' ? 'border-accent/60' : ''
       }`}
     >
-      <span aria-hidden className="text-lg leading-none">{tip.emoji}</span>
+      <span aria-hidden className="text-lg leading-none"><Glyph e={tip.emoji} /></span>
       <div className="min-w-0 flex-1 space-y-2">
         <p className="text-sm leading-snug text-paper/90">{tip.text}</p>
         {(tip.action || tip.secondary) && (

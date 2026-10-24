@@ -8,6 +8,7 @@ import { usePermission } from '@/lib/hooks/usePermission';
 import OwnerPicker from '@/components/city/OwnerPicker';
 import type { MapPlace, TeleportCrystal } from '@/lib/types';
 import type { usePositions } from '@/lib/hooks/usePositions';
+import { SidIcon, GlyphText } from '@/components/icons/SidIcon';
 
 const ERRORS: Record<string, string> = {
   crystal_not_found: 'Cristal introuvable.',
@@ -156,7 +157,7 @@ export default function CrystalsModal({
                   onClick={() => setShowPicker(true)}
                   className="w-full rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-left text-xs text-paper/70 hover:border-accent"
                 >
-                  {holderId ? `👤 ${holderLabel}` : '👤 Choisir le joueur…'}
+                  <GlyphText text={holderId ? `👤 ${holderLabel}` : '👤 Choisir le joueur…'} />
                 </button>
                 <label className="flex items-center gap-2 text-xs text-paper/70">
                   <input
@@ -185,7 +186,7 @@ export default function CrystalsModal({
                       {c.used_at ? ' (utilisé)' : ''}
                     </span>
                     <button onClick={() => revoke(c.id)} className="ml-2 text-paper/40 hover:text-accent">
-                      🗑
+                      <SidIcon name="trash" />
                     </button>
                   </div>
                 ))}

@@ -13,6 +13,7 @@ import {
   type ChecklistItem,
   type GuideFacts
 } from '@/lib/guide';
+import { SidIcon, Glyph } from '@/components/icons/SidIcon';
 
 function Checklist({
   title,
@@ -92,7 +93,7 @@ function Topics({ audience }: { audience: Audience }) {
             aria-expanded={open === t.id}
             className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-paper hover:bg-white/5"
           >
-            <span aria-hidden>{t.emoji}</span>
+            <span aria-hidden><Glyph e={t.emoji} /></span>
             <span className="flex-1">{t.title}</span>
             <span aria-hidden className="text-paper/40">{open === t.id ? '▴' : '▾'}</span>
           </button>
@@ -103,7 +104,7 @@ function Topics({ audience }: { audience: Audience }) {
                   <li key={i}>{s}</li>
                 ))}
               </ol>
-              {t.note && <p className="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs text-paper/60">💡 {t.note}</p>}
+              {t.note && <p className="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs text-paper/60"><SidIcon name="bulb" /> {t.note}</p>}
             </div>
           )}
         </div>

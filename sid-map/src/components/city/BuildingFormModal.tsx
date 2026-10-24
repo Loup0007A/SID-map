@@ -10,6 +10,7 @@ import { uploadMapImage } from '@/lib/uploadImage';
 import type { BuildingType, MarkerShape, Point } from '@/lib/types';
 import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
 import OwnerPicker from './OwnerPicker';
+import { GlyphText } from '@/components/icons/SidIcon';
 
 export default function BuildingFormModal({
   cityId,
@@ -141,7 +142,7 @@ export default function BuildingFormModal({
                 onClick={() => setShowOwnerPicker(true)}
                 className="w-full glass-input rounded-lg px-3 py-2 text-left text-sm text-paper/80 hover:border-accent"
               >
-                {ownerLabel ? `👤 ${ownerLabel}` : '🔍 Rechercher un membre…'}
+                <GlyphText text={ownerLabel ? `👤 ${ownerLabel}` : '🔍 Rechercher un membre…'} />
               </button>
             </div>
           )}

@@ -9,6 +9,7 @@ import OwnerPicker from './OwnerPicker';
 import type { CityBuilding } from '@/lib/types';
 import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
 import { displayName } from '@/lib/memberName';
+import { SidIcon } from "@/components/icons/SidIcon";
 
 export default function BuildingDetailPanel({
   building,
@@ -61,7 +62,7 @@ export default function BuildingDetailPanel({
             onClick={handleDelete}
             className="rounded-lg border border-accent/40 px-2.5 py-1 text-xs text-accent hover:bg-accent/10"
           >
-            🗑 Supprimer
+            <SidIcon name="trash" /> Supprimer
           </button>
         )}
       </div>

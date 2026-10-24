@@ -4,6 +4,7 @@ import Icon from '@/components/ui/Icon';
 
 import { useState } from 'react';
 import type { MapPlace } from '@/lib/types';
+import { SidIcon } from "@/components/icons/SidIcon";
 
 export default function PlaceSearch({
   places,
@@ -35,7 +36,7 @@ export default function PlaceSearch({
           aria-label="Rechercher un lieu"
           className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/70 hover:text-accent"
         >
-          🔍 Rechercher
+          <SidIcon name="magnifier" /> Rechercher
         </button>
       ) : (
         <div className="anim-pop glass-strong rounded-2xl p-2">

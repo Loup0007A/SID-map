@@ -14,6 +14,7 @@ import { PLACE_LABELS, ZONE_LABELS } from '@/lib/types';
 import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
 import { useGroups } from '@/lib/hooks/useGroups';
 import type { usePositions } from '@/lib/hooks/usePositions';
+import { SidIcon } from "@/components/icons/SidIcon";
 
 export default function DetailPanel({
   entity,
@@ -91,7 +92,7 @@ export default function DetailPanel({
             onClick={handleDelete}
             className="rounded-lg border border-accent/40 px-2.5 py-1 text-xs text-accent hover:bg-accent/10"
           >
-            🗑 Supprimer
+            <SidIcon name="trash" /> Supprimer
           </button>
         )}
       </div>
@@ -117,7 +118,7 @@ export default function DetailPanel({
           onClick={() => setShowIconPicker((v) => !v)}
           className="mt-2 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-paper/70 hover:border-accent hover:text-accent"
         >
-          🎨 Changer l'icône
+          <SidIcon name="palette" /> Changer l'icône
         </button>
       )}
 
@@ -142,7 +143,7 @@ export default function DetailPanel({
       {canEdit && (
         <div className="mt-3 space-y-1">
           <label className="text-[11px] uppercase tracking-wide text-paper/50">
-            🏴 Contrôlé par (territoire)
+            <SidIcon name="flag" /> Contrôlé par (territoire)
           </label>
           <select
             value={controllingGroupId ?? ''}
@@ -166,7 +167,7 @@ export default function DetailPanel({
       )}
       {!canEdit && controllingGroupId && groupsHook.labelFor(controllingGroupId) && (
         <p className="mt-2 text-xs text-paper/60">
-          🏴 Territoire contrôlé par <span className="text-accent">{groupsHook.labelFor(controllingGroupId)}</span>
+          <SidIcon name="flag" /> Territoire contrôlé par <span className="text-accent">{groupsHook.labelFor(controllingGroupId)}</span>
         </p>
       )}
 
@@ -192,7 +193,7 @@ export default function DetailPanel({
                 }}
                 className="h-4 w-4 accent-[#d2463b]"
               />
-              🏗️ Ce lieu est un bâtiment éditable (étages, sous-sols…)
+              <SidIcon name="cone" /> Ce lieu est un bâtiment éditable (étages, sous-sols…)
             </label>
           )}
           {isBuilding && (
@@ -211,7 +212,7 @@ export default function DetailPanel({
           onClick={() => onGoHere(entity.id)}
           className="btn-accent mt-4 w-full rounded-lg py-2 text-sm font-semibold text-paper"
         >
-          🧭 Y aller
+          <SidIcon name="compass" /> Y aller
         </button>
       )}
 
