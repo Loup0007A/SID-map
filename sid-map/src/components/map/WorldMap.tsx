@@ -94,6 +94,15 @@ const CLOSE_SNAP_PX = 14;
 type PointTool = 'point-circle' | 'point-rect';
 type ActiveTool = ShapeTool | PointTool | 'route' | 'select' | null;
 
+/* Encres de la feuille d'atlas (Lot 50). */
+const INK = '#2e261d'; // encre ferro-gallique : traits, noms
+const VELLUM = '#ece0c2'; // vélin des terres
+const SEA = '#c3d2cb'; // mer
+const COAST = '#6f9894'; // ombre côtière
+const SANGUINE = '#9b3b28'; // routes
+const SEL = '#1f5f8f'; // sélection, mesure, tracés : encre de Prusse
+const DEFAULT_ROUTE = '#e7c34a';
+
 export default function WorldMap() {
   const supabase = createClient();
   const router = useRouter();
@@ -1077,7 +1086,7 @@ export default function WorldMap() {
           points={pointsToSvg(b.path_points)}
           fill={b.color}
           fillOpacity={showTextures && findTexture(biomeTextureId(b), customTextures)?.bg ? 0 : 0.55}
-          stroke={isSel('biome', b.id) ? '#e7c34a' : deleteMode && editLayer === 'biome' ? '#d2463b' : '#00000033'}
+          stroke={isSel('biome', b.id) ? SEL : deleteMode && editLayer === 'biome' ? '#d2463b' : '#2e261d33'}
           strokeWidth={isSel('biome', b.id) ? 0.45 : deleteMode && editLayer === 'biome' ? 0.3 : 0.1}
           transform={selShift('biome', b.id)}
           className={editLayer === 'biome' ? 'cursor-pointer' : ''}
@@ -1097,7 +1106,7 @@ export default function WorldMap() {
           points={pointsToSvg(r.path_points)}
           fill={reliefColor(r.elevation)}
           fillOpacity={showTextures && findTexture(reliefTextureId(r), customTextures)?.bg ? 0 : 0.4}
-          stroke={isSel('relief', r.id) ? '#e7c34a' : deleteMode && editLayer === 'relief' ? '#d2463b' : '#00000022'}
+          stroke={isSel('relief', r.id) ? SEL : deleteMode && editLayer === 'relief' ? '#d2463b' : '#2e261d22'}
           strokeWidth={isSel('relief', r.id) ? 0.45 : deleteMode && editLayer === 'relief' ? 0.3 : 0.1}
           transform={selShift('relief', r.id)}
           className={editLayer === 'relief' ? 'cursor-pointer' : ''}
@@ -1119,15 +1128,27 @@ export default function WorldMap() {
   const zoneLayer = useMemo(
     () => (
       <>
+        {/* Ombre côtière (sous les terres), comme le lavis bleu des vieux atlas. */}
+        <g style={{ pointerEvents: 'none' }}>
+          {zones.map((z) => (
+            <polygon key={`coast-${z.id}`} points={pointsToSvg(z.path_points)} fill="none" stroke={COAST} strokeOpacity={0.4} strokeWidth={2.4} strokeLinejoin="round" transform={selShift('zone', z.id)} />
+          ))}
+          {zones.map((z) => (
+            <polygon key={`coast2-${z.id}`} points={pointsToSvg(z.path_points)} fill="none" stroke={COAST} strokeOpacity={0.35} strokeWidth={0.9} strokeLinejoin="round" transform={selShift('zone', z.id)} />
+          ))}
+          {zones.map((z) => (
+            <polygon key={`land-${z.id}`} points={pointsToSvg(z.path_points)} fill={VELLUM} transform={selShift('zone', z.id)} />
+          ))}
+        </g>
         {zones.map((z) => (
           <polygon
             key={z.id}
             points={pointsToSvg(z.path_points)}
             fill={z.color}
-            fillOpacity={0.75}
-            stroke={isSel('zone', z.id) ? '#e7c34a' : deleteMode ? '#d2463b' : '#f4e9c8'}
-            strokeOpacity={isSel('zone', z.id) || deleteMode ? 1 : 0.4}
-            strokeWidth={isSel('zone', z.id) ? 0.45 : deleteMode ? 0.3 : 0.18}
+            fillOpacity={0.4}
+            stroke={isSel('zone', z.id) ? SEL : deleteMode ? '#d2463b' : INK}
+            strokeOpacity={isSel('zone', z.id) || deleteMode ? 1 : 0.62}
+            strokeWidth={isSel('zone', z.id) ? 0.45 : deleteMode ? 0.3 : 0.16}
             strokeLinejoin="round"
             strokeDasharray={isSel('zone', z.id) ? '1.2 0.6' : undefined}
             transform={selShift('zone', z.id)}
@@ -1135,6 +1156,11 @@ export default function WorldMap() {
             onClick={(e) => act.current.zone(e, z)}
           />
         ))}
+        <g style={{ pointerEvents: 'none' }}>
+          {zones.map((z) => (
+            <polygon key={`hatch-${z.id}`} points={pointsToSvg(z.path_points)} fill="url(#sid-hatch)" transform={selShift('zone', z.id)} />
+          ))}
+        </g>
         {zones.map((z) => {
           const label = groupsHook.labelFor(z.controlling_group_id);
           if (!label) return null;
@@ -1162,10 +1188,10 @@ export default function WorldMap() {
               textAnchor="middle"
               fontSize={size}
               letterSpacing={size * 0.22}
-              fill="#f4e9c8"
-              fillOpacity={0.62}
-              className="select-none font-display uppercase"
-              style={{ pointerEvents: 'none', paintOrder: 'stroke', stroke: '#06101f', strokeOpacity: 0.45, strokeWidth: size * 0.12 }}
+              fill={INK}
+              fillOpacity={0.78}
+              className="region-label select-none"
+              style={{ pointerEvents: 'none', paintOrder: 'stroke', stroke: VELLUM, strokeOpacity: 0.7, strokeWidth: size * 0.14 }}
               transform={selShift('zone', z.id)}
             >
               {z.name}
@@ -1187,9 +1213,9 @@ export default function WorldMap() {
             key={r.id}
             points={pointsToSvg(r.path_points)}
             fill="none"
-            stroke={deleteMode ? '#d2463b' : isHighlighted ? '#4ade80' : r.color}
-            strokeWidth={isHighlighted ? 0.6 : 0.35}
-            strokeDasharray={isHighlighted ? undefined : '1.4 0.9'}
+            stroke={deleteMode ? '#d2463b' : isHighlighted ? SEL : !r.color || r.color.toLowerCase() === DEFAULT_ROUTE ? SANGUINE : r.color}
+            strokeWidth={isHighlighted ? 0.6 : 0.32}
+            strokeDasharray={isHighlighted ? undefined : '1.1 0.7'}
             strokeLinecap="round"
             className={`cursor-pointer ${isHighlighted ? 'route-glow' : 'route-flow'}`}
             onClick={(e) => act.current.route(e, r)}
@@ -1219,30 +1245,37 @@ export default function WorldMap() {
               onClick={(e) => act.current.place(e, p)}
             >
               {p.shape === 'rect' ? (
-                <rect x={-w / 2} y={-h / 2} width={w} height={h} rx={0.6} fill="url(#sid-place)" stroke={deleteMode ? '#d2463b' : '#d9b65a'} strokeWidth={deleteMode ? 0.35 : 0.16} />
+                <>
+                  <rect x={-w / 2} y={-h / 2} width={w} height={h} rx={0.5} fill="#f6eedb" stroke={deleteMode ? '#d2463b' : INK} strokeWidth={deleteMode ? 0.35 : 0.2} className="place-disc" />
+                  <rect x={-w / 2 + 0.45} y={-h / 2 + 0.45} width={w - 0.9} height={h - 0.9} rx={0.3} fill="none" stroke={INK} strokeOpacity={0.45} strokeWidth={0.07} />
+                </>
               ) : (
-                <circle r={r} fill="url(#sid-place)" stroke={deleteMode ? '#d2463b' : '#d9b65a'} strokeWidth={deleteMode ? 0.35 : 0.16} />
+                <>
+                  <circle r={r} fill="#f6eedb" stroke={deleteMode ? '#d2463b' : INK} strokeWidth={deleteMode ? 0.35 : 0.2} className="place-disc" />
+                  <circle r={Math.max(0.2, r - 0.45)} fill="none" stroke={INK} strokeOpacity={0.45} strokeWidth={0.07} />
+                </>
               )}
               {isSel('place', p.id) &&
                 (p.shape === 'rect' ? (
-                  <rect x={-w / 2 - 0.7} y={-h / 2 - 0.7} width={w + 1.4} height={h + 1.4} rx={1} fill="none" stroke="#e7c34a" strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
+                  <rect x={-w / 2 - 0.7} y={-h / 2 - 0.7} width={w + 1.4} height={h + 1.4} rx={1} fill="none" stroke={SEL} strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
                 ) : (
-                  <circle r={r + 0.8} fill="none" stroke="#e7c34a" strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
+                  <circle r={r + 0.8} fill="none" stroke={SEL} strokeWidth={0.3} strokeDasharray="1 0.6" className="sel-ring" />
                 ))}
               {isImageIcon(icon) ? (
                 <image href={icon} x={-s / 2} y={-s / 2} width={s} height={s} preserveAspectRatio="xMidYMid meet" style={{ pointerEvents: 'none' }} />
               ) : (
-                <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
+                <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill={INK}>
                   {icon}
                 </text>
               )}
               <text
                 textAnchor="middle"
                 dy={labelOffset}
-                fontSize="1.3"
-                fill="#e7e5db"
+                fontSize="1.35"
+                fontWeight={700}
+                fill={INK}
                 className="place-label select-none"
-                style={{ paintOrder: 'stroke', stroke: '#081629', strokeWidth: 0.3 }}
+                style={{ paintOrder: 'stroke', stroke: VELLUM, strokeOpacity: 0.92, strokeWidth: 0.42, strokeLinejoin: 'round' }}
               >
                 {p.name}
               </text>
@@ -1509,46 +1542,61 @@ export default function WorldMap() {
         }}
       >
         <defs>
-          <radialGradient id="sid-ocean" gradientUnits="userSpaceOnUse" cx={world / 2} cy={world * 0.42} r={world * 0.85}>
-            <stop offset="0" stopColor="#16335a" />
-            <stop offset="0.55" stopColor="#0e2444" />
-            <stop offset="1" stopColor="#081629" />
-          </radialGradient>
-          <radialGradient id="sid-place" cx="0.35" cy="0.3" r="0.9">
-            <stop offset="0" stopColor="#33405f" />
-            <stop offset="1" stopColor="#0b1120" />
-          </radialGradient>
-          <pattern id="sid-graticule" width={10} height={10} patternUnits="userSpaceOnUse">
-            <path d="M10 0H0V10" fill="none" stroke="#9fc4ff" strokeOpacity={0.07} strokeWidth={0.08} />
+          {/* Mer : petites ondes à la plume. */}
+          <pattern id="sid-waves" width={4.2} height={2.6} patternUnits="userSpaceOnUse">
+            <path d="M0 1.3 q1.05 -0.9 2.1 0 t2.1 0" fill="none" stroke="#4f7d7a" strokeOpacity={0.3} strokeWidth={0.09} />
+          </pattern>
+          {/* Hachures fines sur les terres. */}
+          <pattern id="sid-hatch" width={1.2} height={1.2} patternUnits="userSpaceOnUse" patternTransform="rotate(38)">
+            <path d="M0 0V1.2" stroke={INK} strokeOpacity={0.07} strokeWidth={0.18} />
+          </pattern>
+          <pattern id="sid-graticule" width={world / 10} height={world / 10} patternUnits="userSpaceOnUse">
+            <path d={`M${world / 10} 0H0V${world / 10}`} fill="none" stroke={INK} strokeOpacity={0.12} strokeWidth={0.08} />
           </pattern>
         </defs>
-        {/* Hors du monde : le vide. Le cadre montre où la carte s'arrête. */}
-        <rect x={-world} y={-world} width={world * 3} height={world * 3} fill="#050b16" />
-        <rect x={0} y={0} width={world} height={world} fill="url(#sid-ocean)" />
-        <rect x={0} y={0} width={world} height={world} fill="url(#sid-graticule)" style={{ pointerEvents: 'none' }} />
-        <rect
-          x={0}
-          y={0}
-          width={world}
-          height={world}
-          fill="none"
-          stroke="#e7c34a"
-          strokeOpacity={0.35}
-          strokeWidth={Math.max(0.15, vp.viewBox.w * 0.0015)}
-          style={{ pointerEvents: 'none' }}
-        />
+        {/* Hors du monde : la table (le fond de la page). La feuille de vélin
+            déborde un peu autour du monde, avec son filet en damier. */}
+        <rect x={-world * 2} y={-world * 2} width={world * 5} height={world * 5} fill="#161d2b" />
+        {(() => {
+          const m = world * 0.045; // marge de la feuille
+          const b = world * 0.011; // largeur du filet en damier
+          const seg = world / 40;
+          const cells = [];
+          for (let k = 0; k < 40; k++) {
+            if (k % 2) continue;
+            const o = k * seg;
+            cells.push(<rect key={`t${k}`} x={o} y={-b} width={seg} height={b} />, <rect key={`b${k}`} x={o} y={world} width={seg} height={b} />);
+            cells.push(<rect key={`l${k}`} x={-b} y={world - o - seg} width={b} height={seg} />, <rect key={`r${k}`} x={world} y={world - o - seg} width={b} height={seg} />);
+          }
+          return (
+            <g style={{ pointerEvents: 'none' }}>
+              <rect x={-m} y={-m} width={world + 2 * m} height={world + 2 * m} fill="#e4d6b4" />
+              <rect x={-m} y={-m} width={world + 2 * m} height={world + 2 * m} fill="none" stroke="#000" strokeOpacity={0.25} strokeWidth={world * 0.004} />
+              <rect x={0} y={0} width={world} height={world} fill={SEA} />
+              <rect x={0} y={0} width={world} height={world} fill="url(#sid-waves)" />
+              <rect x={0} y={0} width={world} height={world} fill="url(#sid-graticule)" />
+              <rect x={-b} y={-b} width={world + 2 * b} height={world + 2 * b} fill="none" stroke={INK} strokeWidth={b * 0.12} />
+              <g fill={INK}>{cells}</g>
+              <rect x={0} y={0} width={world} height={world} fill="none" stroke={INK} strokeWidth={b * 0.16} />
+            </g>
+          );
+        })()}
 
         {/* Rose des vents, dans l'angle bas-droit du monde. */}
-        <g transform={`translate(${world - 9} ${world - 9})`} opacity={0.5} style={{ pointerEvents: 'none' }}>
-          <circle r={5.2} fill="none" stroke="#e7c34a" strokeOpacity={0.5} strokeWidth={0.1} />
-          <circle r={3.6} fill="none" stroke="#e7c34a" strokeOpacity={0.3} strokeWidth={0.08} strokeDasharray="0.4 0.4" />
-          {[0, 90, 180, 270].map((a) => (
-            <path key={a} d="M0 -5 L0.9 0 L0 0.9 L-0.9 0 Z" fill="#e7c34a" fillOpacity={a === 0 ? 0.9 : 0.45} transform={`rotate(${a})`} />
-          ))}
+        <g transform={`translate(${world - 11} ${world - 11})`} style={{ pointerEvents: 'none' }}>
+          <circle r={6.4} fill={VELLUM} fillOpacity={0.75} stroke={INK} strokeWidth={0.14} />
+          <circle r={5.2} fill="none" stroke={INK} strokeOpacity={0.6} strokeWidth={0.07} strokeDasharray="0.35 0.35" />
           {[45, 135, 225, 315].map((a) => (
-            <path key={a} d="M0 -3 L0.5 0 L-0.5 0 Z" fill="#f4e9c8" fillOpacity={0.35} transform={`rotate(${a})`} />
+            <path key={a} d="M0 -3.6 L0.6 0 L-0.6 0 Z" fill={INK} fillOpacity={0.55} transform={`rotate(${a})`} />
           ))}
-          <text y={-5.9} textAnchor="middle" fontSize={1.5} fill="#e7c34a" className="font-display">N</text>
+          {[0, 90, 180, 270].map((a) => (
+            <g key={a} transform={`rotate(${a})`}>
+              <path d="M0 -5.8 L1 0 L0 0 Z" fill={a === 0 ? SANGUINE : INK} />
+              <path d="M0 -5.8 L-1 0 L0 0 Z" fill={a === 0 ? '#c46a52' : '#6b5d4b'} />
+            </g>
+          ))}
+          <circle r={0.45} fill={VELLUM} stroke={INK} strokeWidth={0.1} />
+          <text y={-6.9} textAnchor="middle" fontSize={1.6} fill={INK} className="region-label">N</text>
         </g>
 
         {biomeLayer}
@@ -1565,7 +1613,7 @@ export default function WorldMap() {
           <polyline
             points={pointsToSvg(routeDraft.points)}
             fill="none"
-            stroke="#e7c34a"
+            stroke={SEL}
             strokeWidth={0.35}
             strokeDasharray="1 0.7"
           />
@@ -1586,7 +1634,7 @@ export default function WorldMap() {
                 cx={p.x}
                 cy={p.y}
                 r={i === 0 && closeSnapReady ? 0.9 : 0.45}
-                fill={i === 0 && closeSnapReady ? '#d2463b' : '#e7e5db'}
+                fill={i === 0 && closeSnapReady ? '#d2463b' : INK}
               />
             ))}
           </>
@@ -1620,9 +1668,9 @@ export default function WorldMap() {
             y={Math.min(selDrag.start.y, selDrag.cur.y)}
             width={Math.abs(selDrag.cur.x - selDrag.start.x)}
             height={Math.abs(selDrag.cur.y - selDrag.start.y)}
-            fill="#e7c34a"
-            fillOpacity={0.1}
-            stroke="#e7c34a"
+            fill={SEL}
+            fillOpacity={0.08}
+            stroke={SEL}
             strokeWidth={Math.max(0.1, vp.viewBox.w * 0.0015)}
             strokeDasharray="1 0.6"
             style={{ pointerEvents: 'none' }}
@@ -1637,14 +1685,14 @@ export default function WorldMap() {
                 y1={measurePts[0].y}
                 x2={measurePts[1].x}
                 y2={measurePts[1].y}
-                stroke="#e7c34a"
+                stroke={SEL}
                 strokeWidth={0.35}
                 strokeDasharray="1 0.6"
                 strokeLinecap="round"
               />
             )}
             {measurePts.map((p, i) => (
-              <circle key={i} cx={p.x} cy={p.y} r={0.7} fill="#e7c34a" stroke="#081629" strokeWidth={0.2} />
+              <circle key={i} cx={p.x} cy={p.y} r={0.7} fill={VELLUM} stroke={SEL} strokeWidth={0.25} />
             ))}
           </g>
         )}
@@ -1657,7 +1705,7 @@ export default function WorldMap() {
             y1={myPlaceForFlight.y}
             x2={flightTarget.x}
             y2={flightTarget.y}
-            stroke="#e7c34a"
+            stroke={SEL}
             strokeWidth={0.4}
             strokeDasharray="1.2 1"
             strokeLinecap="round"

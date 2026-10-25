@@ -58,12 +58,12 @@ function BlockingModal({ title, onClose, children, maxWidth = 'max-w-md', footer
   useEscape(onClose);
   return (
     <div
-      className="anim-fade fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-[#03060d]/70 p-3 backdrop-blur-sm sm:p-4"
+      className="anim-fade fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-[#0a0f1a]/70 p-3 sm:p-4"
     >
-      <div role="dialog" aria-modal="true" aria-label={title} className={`anim-pop glass-strong flex max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] w-full ${maxWidth} flex-col overflow-hidden rounded-2xl`}>
-        <div className="stamp-bar h-1 shrink-0" />
+      <div role="dialog" aria-modal="true" aria-label={title} className={`anim-pop glass-strong flex max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] w-full ${maxWidth} flex-col overflow-hidden rounded-xl`}>
+        <div className="stamp-bar h-px shrink-0" />
         <div className="flex shrink-0 items-center justify-between px-5 pb-2 pt-4">
-          <h3 className="font-display text-sm uppercase tracking-wide text-accent"><GlyphText text={title} /></h3>
+          <h3 className="font-display text-[1.15rem] leading-tight text-accent"><GlyphText text={title} /></h3>
           <button
             onClick={onClose}
             aria-label="Fermer"
@@ -278,7 +278,7 @@ function FloatingWindow({ title, onClose, children, maxWidth = 'max-w-md', foote
         style={{ touchAction: 'none' }}
       >
         <span aria-hidden className="text-paper/30">⠿</span>
-        <h3 className="min-w-0 flex-1 truncate font-display text-sm uppercase tracking-wide text-accent"><GlyphText text={title} /></h3>
+        <h3 className="min-w-0 flex-1 truncate font-display text-[1.1rem] leading-tight text-accent"><GlyphText text={title} /></h3>
         <button
           onClick={reset}
           aria-label="Replacer la fenêtre à sa position et sa taille d'origine"

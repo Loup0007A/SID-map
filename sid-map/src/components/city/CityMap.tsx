@@ -482,16 +482,26 @@ export default function CityMap({ cityId }: { cityId: string }) {
           if (vp.isPanning) vp.endPan();
         }}
       >
-        <rect x={-50} y={-50} width={200} height={200} fill="#2a2419" />
+        {/* Plan de ville sur vélin : quadrillage de cadastre, table autour (Lot 50). */}
+        <defs>
+          <pattern id="city-grid" width={5} height={5} patternUnits="userSpaceOnUse">
+            <path d="M5 0H0V5" fill="none" stroke="#2e261d" strokeOpacity={0.1} strokeWidth={0.06} />
+          </pattern>
+        </defs>
+        <rect x={-200} y={-200} width={500} height={500} fill="#161d2b" />
+        <rect x={-50} y={-50} width={200} height={200} fill="#ece0c2" />
+        <rect x={-50} y={-50} width={200} height={200} fill="url(#city-grid)" />
+        <rect x={-50} y={-50} width={200} height={200} fill="none" stroke="#2e261d" strokeWidth={0.5} />
 
         {districts.map((d) => (
           <polygon
             key={d.id}
             points={pointsToSvg(d.path_points)}
             fill={d.color}
-            fillOpacity={activeDistrictFilter && activeDistrictFilter !== d.id ? 0.1 : 0.35}
-            stroke={deleteMode ? '#d2463b' : '#00000066'}
-            strokeWidth={deleteMode ? 0.3 : 0.15}
+            fillOpacity={activeDistrictFilter && activeDistrictFilter !== d.id ? 0.1 : 0.4}
+            stroke={deleteMode ? '#d2463b' : '#2e261d'}
+            strokeOpacity={deleteMode ? 1 : 0.6}
+            strokeWidth={deleteMode ? 0.3 : 0.16}
             className="cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
@@ -517,7 +527,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
                 cx={p.x}
                 cy={p.y}
                 r={i === 0 && closeSnapReady ? 0.9 : 0.45}
-                fill={i === 0 && closeSnapReady ? '#d2463b' : '#f4ecd8'}
+                fill={i === 0 && closeSnapReady ? '#d2463b' : '#2e261d'}
               />
             ))}
           </>
@@ -563,7 +573,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
               }}
             >
               {b.shape === 'circle' ? (
-                <circle r={radius} fill="#151312" stroke="#d2463b" strokeWidth={deleteMode ? 0.35 : 0.1} />
+                <circle r={radius} fill="#f6eedb" stroke={deleteMode ? '#d2463b' : '#2e261d'} strokeWidth={deleteMode ? 0.35 : 0.18} />
               ) : (
                 <rect
                   x={-b.width / 2}
@@ -571,9 +581,9 @@ export default function CityMap({ cityId }: { cityId: string }) {
                   width={b.width}
                   height={b.height}
                   rx={0.4}
-                  fill="#151312"
-                  stroke="#d2463b"
-                  strokeWidth={deleteMode ? 0.35 : 0.1}
+                  fill="#f6eedb"
+                  stroke={deleteMode ? '#d2463b' : '#2e261d'}
+                  strokeWidth={deleteMode ? 0.35 : 0.18}
                 />
               )}
               {(() => {
@@ -582,14 +592,14 @@ export default function CityMap({ cityId }: { cityId: string }) {
                 return isImageIcon(icon) ? (
                   <image href={icon} x={-s / 2} y={-s / 2} width={s} height={s} preserveAspectRatio="xMidYMid meet" style={{ pointerEvents: 'none' }} />
                 ) : (
-                  <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#e7e5db">
+                  <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#2e261d">
                     {icon}
                   </text>
                 );
               })()}
               {occupants.length > 0 && (
                 <>
-                  <circle cx={radius * 0.75} cy={-radius * 0.75} r={1} fill="#1e9e5a" stroke="#151312" strokeWidth={0.15} />
+                  <circle cx={radius * 0.75} cy={-radius * 0.75} r={1} fill="#1f5f8f" stroke="#f6eedb" strokeWidth={0.15} />
                   <text x={radius * 0.75} y={-radius * 0.75} dy="0.4" textAnchor="middle" fontSize="1.1" fill="#fff">
                     {occupants.length}
                   </text>

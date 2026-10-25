@@ -68,25 +68,28 @@ export default function PlaceBuildingClient({ placeId }: { placeId: string }) {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen p-6 md:p-10">
-        <Link href="/carte" className="mb-6 inline-block text-sm text-accent hover:brightness-110">
+      <main className="mx-auto min-h-screen max-w-6xl p-6 md:p-10">
+        <Link href="/carte" className="mb-8 inline-block text-[15px] text-accent hover:brightness-110">
           ← Retour à la carte du monde
         </Link>
 
-        <div className="grid gap-8 md:grid-cols-[1fr_320px]">
+        <div className="grid gap-10 md:grid-cols-[1fr_320px]">
           <div>
-            <p className="text-xs uppercase tracking-wide text-accent">
-              {placeTypes.labelFor(place.type)} — intérieur
-            </p>
-            <h1 className="font-display text-3xl">
-              <Icon value={place.icon ?? placeTypes.iconFor(place.type)} /> {place.name}
-            </h1>
+            <div className="flex items-center gap-4 border-b border-accent/25 pb-5">
+              <span className="grid h-16 w-16 flex-none place-items-center rounded-full border-2 border-[#2e261d] bg-vellum text-3xl shadow-[0_0_0_3px_#161d2b,0_0_0_4px_rgba(212,170,80,0.5)]">
+                <Icon value={place.icon ?? placeTypes.iconFor(place.type)} />
+              </span>
+              <div>
+                <p className="font-serif text-[15px] italic text-paper/60">{placeTypes.labelFor(place.type)}, vue de l’intérieur</p>
+                <h1 className="font-display text-[2.2rem] leading-tight">{place.name}</h1>
+              </div>
+            </div>
 
             {place.image_url && (
-              <img src={place.image_url} alt={place.name} className="mt-4 h-56 w-full rounded-xl object-cover" />
+              <img src={place.image_url} alt={place.name} className="mt-6 h-56 w-full rounded-lg object-cover ring-1 ring-accent/30" />
             )}
 
-            <p className="mt-4 whitespace-pre-wrap text-paper/80">
+            <p className="mt-5 max-w-[65ch] whitespace-pre-wrap font-serif text-[1.1rem] leading-relaxed text-paper/85">
               {place.description || 'Aucune description pour le moment.'}
             </p>
 

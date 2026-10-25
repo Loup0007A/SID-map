@@ -39,14 +39,14 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
     }`;
 
   return (
-    <div className="anim-fade fixed inset-0 z-50 bg-[#03060d]/55 backdrop-blur-[2px]" onClick={onClose}>
+    <div className="anim-fade fixed inset-0 z-50 bg-[#0a0f1a]/60" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="anim-pop glass-strong absolute inset-x-2 top-16 mx-auto flex max-h-[calc(100dvh-5rem)] max-w-3xl flex-col overflow-hidden rounded-2xl md:top-16"
+        className="anim-pop glass-strong absolute inset-x-2 top-16 mx-auto flex max-h-[calc(100dvh-5rem)] max-w-3xl flex-col overflow-hidden rounded-xl md:top-16"
       >
-        <div className="stamp-bar h-1 shrink-0" />
+        <div className="stamp-bar h-px shrink-0" />
         <div className="flex shrink-0 items-center gap-2 px-4 pb-2 pt-3">
-          <h2 className="font-display text-sm uppercase tracking-wide text-accent">▦ Applications</h2>
+          <h2 className="font-display text-[1.25rem] leading-none text-accent">Applications</h2>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -76,7 +76,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
             .map((c) => (
               <section key={c.id}>
                 {cat === 'all' && (
-                  <h3 className="mb-2 text-[11px] uppercase tracking-wide text-paper/50">
+                  <h3 className="mb-2.5 flex items-center gap-2 border-b border-accent/20 pb-1.5 font-display text-[1.05rem] text-accent">
                     <Glyph e={c.emoji} /> {c.label}
                   </h3>
                 )}
@@ -88,11 +88,11 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
                         key={a.id}
                         onClick={() => launch(a.id)}
                         title={a.description}
-                        className="hover-lift flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 p-2.5 text-center hover:border-[#e7c34a]/60 hover:bg-white/10"
+                        className="hover-lift flex flex-col items-center gap-1.5 rounded-lg border border-accent/15 bg-[#232e44] p-2.5 text-center hover:border-accent/60 hover:bg-[#28354e]"
                       >
                         <AppIcon id={a.id} emoji={a.emoji} />
-                        <span className="text-[11px] leading-tight text-paper/90">{a.name}</span>
-                        <span className="hidden text-[10px] leading-tight text-paper/45 sm:block">{a.description}</span>
+                        <span className="font-serif text-[15px] font-bold leading-tight text-paper">{a.name}</span>
+                        <span className="hidden text-[12.5px] leading-snug text-paper/55 sm:block">{a.description}</span>
                       </button>
                     ))}
                 </div>

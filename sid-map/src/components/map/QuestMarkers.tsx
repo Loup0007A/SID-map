@@ -29,7 +29,7 @@ export default function QuestMarkers({
                 onToggle(q.id);
               }}
             >
-              <circle r={openId === q.id ? 1.9 : 1.5} fill="#e7c34a" stroke="#151312" strokeWidth={0.2} />
+              <circle r={openId === q.id ? 1.9 : 1.55} fill="#f2d98f" stroke="#2e261d" strokeWidth={0.2} />
               <SvgIcon name="scroll" size={2.1} />
             </g>
           </g>

@@ -59,11 +59,11 @@ export default function Navbar() {
     <nav className="anim-fade relative z-40 flex h-14 shrink-0 items-center justify-between gap-2 glass-strong px-3 md:px-4">
       <div className="stamp-bar absolute bottom-0 left-0 h-[2px] w-full" />
 
-      <Link href="/carte" className="shrink-0 font-display text-[10px] uppercase tracking-widest2 text-accent md:text-[11px]">
-        <span className="brand-mark flex items-center gap-2">
+      <Link href="/carte" className="shrink-0 font-display text-[1.05rem] text-paper md:text-[1.2rem]">
+        <span className="brand-mark flex items-center gap-2.5">
           <span aria-hidden className="brand-seal">✦</span>
-          <span className="md:hidden">S.I.D.</span>
-          <span className="hidden md:inline">S.I.D. — Cartographie</span>
+          <span className="md:hidden">Cartographie</span>
+          <span className="hidden md:inline">Cartographie du S.I.D.</span>
         </span>
       </Link>
 
@@ -71,18 +71,18 @@ export default function Navbar() {
         <button
           onClick={() => setAppsOpen(true)}
           data-guide="apps"
-          className="btn-accent shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 font-display text-[11px] uppercase tracking-wide text-paper md:px-3 md:text-xs"
+          className="btn-accent shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none text-paper md:px-3.5"
         >
-          ▦ Applications
+          Applications
         </button>
         {LINKS.map((l) => (
           <Link
             key={l.href}
             href={l.href}
-            className={`shrink-0 whitespace-nowrap rounded-lg px-2.5 py-1.5 font-display text-[11px] uppercase tracking-wide transition md:px-3 md:text-xs ${
+            className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none transition ${
               pathname === l.href
-                ? 'hidden bg-accent/20 text-accent md:inline-block'
-                : 'text-paper/70 hover:bg-white/10 hover:text-accent'
+                ? 'hidden text-accent shadow-[inset_0_-2px_0_#d4aa50] md:inline-block'
+                : 'text-paper/75 hover:text-accent'
             }`}
           >
             {l.label}
@@ -91,7 +91,7 @@ export default function Navbar() {
         <button
           onClick={() => guide.openHelp()}
           data-guide="help"
-          className="shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 font-display text-[11px] uppercase tracking-wide text-paper/80 transition hover:border-accent hover:text-accent md:px-3 md:text-xs"
+          className="shrink-0 whitespace-nowrap rounded-md border border-accent/30 px-3 py-1.5 font-display text-[0.95rem] leading-none text-paper/85 transition hover:border-accent hover:text-accent"
         >
           ?<span className="hidden md:inline"> Aide</span>
         </button>
@@ -99,7 +99,7 @@ export default function Navbar() {
           onClick={logout}
           aria-label="Déconnexion"
           title="Déconnexion"
-          className="ml-1 shrink-0 whitespace-nowrap rounded-lg border border-white/15 px-2.5 py-1.5 font-display text-[11px] text-paper/60 transition hover:border-accent hover:text-accent md:px-3 md:text-xs"
+          className="ml-1 shrink-0 whitespace-nowrap rounded-md border border-accent/30 px-3 py-1.5 font-display text-[0.95rem] leading-none text-paper/65 transition hover:border-accent hover:text-accent"
         >
           <span className="md:hidden" aria-hidden>
             <SidIcon name="power" />

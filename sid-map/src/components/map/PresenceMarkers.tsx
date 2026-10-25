@@ -47,12 +47,12 @@ export default function PresenceMarkers({
                 onToggle(placeId);
               }}
             >
-              <circle r={1.6} fill="#1e9e5a" stroke="#081629" strokeWidth={0.2} />
+              <circle r={1.7} fill="#f6eedb" stroke="#1f5f8f" strokeWidth={0.28} />
               <SvgIcon name="profile" size={2.1} />
               {people.length > 1 && (
                 <>
-                  <circle cx={1.3} cy={-1.3} r={1} fill="#d2463b" />
-                  <text x={1.3} y={-1.3} dy="0.4" textAnchor="middle" fontSize="1.1" fill="#fff">
+                  <circle cx={1.4} cy={-1.4} r={1} fill="#9b3b28" stroke="#f6eedb" strokeWidth={0.15} />
+                  <text x={1.4} y={-1.4} dy="0.4" textAnchor="middle" fontSize="1.1" fill="#fff">
                     {people.length}
                   </text>
                 </>
@@ -67,7 +67,7 @@ export default function PresenceMarkers({
         if (!pos) return null;
         return (
           <g key={p.user_id} transform={`translate(${pos.x}, ${pos.y})`}>
-            <circle r={1.4} fill="#e7c34a" stroke="#081629" strokeWidth={0.2} />
+            <circle r={1.5} fill="#f6eedb" stroke="#9b3b28" strokeWidth={0.26} />
             <SvgIcon name={p.active_mount_id ? 'horse' : 'walker'} size={2} />
           </g>
         );

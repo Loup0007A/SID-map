@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 // Polices servies par le site lui-même (paquets @fontsource).
-import '@fontsource/inter/400.css';
-import '@fontsource/inter/500.css';
-import '@fontsource/inter/600.css';
-import '@fontsource/inter/700.css';
-import '@fontsource/jetbrains-mono/400.css';
-import '@fontsource/jetbrains-mono/500.css';
-import '@fontsource/jetbrains-mono/700.css';
+import '@fontsource/alegreya-sans/400.css';
+import '@fontsource/alegreya-sans/500.css';
+import '@fontsource/alegreya-sans/700.css';
+import '@fontsource/alegreya-sans/400-italic.css';
+import '@fontsource/alegreya-sc/500.css';
+import '@fontsource/alegreya-sc/700.css';
+import '@fontsource/alegreya/500.css';
+import '@fontsource/alegreya/700.css';
+import '@fontsource/alegreya/500-italic.css';
 import { ToastProvider } from '@/components/ui/Toast';
 import TermsBanner from '@/components/legal/TermsBanner';
 import { GuideProvider } from '@/components/guide/GuideProvider';
@@ -30,7 +32,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#070c18',
+  themeColor: '#121927',
   viewportFit: 'cover'
 };
 
