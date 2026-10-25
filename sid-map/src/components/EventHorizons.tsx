@@ -269,7 +269,7 @@ export function Horizon({ kind }: { kind: HorizonKind }) {
   const Art = ART[kind];
   if (!Art) return null;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax slice" className={`hz hz-${kind}`} aria-hidden>
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMaxYMax slice" className={`hz hz-${kind}`} aria-hidden>
       <Art />
     </svg>
   );
