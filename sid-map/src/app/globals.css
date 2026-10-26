@@ -529,3 +529,149 @@ html.ev-grande_chasse .map-vignette {
    ===================================================================== */
 .uppercase { text-transform: none !important; font-variant-caps: all-small-caps; letter-spacing: 0.05em; }
 .font-display.uppercase, .uppercase .font-display { font-variant-caps: normal; }
+
+/* =====================================================================
+   L'Envers (Lot 52) : le dos de la feuille. Nuit d'encre, argent de lune,
+   lettres en miroir. Seulement visible une fois la carte déchirée.
+   ===================================================================== */
+.envers-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 40%, #1b1633 0%, #0e0b1c 45%, #06050c 100%);
+}
+.envers-backdrop.fixed { position: fixed; }
+.envers-star { animation: envers-twinkle 5.5s ease-in-out infinite; }
+@keyframes envers-twinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.85; } }
+.envers-rose {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: min(120vmin, 980px);
+  height: min(120vmin, 980px);
+  transform: translate(-50%, -50%);
+  animation: envers-turn 240s linear infinite;
+  opacity: 0.9;
+  will-change: transform;
+}
+@keyframes envers-turn { to { transform: translate(-50%, -50%) rotate(-360deg); } }
+.envers-mirror-word {
+  position: absolute;
+  right: -2vw;
+  bottom: -3vw;
+  font-family: var(--font-sc);
+  font-size: clamp(80px, 22vw, 300px);
+  line-height: 1;
+  color: #c9d3e6;
+  opacity: 0.045;
+  transform: scaleX(-1);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+.envers-panel { color: #dfe6f2; animation: envers-fade 0.5s var(--ease-out) both; }
+@keyframes envers-fade { from { opacity: 0; } }
+.envers-rise { animation: envers-rise 0.8s var(--ease-out) both; }
+@keyframes envers-rise { from { opacity: 0; transform: translateY(14px); } }
+.envers-title {
+  margin-top: 0.25rem;
+  font-family: var(--font-sc);
+  font-weight: 500;
+  font-size: clamp(42px, 9vw, 72px);
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: #eef2fa;
+  text-shadow: 0 0 28px rgba(160, 175, 230, 0.35);
+}
+.envers-h2 { font-family: var(--font-sc); font-size: 1.35rem; letter-spacing: 0.04em; color: #eef2fa; }
+.envers-card {
+  position: relative;
+  border-radius: 6px;
+  padding: 1.25rem 1.25rem 1.1rem;
+  background: linear-gradient(180deg, rgba(24, 20, 44, 0.86), rgba(13, 11, 26, 0.9));
+  border: 1px solid rgba(201, 211, 230, 0.22);
+  box-shadow: inset 0 0 0 3px rgba(13, 11, 26, 0.9), inset 0 0 0 4px rgba(201, 211, 230, 0.1), 0 20px 50px -20px rgba(0, 0, 0, 0.8);
+}
+@media (min-width: 640px) { .envers-card { padding: 1.5rem 1.6rem 1.3rem; } }
+.envers-admin { border-color: rgba(231, 200, 115, 0.3); }
+.envers-item {
+  border-radius: 4px;
+  padding: 0.75rem 0.85rem;
+  background: rgba(201, 211, 230, 0.05);
+  border: 1px solid rgba(201, 211, 230, 0.12);
+}
+.envers-counter {
+  font-family: var(--font-serif);
+  font-size: clamp(44px, 11vw, 76px);
+  line-height: 0.9;
+  color: #f4e9c9;
+  font-variant-numeric: tabular-nums oldstyle-nums;
+  text-shadow: 0 0 24px rgba(246, 196, 110, 0.25);
+}
+.envers-track {
+  position: relative;
+  height: 2px;
+  margin-right: 10px;
+  background: repeating-linear-gradient(90deg, rgba(201, 211, 230, 0.35) 0 6px, transparent 6px 11px);
+  animation: envers-road 1.1s linear infinite;
+}
+@keyframes envers-road { to { background-position: -11px 0; } }
+.envers-track-fill { position: absolute; inset: 0 auto 0 0; background: #e7c873; box-shadow: 0 0 10px rgba(231, 200, 115, 0.6); }
+.envers-walker {
+  position: absolute;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: #fff3d2;
+  box-shadow: 0 0 0 3px rgba(231, 200, 115, 0.25), 0 0 14px 3px rgba(231, 200, 115, 0.7);
+  animation: envers-lantern 1.6s ease-in-out infinite;
+}
+@keyframes envers-lantern { 50% { box-shadow: 0 0 0 5px rgba(231, 200, 115, 0.12), 0 0 20px 5px rgba(231, 200, 115, 0.55); } }
+.envers-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.55rem 1.15rem;
+  font-family: var(--font-sc);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  color: #120f22;
+  background: linear-gradient(180deg, #f4e9c9, #d9c58f);
+  box-shadow: 0 0 0 1px rgba(255, 246, 220, 0.4), 0 6px 22px -6px rgba(231, 200, 115, 0.55);
+  transition: transform 0.15s var(--ease-out), box-shadow 0.15s;
+}
+.envers-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(255, 246, 220, 0.6), 0 10px 26px -6px rgba(231, 200, 115, 0.7); }
+.envers-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.envers-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  font-family: var(--font-sc);
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  color: #dfe6f2;
+  border: 1px solid rgba(201, 211, 230, 0.35);
+  background: rgba(13, 11, 26, 0.5);
+  transition: border-color 0.15s, background 0.15s;
+}
+.envers-btn-ghost:hover:not(:disabled) { border-color: rgba(231, 200, 115, 0.7); background: rgba(231, 200, 115, 0.08); }
+.envers-btn-ghost:disabled { opacity: 0.45; }
+.envers-input {
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+  color: #eef2fa;
+  background: rgba(6, 5, 12, 0.6);
+  border: 1px solid rgba(201, 211, 230, 0.25);
+}
+.envers-input:focus { outline: none; border-color: #e7c873; box-shadow: 0 0 0 2px rgba(231, 200, 115, 0.2); }
+.envers-input::placeholder { color: rgba(201, 211, 230, 0.4); }
+@media (prefers-reduced-motion: reduce) {
+  .envers-rose, .envers-star, .envers-track, .envers-rise, .envers-panel, .envers-walker { animation: none; }
+}

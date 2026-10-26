@@ -69,6 +69,7 @@ import { useFavorites } from '@/lib/hooks/useFavorites';
 import { useIsDesktop } from '@/components/ui/Modal';
 import { SEL_TABLE, parseSel, pointInPolygon, selKey, shiftPoint, shiftPoints, type SelKind } from '@/lib/selection';
 import { SidIcon, GlyphText } from '@/components/icons/SidIcon';
+import { useEnvers } from '@/components/envers/useEnvers';
 
 // Fenêtres et formulaires chargés à la demande : la carte s'affiche plus vite
 // sur téléphone (moins de code à télécharger et à lire au démarrage).
@@ -134,6 +135,7 @@ export default function WorldMap() {
   const now = useNow(15000);
   const groupsHook = useGroups();
   const { showToast } = useToast();
+  const envers = useEnvers(!!positionsHook.myUserId, searchParams.get('envers') !== null, () => setSelected(null));
 
   const [zones, setZones] = useState<MapZone[]>([]);
   const [places, setPlaces] = useState<MapPlace[]>([]);
@@ -747,7 +749,11 @@ export default function WorldMap() {
           const near = findPlaceNear(pt);
           const snapped = near ? { x: near.x, y: near.y } : pt;
           setMeasurePts((pts) => (pts.length >= 2 ? [snapped] : [...pts, snapped]));
-        } else setSelected(null);
+        } else {
+          const pt = vp.screenToSvg(e.clientX, e.clientY);
+          if ((!editMode || envers.picking) && envers.onMapClick(e.clientX, e.clientY, pt, e.timeStamp)) return;
+          setSelected(null);
+        }
       }
       return;
     }
@@ -1533,6 +1539,7 @@ export default function WorldMap() {
             : 'cursor-grab'
         }`}
         onWheel={vp.handleWheel}
+        data-envers-map=""
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -2084,6 +2091,7 @@ export default function WorldMap() {
         </div>
       )}
       </div>
+      {envers.layer}
     </div>
   );
 }
