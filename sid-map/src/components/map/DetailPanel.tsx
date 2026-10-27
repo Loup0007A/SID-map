@@ -1,5 +1,6 @@
 'use client';
 
+import { PlaceNoteBox, type PlaceNote } from './PlaceNotes';
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -24,10 +25,15 @@ export default function DetailPanel({
   positionsHook,
   isFavorite,
   onToggleFavorite,
-  onGoHere
+  onGoHere,
+  note,
+  onNoteChanged
 }: {
   /** ouvre l'itinéraire vers ce lieu */
   onGoHere?: (placeId: string) => void;
+  /** ma note privée sur ce lieu (carnet de route) */
+  note?: PlaceNote;
+  onNoteChanged?: () => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   entity: MapZone | MapPlace;
@@ -214,6 +220,10 @@ export default function DetailPanel({
         >
           <SidIcon name="compass" /> Y aller
         </button>
+      )}
+
+      {kind === 'place' && onNoteChanged && (
+        <PlaceNoteBox placeId={entity.id} myUserId={positionsHook?.myUserId ?? null} note={note} onChanged={onNoteChanged} />
       )}
 
       {kind === 'place' && positionsHook && (

@@ -80,6 +80,8 @@ const RouteFormModal = dynamic(() => import('./RouteFormModal'), { ssr: false })
 const RouteInfoModal = dynamic(() => import('./RouteInfoModal'), { ssr: false });
 const ReliefFormModal = dynamic(() => import('./ReliefFormModal'), { ssr: false });
 const BiomeFormModal = dynamic(() => import('./BiomeFormModal'), { ssr: false });
+import { NightLayer, SkyButton, useSky } from './DayNight';
+import { NoteMarkers, usePlaceNotes } from './PlaceNotes';
 const QuestPopup = dynamic(() => import('./QuestPopup'), { ssr: false });
 const TexturePicker = dynamic(() => import('./TexturePicker'), { ssr: false });
 const CrystalsModal = dynamic(() => import('./CrystalsModal'), { ssr: false });
@@ -126,6 +128,8 @@ export default function WorldMap() {
   const { custom: customTextures } = useTextures();
   const mapSettings = useMapSettings();
   const [showTextures, setShowTextures] = useState(true);
+  // Cycle jour/nuit à l'heure de Paris (Lot 60).
+  const skyState = useSky();
   const [retexture, setRetexture] = useState<{ table: 'map_biomes' | 'map_relief'; id: string; value: string | null } | null>(null);
   const world = mapSettings.settings.world_size;
   const vp = useSvgViewport(world);
@@ -358,6 +362,8 @@ export default function WorldMap() {
 
   // État réel publié pour les check-lists du centre d'aide.
   const myPos = positionsHook.myPosition;
+  // Carnet de route : mes notes privées sur les lieux (Lot 60).
+  const placeNotes = usePlaceNotes(!!positionsHook.myUserId);
   const scaleSet =
     mapSettings.settings.km_per_unit !== DEFAULT_SETTINGS.km_per_unit ||
     mapSettings.settings.walk_kmh !== DEFAULT_SETTINGS.walk_kmh;
@@ -1531,7 +1537,7 @@ export default function WorldMap() {
         ref={vp.svgRef}
         viewBox={vp.viewBoxString}
         style={{ touchAction: 'none', transformOrigin: '0 0' }}
-        className={`h-full w-full select-none ${
+        className={`h-full w-full select-none ${skyState.active && skyState.sky?.night ? 'map-night ' : ''}${
           deleteMode
             ? 'cursor-not-allowed'
             : editMode && activeTool
@@ -1669,6 +1675,8 @@ export default function WorldMap() {
           <rect x={pointPreview.rectX} y={pointPreview.rectY} width={pointPreview.w} height={pointPreview.h} fill="#d2463b" fillOpacity={0.3} stroke="#d2463b" strokeWidth={0.25} />
         )}
 
+        {skyState.active && <NightLayer sky={skyState.sky!} world={world} />}
+
         {placeLayer}
 
         {selDrag?.mode === 'marquee' && (
@@ -1706,6 +1714,7 @@ export default function WorldMap() {
           </g>
         )}
 
+        <NoteMarkers notes={placeNotes.notes} places={places} onOpen={selectPlaceAndShare} />
         <QuestMarkers quests={quests} places={places} openPlaceId={openQuestPlace} onToggle={(id) => setOpenQuestPlace((c) => (c === id ? null : id))} />
 
         {flightMode && flightTarget && myPlaceForFlight && (
@@ -1778,6 +1787,8 @@ export default function WorldMap() {
             setShowPlanner(true);
             setSelected(null);
           }}
+          note={selected.kind === 'place' ? placeNotes.notes.get(selected.entity.id) : undefined}
+          onNoteChanged={placeNotes.refresh}
         />
       )}
 
@@ -2003,6 +2014,14 @@ export default function WorldMap() {
           >
             <SidIcon name="palette" /> Textures
           </button>
+          <SkyButton
+            on={skyState.on}
+            sky={skyState.sky}
+            onToggle={skyState.toggle}
+            className={`rounded-full px-2.5 py-1 font-display text-[10px] uppercase tracking-wide transition ${
+              skyState.on ? 'bg-accent text-paper' : 'text-paper/60'
+            }`}
+          />
         </div>
         <MapLegend
           sections={[
