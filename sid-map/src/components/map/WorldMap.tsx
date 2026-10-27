@@ -427,8 +427,10 @@ export default function WorldMap() {
   useEffect(() => {
     const check = async () => {
       const result = await positionsHook.checkQuestArrival();
-      if (result?.some((r) => r.validated)) {
-        showToast('Présence confirmée pour ta quête ! La récompense sera versée après validation sur le site principal.', 'success');
+      const ok = result?.filter((r) => r.validated) ?? [];
+      if (ok.length > 0) {
+        const rep = ok.reduce((n, r) => n + (r.reputation ?? 0), 0);
+        showToast(`Présence confirmée : quête validée, récompense versée${rep ? `, +${rep} de renommée` : ''} !`, 'success');
       }
     };
     check();

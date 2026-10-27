@@ -115,7 +115,7 @@ export function usePositions() {
 
   async function checkQuestArrival() {
     const { data } = await supabase.rpc('check_quest_arrival');
-    return data as { quest_id: string; validated: boolean; error?: string }[] | null;
+    return data as { quest_id: string; validated: boolean; reputation?: number; error?: string }[] | null;
   }
 
   return {
