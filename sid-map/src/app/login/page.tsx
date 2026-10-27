@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { LegalLinks } from '@/components/legal/LegalPage';
+import LoginIntro from '@/components/auth/LoginIntro';
 
 export default function LoginPage() {
   return (
@@ -22,6 +23,7 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [intro, setIntro] = useState(false);
   // Retour vers la page demandée (chemin interne seulement).
   const nextParam = params.get('next');
   const next = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/carte';
@@ -67,12 +69,21 @@ function LoginForm() {
       }
     }
 
-    router.push(next);
-    router.refresh();
+    // Petite animation, puis la carte (préchargée pendant ce temps).
+    router.prefetch(next);
+    setIntro(true);
   }
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
+      {intro && (
+        <LoginIntro
+          onDone={() => {
+            router.push(next);
+            router.refresh();
+          }}
+        />
+      )}
       <div className="w-full max-w-sm">
         <div className="anim-pop glass-strong overflow-hidden rounded-2xl">
           <div className="stamp-bar h-1.5 w-full" />
