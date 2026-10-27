@@ -142,7 +142,7 @@ export default function WorldMap() {
   const [routes, setRoutes] = useState<MapRoute[]>([]);
   const [quests, setQuests] = useState<MapQuest[]>([]);
   const [openPresenceId, setOpenPresenceId] = useState<string | null>(null);
-  const [openQuestId, setOpenQuestId] = useState<string | null>(null);
+  const [openQuestPlace, setOpenQuestPlace] = useState<string | null>(null);
   const [relief, setRelief] = useState<MapRelief[]>([]);
   const [biomes, setBiomes] = useState<MapBiome[]>([]);
   const [showRelief, setShowRelief] = useState(false);
@@ -1706,7 +1706,7 @@ export default function WorldMap() {
           </g>
         )}
 
-        <QuestMarkers quests={quests} places={places} openId={openQuestId} onToggle={(id) => setOpenQuestId((c) => (c === id ? null : id))} />
+        <QuestMarkers quests={quests} places={places} openPlaceId={openQuestPlace} onToggle={(id) => setOpenQuestPlace((c) => (c === id ? null : id))} />
 
         {flightMode && flightTarget && myPlaceForFlight && (
           <line
@@ -1746,8 +1746,21 @@ export default function WorldMap() {
         </div>
       )}
 
-      {openQuestId && quests.find((q) => q.id === openQuestId) && (
-        <QuestPopup quest={quests.find((q) => q.id === openQuestId)!} onClose={() => setOpenQuestId(null)} />
+      {openQuestPlace && places.find((p) => p.id === openQuestPlace) && quests.some((q) => q.place_id === openQuestPlace) && (
+        <QuestPopup
+          place={places.find((p) => p.id === openQuestPlace)!}
+          quests={quests.filter((q) => q.place_id === openQuestPlace)}
+          myPos={myPos}
+          myUserId={positionsHook.myUserId}
+          onClose={() => setOpenQuestPlace(null)}
+          onToast={(m, k) => showToast(m, k)}
+          onGo={(id) => {
+            setOpenQuestPlace(null);
+            setPlannerTo(id);
+            setPlannerKey((k) => k + 1);
+            setShowPlanner(true);
+          }}
+        />
       )}
 
       {selected && (
