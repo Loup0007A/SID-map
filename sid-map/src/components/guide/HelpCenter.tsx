@@ -35,7 +35,7 @@ function Checklist({
       <div className="flex items-baseline justify-between gap-2">
         <h4 className="font-display text-[11px] uppercase tracking-wide text-accent">{title}</h4>
         {facts && (
-          <span className="text-[11px] text-paper/50">
+          <span className="text-[11px] text-paper/65">
             {doneCount}/{required.length} essentiels
           </span>
         )}
@@ -59,12 +59,12 @@ function Checklist({
                 ✓
               </span>
               <div className="min-w-0 flex-1">
-                <p className={`text-sm ${done ? 'text-paper/50 line-through' : 'text-paper'}`}>
+                <p className={`text-sm ${done ? 'text-paper/65 line-through' : 'text-paper'}`}>
                   {it.label}
-                  {it.optional && <span className="ml-1.5 text-[10px] uppercase tracking-wide text-paper/40 no-underline">facultatif</span>}
+                  {it.optional && <span className="ml-1.5 text-[10px] uppercase tracking-wide text-paper/65 no-underline">facultatif</span>}
                   <span className="sr-only">{done ? ' — fait' : ' — à faire'}</span>
                 </p>
-                {!done && <p className="mt-0.5 text-xs leading-relaxed text-paper/55">{it.why}</p>}
+                {!done && <p className="mt-0.5 text-xs leading-relaxed text-paper/65">{it.why}</p>}
               </div>
               {!done && it.app && (
                 <button
@@ -95,7 +95,7 @@ function Topics({ audience }: { audience: Audience }) {
           >
             <span aria-hidden><Glyph e={t.emoji} /></span>
             <span className="flex-1">{t.title}</span>
-            <span aria-hidden className="text-paper/40">{open === t.id ? '▴' : '▾'}</span>
+            <span aria-hidden className="text-paper/65">{open === t.id ? '▴' : '▾'}</span>
           </button>
           {open === t.id && (
             <div className="space-y-2 border-t border-white/10 px-3 py-2.5">
@@ -165,7 +165,7 @@ export default function HelpCenter({
       }
       footer={
         <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-auto text-xs text-paper/50">Visite guidée (1 min)</span>
+          <span className="mr-auto text-xs text-paper/65">Visite guidée (1 min)</span>
           <button onClick={() => tour('player')} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-paper/80 hover:border-accent hover:text-accent">
             ▶ Joueur
           </button>

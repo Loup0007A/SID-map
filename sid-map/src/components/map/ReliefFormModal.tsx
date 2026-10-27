@@ -49,7 +49,7 @@ export default function ReliefFormModal({
     <Modal title="Nouveau relief" onClose={onClose}>
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/50">
+          <label className="flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/65">
             <span>
               Altitude ({elevation < 0 ? 'dépression' : elevation === 0 ? 'niveau de la mer' : 'élévation'})
             </span>

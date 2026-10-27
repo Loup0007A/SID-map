@@ -1417,7 +1417,7 @@ export default function WorldMap() {
 
                 <button
                   onClick={() => setToolbarOpen(false)}
-                  className="ml-auto shrink-0 rounded-lg px-2 py-2 text-paper/50 hover:text-accent md:ml-0"
+                  className="ml-auto shrink-0 rounded-lg px-2 py-2 text-paper/65 hover:text-accent md:ml-0"
                   title="Réduire"
                 >
                   ▾
@@ -1731,7 +1731,7 @@ export default function WorldMap() {
             <p className="font-semibold text-accent">
               <SidIcon name="profile" /> {places.find((p) => p.id === openPresenceId)?.name ?? 'Lieu'}
             </p>
-            <button onClick={() => setOpenPresenceId(null)} className="text-paper/50 hover:text-accent">
+            <button onClick={() => setOpenPresenceId(null)} className="text-paper/65 hover:text-accent">
               ✕
             </button>
           </div>
@@ -1740,7 +1740,7 @@ export default function WorldMap() {
             .map((p) => (
               <p key={p.user_id} className="truncate">
                 {p.nickname ?? 'Membre'}
-                {p.status && <span className="text-paper/50"> — {p.status}</span>}
+                {p.status && <span className="text-paper/65"> — {p.status}</span>}
               </p>
             ))}
         </div>
@@ -1925,7 +1925,7 @@ export default function WorldMap() {
         <Modal title="🕶️ Marchés noirs" windowId="blackmarket" onClose={() => setShowBlackMarkets(false)} maxWidth="max-w-xs">
           <div className="space-y-1.5">
             {places.filter((p) => p.allows_black_market).length === 0 && (
-              <p className="text-xs text-paper/50">Aucun lieu n'autorise de marché noir pour l'instant.</p>
+              <p className="text-xs text-paper/65">Aucun lieu n'autorise de marché noir pour l'instant.</p>
             )}
             {places
               .filter((p) => p.allows_black_market)

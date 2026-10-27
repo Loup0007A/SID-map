@@ -122,7 +122,7 @@ export default function TextureEditorModal({
     }
   }
 
-  const row = 'flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/50';
+  const row = 'flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/65';
   const toolBtn = (t: Tool, label: string) => (
     <button
       type="button"
@@ -236,7 +236,7 @@ export default function TextureEditorModal({
               )}
             </svg>
             <div className="grid grid-cols-2 gap-3">
-              <label className="space-y-1 text-[11px] uppercase tracking-wide text-paper/50">
+              <label className="space-y-1 text-[11px] uppercase tracking-wide text-paper/65">
                 Encre
                 <input
                   type="color"
@@ -272,7 +272,7 @@ export default function TextureEditorModal({
                 <SidIcon name="trash" /> Tout effacer
               </button>
             </div>
-            <p className="text-[10px] text-paper/40">
+            <p className="text-[10px] text-paper/65">
               Dessine dans la tuile : elle se répète sur tout le terrain (aperçu en haut à gauche). Reste dans le cadre pointillé pour un motif régulier.
             </p>
           </div>
@@ -280,12 +280,12 @@ export default function TextureEditorModal({
 
         <div className="grid grid-cols-2 gap-3">
           {motif !== 'custom' && (
-            <label className="space-y-1 text-[11px] uppercase tracking-wide text-paper/50">
+            <label className="space-y-1 text-[11px] uppercase tracking-wide text-paper/65">
               Couleur du motif
               <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="block h-8 w-full rounded bg-transparent" />
             </label>
           )}
-          <div className="space-y-1 text-[11px] uppercase tracking-wide text-paper/50">
+          <div className="space-y-1 text-[11px] uppercase tracking-wide text-paper/65">
             Couleur de fond (terrain)
             <div className="flex items-center gap-2">
               <input

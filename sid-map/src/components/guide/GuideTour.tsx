@@ -120,13 +120,13 @@ export default function GuideTour({
       >
         <div className="stamp-bar h-1" />
         <div className="space-y-2 p-4">
-          <p className="font-display text-[10px] uppercase tracking-wide text-paper/50">
+          <p className="font-display text-[10px] uppercase tracking-wide text-paper/65">
             Visite guidée · {index + 1}/{steps.length}
           </p>
           <h3 className="font-display text-sm uppercase tracking-wide text-accent">{step.title}</h3>
           <p className="text-sm leading-relaxed text-paper/85">{step.body}</p>
           <div className="flex items-center gap-2 pt-2">
-            <button onClick={onEnd} className="mr-auto text-xs text-paper/50 underline hover:text-accent">
+            <button onClick={onEnd} className="mr-auto text-xs text-paper/65 underline hover:text-accent">
               {last ? 'Fermer' : 'Passer la visite'}
             </button>
             {index > 0 && (

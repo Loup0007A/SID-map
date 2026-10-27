@@ -120,7 +120,7 @@ export default function ScaleBar({
           }
         >
           <div className="space-y-3">
-            <label className="block space-y-1 text-[11px] uppercase tracking-wide text-paper/50">
+            <label className="block space-y-1 text-[11px] uppercase tracking-wide text-paper/65">
               1 unité de carte = … {settings.unit_label}
               <input
                 value={km}
@@ -129,11 +129,11 @@ export default function ScaleBar({
                 className="w-full glass-input rounded-lg px-3 py-2 text-sm normal-case outline-none"
               />
             </label>
-            <p className="text-[10px] text-paper/40">
+            <p className="text-[10px] text-paper/65">
               La carte entière fait {world || '?'} unités de large : avec {km || '?'} {settings.unit_label}/unité, elle mesure{' '}
               {Math.round((Number(km.replace(',', '.')) || 0) * (Number(world.replace(',', '.')) || 0))} {settings.unit_label}.
             </p>
-            <label className="block space-y-1 text-[11px] uppercase tracking-wide text-paper/50">
+            <label className="block space-y-1 text-[11px] uppercase tracking-wide text-paper/65">
               Vitesse de marche ({settings.unit_label}/h)
               <input
                 value={walk}
@@ -143,7 +143,7 @@ export default function ScaleBar({
               />
             </label>
             <div className="space-y-1 border-t border-white/10 pt-3">
-              <label className="block space-y-1 text-[11px] uppercase tracking-wide text-paper/50">
+              <label className="block space-y-1 text-[11px] uppercase tracking-wide text-paper/65">
                 Taille de la carte (unités de côté)
                 <input
                   value={world}
@@ -164,13 +164,13 @@ export default function ScaleBar({
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] text-paper/40">
+              <p className="text-[10px] text-paper/65">
                 100 = taille d'origine, 1000 au maximum. Agrandir ajoute de l'espace à droite et en bas : rien de ce
                 qui existe ne bouge, et les distances ne changent pas.
                 {minWorld > 100 && ` Minimum actuel : ${minWorld} (des éléments vont jusque-là).`}
               </p>
             </div>
-            <p className="text-[10px] text-paper/40">
+            <p className="text-[10px] text-paper/65">
               Les montures qui volent utilisent cette échelle : temps de vol = distance ÷ vitesse (vitesse propre à la monture, ou marche × multiplicateur).
             </p>
           </div>

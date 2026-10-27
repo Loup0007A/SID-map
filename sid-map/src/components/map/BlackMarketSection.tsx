@@ -130,7 +130,7 @@ export default function BlackMarketSection({
 
   return (
     <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
-      <p className="text-[11px] uppercase tracking-wide text-paper/50"><SidIcon name="shades" /> Marché noir</p>
+      <p className="text-[11px] uppercase tracking-wide text-paper/65"><SidIcon name="shades" /> Marché noir</p>
 
       {canEdit && (
         <label className="mt-2 flex items-center gap-2 text-xs text-paper/70">
@@ -146,11 +146,11 @@ export default function BlackMarketSection({
 
       {allows && (
         <>
-          <p className="mt-2 text-[10px] text-paper/40">
+          <p className="mt-2 text-[10px] text-paper/65">
             10 % de chaque vente sont reversés aux admins. Il faut être sur place pour acheter ou vendre.
           </p>
 
-          {stalls.length === 0 && <p className="mt-2 text-xs text-paper/50">Aucun étal pour l'instant.</p>}
+          {stalls.length === 0 && <p className="mt-2 text-xs text-paper/65">Aucun étal pour l'instant.</p>}
 
           <div className="mt-2 space-y-2">
             {stalls.map((s) => {
@@ -168,12 +168,12 @@ export default function BlackMarketSection({
                       </button>
                     )}
                   </div>
-                  {its.length === 0 && <p className="text-[11px] text-paper/40">Étal vide.</p>}
+                  {its.length === 0 && <p className="text-[11px] text-paper/65">Étal vide.</p>}
                   {its.map((i) => (
                     <div key={i.id} className="mt-1 flex items-center justify-between gap-2 text-xs">
                       <span className="truncate text-paper/80">
                         {i.name}
-                        <span className="text-paper/40">
+                        <span className="text-paper/65">
                           {' '}
                           · {i.stock === null ? '∞' : `${i.stock} en stock`}
                         </span>
@@ -181,7 +181,7 @@ export default function BlackMarketSection({
                       <span className="flex shrink-0 items-center gap-1.5">
                         <span className="text-accent">{i.price} <SidIcon name="coins" /></span>
                         {mine || canEdit ? (
-                          <button onClick={() => removeItem(i.id)} className="text-paper/40 hover:text-accent">
+                          <button onClick={() => removeItem(i.id)} className="text-paper/65 hover:text-accent">
                             <SidIcon name="trash" />
                           </button>
                         ) : (
@@ -196,7 +196,7 @@ export default function BlackMarketSection({
                       </span>
                     </div>
                   ))}
-                  {!isHere && !mine && <p className="mt-1 text-[10px] text-paper/40">Rends-toi sur place pour acheter.</p>}
+                  {!isHere && !mine && <p className="mt-1 text-[10px] text-paper/65">Rends-toi sur place pour acheter.</p>}
 
                   {mine && (
                     <div className="mt-2 grid grid-cols-6 gap-1">
@@ -253,7 +253,7 @@ export default function BlackMarketSection({
             </div>
           )}
           {!myStall && !isHere && (
-            <p className="mt-2 text-[10px] text-paper/40">Sois présent sur place pour ouvrir un étal.</p>
+            <p className="mt-2 text-[10px] text-paper/65">Sois présent sur place pour ouvrir un étal.</p>
           )}
         </>
       )}

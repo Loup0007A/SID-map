@@ -139,7 +139,7 @@ export default function MountsModal({
         <div className="space-y-2.5">
           <input placeholder="Nom (ex : Aigle géant)" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} className={field} />
           <IconPicker value={draft.icon} onChange={(icon) => setDraft({ ...draft, icon })} />
-          <div className="grid grid-cols-2 gap-2 text-[11px] uppercase tracking-wide text-paper/50">
+          <div className="grid grid-cols-2 gap-2 text-[11px] uppercase tracking-wide text-paper/65">
             <label>
               Vitesse ×
               <input type="number" step={0.5} min={0.5} value={draft.speed_multiplier} onChange={(e) => setDraft({ ...draft, speed_multiplier: Number(e.target.value) })} className={field} />
@@ -164,8 +164,8 @@ export default function MountsModal({
             </div>
           )}
           <div className="space-y-1.5">
-            <p className="text-[11px] uppercase tracking-wide text-paper/50">Biomes traversables</p>
-            <p className="text-[10px] text-paper/40">Aucun coché = tous les biomes. Sinon la monture ne peut pas traverser les autres.</p>
+            <p className="text-[11px] uppercase tracking-wide text-paper/65">Biomes traversables</p>
+            <p className="text-[10px] text-paper/65">Aucun coché = tous les biomes. Sinon la monture ne peut pas traverser les autres.</p>
             <div className="grid grid-cols-2 gap-1">
               {Object.entries(BIOME_LABELS).map(([k, label]) => {
                 const on = draft.allowed_biomes.includes(k);
@@ -223,14 +223,14 @@ export default function MountsModal({
               </p>
             </div>
           ) : (
-            <p className="text-xs text-paper/50">
+            <p className="text-xs text-paper/65">
               Tu n'as pas de monture. Rends-toi dans un lieu qui en propose (fiche du lieu → « Montures louables »). Une location dure {` 24 h par défaut`}.
             </p>
           )}
         </div>
       ) : (
         <div className="space-y-2">
-          {mounts.mountTypes.length === 0 && <p className="text-xs text-paper/50">Aucune monture créée.</p>}
+          {mounts.mountTypes.length === 0 && <p className="text-xs text-paper/65">Aucune monture créée.</p>}
           {mounts.mountTypes.map((m) => {
             const rows = log.filter((l) => l.mount_type_id === m.id);
             const revenue = rows.reduce((a, r) => a + Number(r.admin_share), 0);
@@ -250,17 +250,17 @@ export default function MountsModal({
                   )}
                 </div>
                 <dl className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-paper/70">
-                  <dt className="text-paper/40">Déplacement</dt><dd><GlyphText text={m.can_fly ? '🕊️ Vol libre' : '🛣 Routes'} /></dd>
-                  <dt className="text-paper/40">Vitesse</dt><dd>×{m.speed_multiplier} · {Math.round(effectiveKmh(m))} {settings.unit_label}/h</dd>
+                  <dt className="text-paper/65">Déplacement</dt><dd><GlyphText text={m.can_fly ? '🕊️ Vol libre' : '🛣 Routes'} /></dd>
+                  <dt className="text-paper/65">Vitesse</dt><dd>×{m.speed_multiplier} · {Math.round(effectiveKmh(m))} {settings.unit_label}/h</dd>
                   {m.can_fly && (
                     <>
-                      <dt className="text-paper/40">Portée</dt>
+                      <dt className="text-paper/65">Portée</dt>
                       <dd>{m.flight_range_km ? `${m.flight_range_km} ${settings.unit_label}` : 'Illimitée'}</dd>
                     </>
                   )}
-                  <dt className="text-paper/40">Location</dt><dd>{m.rental_price} <SidIcon name="coins" /> / {m.rental_hours ?? 24} h</dd>
-                  <dt className="text-paper/40">Biomes</dt><dd>{biomes}</dd>
-                  <dt className="text-paper/40">Locations</dt><dd>{isAdmin ? rows.length : mine}{isAdmin ? ` · ${revenue.toFixed(0)} 🪙 aux admins` : ' (les tiennes)'}</dd>
+                  <dt className="text-paper/65">Location</dt><dd>{m.rental_price} <SidIcon name="coins" /> / {m.rental_hours ?? 24} h</dd>
+                  <dt className="text-paper/65">Biomes</dt><dd>{biomes}</dd>
+                  <dt className="text-paper/65">Locations</dt><dd>{isAdmin ? rows.length : mine}{isAdmin ? ` · ${revenue.toFixed(0)} 🪙 aux admins` : ' (les tiennes)'}</dd>
                 </dl>
               </div>
             );

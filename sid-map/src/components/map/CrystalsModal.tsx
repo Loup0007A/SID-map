@@ -101,15 +101,15 @@ export default function CrystalsModal({
       <Modal title="💎 Cristaux de téléportation" windowId="crystals" onClose={onClose} maxWidth="max-w-sm">
         <div className="space-y-4">
           <div>
-            <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50">Mes cristaux</p>
-            {mine.length === 0 && <p className="text-xs text-paper/40">Tu n'as aucun cristal.</p>}
+            <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/65">Mes cristaux</p>
+            {mine.length === 0 && <p className="text-xs text-paper/65">Tu n'as aucun cristal.</p>}
             <div className="space-y-1.5">
               {mine.map((c) => {
                 const here = myPosition?.place_id === c.from_place_id && !myPosition?.travel_started_at;
                 return (
                   <div key={c.id} className="rounded-lg bg-white/5 p-2 text-xs">
                     <p className="text-paper">
-                      {c.label} <span className="text-paper/40">· {c.is_single_use ? 'usage unique' : 'continu'}</span>
+                      {c.label} <span className="text-paper/65">· {c.is_single_use ? 'usage unique' : 'continu'}</span>
                     </p>
                     <p className="text-paper/60">
                       {placeName(c.from_place_id)} → {placeName(c.to_place_id)}
@@ -129,7 +129,7 @@ export default function CrystalsModal({
 
           {isAdmin && (
             <div className="border-t border-white/10 pt-3">
-              <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50">Admin · donner un cristal</p>
+              <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/65">Admin · donner un cristal</p>
               <div className="space-y-1.5">
                 <input
                   value={label}
@@ -177,7 +177,7 @@ export default function CrystalsModal({
                 </button>
               </div>
 
-              <p className="mb-1 mt-3 text-[11px] uppercase tracking-wide text-paper/50">Cristaux existants</p>
+              <p className="mb-1 mt-3 text-[11px] uppercase tracking-wide text-paper/65">Cristaux existants</p>
               <div className="max-h-40 space-y-1 overflow-y-auto scrollbar-thin pr-1">
                 {crystals.map((c) => (
                   <div key={c.id} className="flex items-center justify-between rounded-lg bg-white/5 px-2 py-1 text-[11px]">
@@ -185,7 +185,7 @@ export default function CrystalsModal({
                       {placeName(c.from_place_id)} → {placeName(c.to_place_id)} · {c.is_single_use ? '1×' : '∞'}
                       {c.used_at ? ' (utilisé)' : ''}
                     </span>
-                    <button onClick={() => revoke(c.id)} className="ml-2 text-paper/40 hover:text-accent">
+                    <button onClick={() => revoke(c.id)} className="ml-2 text-paper/65 hover:text-accent">
                       <SidIcon name="trash" />
                     </button>
                   </div>

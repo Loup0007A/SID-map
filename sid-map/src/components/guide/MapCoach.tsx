@@ -51,7 +51,7 @@ export default function MapCoach({ tip, onDismiss }: { tip: CoachTip | null; onD
           onClick={() => onDismiss(tip.id)}
           aria-label="Masquer cette suggestion"
           title="Masquer"
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-paper/45 hover:bg-white/10 hover:text-accent"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-paper/65 hover:bg-white/10 hover:text-accent"
         >
           ✕
         </button>

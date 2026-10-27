@@ -399,7 +399,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
                 )}
                 <button
                   onClick={() => setToolbarOpen(false)}
-                  className="ml-auto shrink-0 rounded-lg px-2 py-2 text-paper/50 hover:text-accent md:ml-0"
+                  className="ml-auto shrink-0 rounded-lg px-2 py-2 text-paper/65 hover:text-accent md:ml-0"
                   title="Réduire"
                 >
                   ▾
@@ -455,7 +455,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
       )}
 
       {loading && (
-        <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-display text-xs uppercase tracking-widest2 text-paper/50">
+        <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-display text-xs uppercase tracking-widest2 text-paper/65">
           Chargement du plan…
         </p>
       )}

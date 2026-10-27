@@ -23,7 +23,7 @@ export default function LegalPage({ title, children }: { title: string; children
 
 export function LegalLinks({ className = '' }: { className?: string }) {
   return (
-    <p className={`flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] uppercase tracking-wide text-paper/40 ${className}`}>
+    <p className={`flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] uppercase tracking-wide text-paper/65 ${className}`}>
       <Link href="/cgu" className="hover:text-accent hover:underline">Conditions d&apos;utilisation</Link>
       <Link href="/confidentialite" className="hover:text-accent hover:underline">Confidentialité</Link>
       <a href="https://sid-quest.vercel.app/dashboard/privacy" className="hover:text-accent hover:underline">Mes données</a>

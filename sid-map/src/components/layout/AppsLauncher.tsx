@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { usePermission } from '@/lib/hooks/usePermission';
 import { APPS, CATEGORIES, openApp, type AppCategory } from '@/lib/apps';
@@ -17,6 +17,13 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
   const [cat, setCat] = useState<AppCategory | 'all'>('all');
   const [query, setQuery] = useState('');
   const guide = useGuide();
+
+  // Échap ferme le panneau.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   const categories = CATEGORIES.filter((c) => !c.adminOnly || isAdmin);
 
@@ -39,7 +46,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
     }`;
 
   return (
-    <div className="anim-fade fixed inset-0 z-50 bg-[#0a0f1a]/60" onClick={onClose}>
+    <div className="anim-fade fixed inset-0 z-50 bg-[#0a0f1a]/60" onClick={onClose} role="dialog" aria-modal="true" aria-label="Applications">
       <div
         onClick={(e) => e.stopPropagation()}
         className="anim-pop glass-strong absolute inset-x-2 top-16 mx-auto flex max-h-[calc(100dvh-5rem)] max-w-3xl flex-col overflow-hidden rounded-xl md:top-16"
@@ -53,7 +60,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
             placeholder="Rechercher…"
             className="glass-input ml-auto w-40 rounded-lg px-3 py-1.5 text-xs outline-none md:w-56"
           />
-          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full text-paper/50 hover:bg-white/10 hover:text-accent">
+          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full text-paper/65 hover:bg-white/10 hover:text-accent">
             ✕
           </button>
         </div>
@@ -70,7 +77,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 pb-4 scrollbar-thin">
-          {visible.length === 0 && <p className="py-6 text-center text-sm text-paper/50">Aucune application ne correspond à « {query} ».</p>}
+          {visible.length === 0 && <p className="py-6 text-center text-sm text-paper/65">Aucune application ne correspond à « {query} ».</p>}
           {categories
             .filter((c) => visible.some((a) => a.category === c.id))
             .map((c) => (
@@ -92,7 +99,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
                       >
                         <AppIcon id={a.id} emoji={a.emoji} />
                         <span className="font-serif text-[15px] font-bold leading-tight text-paper">{a.name}</span>
-                        <span className="hidden text-[12.5px] leading-snug text-paper/55 sm:block">{a.description}</span>
+                        <span className="hidden text-[12.5px] leading-snug text-paper/65 sm:block">{a.description}</span>
                       </button>
                     ))}
                 </div>

@@ -53,7 +53,7 @@ export default function ZoneFormModal({
   return (
     <Modal title="Nouvelle zone" onClose={onClose}>
       <div className="space-y-3">
-        <p className="text-xs text-paper/50">{points.length} point(s) tracé(s)</p>
+        <p className="text-xs text-paper/65">{points.length} point(s) tracé(s)</p>
 
         <input
           placeholder="Nom (ex: Continent d'Aravel)"

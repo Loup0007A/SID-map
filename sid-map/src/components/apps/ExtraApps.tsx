@@ -76,8 +76,8 @@ export function DirectoryApp({
       }
     >
       <div className="anim-stagger space-y-1.5">
-        {places.length === 0 && <p className="py-4 text-center text-sm text-paper/50">Aucun lieu n’existe encore sur la carte.</p>}
-        {places.length > 0 && list.length === 0 && <p className="py-4 text-center text-sm text-paper/50">Aucun lieu ne correspond à ce filtre.</p>}
+        {places.length === 0 && <p className="py-4 text-center text-sm text-paper/65">Aucun lieu n’existe encore sur la carte.</p>}
+        {places.length > 0 && list.length === 0 && <p className="py-4 text-center text-sm text-paper/65">Aucun lieu ne correspond à ce filtre.</p>}
         {list.map((p) => (
           <button key={p.id} onClick={() => onGo(p)} className={row}>
             <span aria-hidden className="text-lg"><Icon value={p.icon || typeIcon(p.type)} /></span>
@@ -86,7 +86,7 @@ export function DirectoryApp({
                 {p.name}
                 {favoriteIds.includes(p.id) && <span className="ml-1 text-[#e7c34a]">★</span>}
               </span>
-              <span className="block truncate text-[11px] text-paper/50">{typeLabel(p.type)}</span>
+              <span className="block truncate text-[11px] text-paper/65">{typeLabel(p.type)}</span>
             </span>
             {(here.get(p.id) ?? 0) > 0 && (
               <span className="shrink-0 rounded-full bg-emerald-400/15 px-2 py-0.5 text-[11px] text-emerald-300" title="Personnages présents">
@@ -144,17 +144,17 @@ export function NearbyApp({
         </div>
       ) : (
         <div className="space-y-2">
-          <p className="text-xs text-paper/55">
+          <p className="text-xs text-paper/65">
             Depuis <span className="text-paper"><Icon value={me.icon ?? '📍'} /> {me.name}</span>, du plus proche au plus loin. Les distances sont à vol d’oiseau.
           </p>
-          {list.length === 0 && <p className="py-3 text-center text-sm text-paper/50">Aucun autre lieu sur la carte.</p>}
+          {list.length === 0 && <p className="py-3 text-center text-sm text-paper/65">Aucun autre lieu sur la carte.</p>}
           <div className="anim-stagger space-y-1.5">
             {list.map(({ p, km, route }) => (
               <button key={p.id} onClick={() => onGo(p)} className={row}>
                 <span aria-hidden className="text-lg"><Icon value={p.icon ?? '📍'} /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm text-paper">{p.name}</span>
-                  <span className="block truncate text-[11px] text-paper/50">
+                  <span className="block truncate text-[11px] text-paper/65">
                     {route ? (
                       <>
                         <SidIcon name="road" /> Route directe · {formatMinutes(routeWeight(route) / (speedMultiplier || 1))}
@@ -239,7 +239,7 @@ export function NotesApp({ currentPlaceName, onClose }: { currentPlaceName: stri
       onClose={onClose}
       footer={
         <div className="flex items-center gap-2 text-[11px]">
-          <span className={state === 'error' ? 'text-accent' : 'text-paper/50'}>
+          <span className={state === 'error' ? 'text-accent' : 'text-paper/65'}>
             {state === 'error' ? 'Enregistrement impossible sur cet appareil' : state === 'saving' ? 'Enregistrement…' : `Enregistré · ${text.length} caractères`}
           </span>
           <button onClick={stamp} className="ml-auto rounded-lg border border-white/15 px-2.5 py-1 text-paper/75 hover:border-accent hover:text-accent">

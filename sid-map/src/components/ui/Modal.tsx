@@ -67,7 +67,7 @@ function BlockingModal({ title, onClose, children, maxWidth = 'max-w-md', footer
           <button
             onClick={onClose}
             aria-label="Fermer"
-            className="rounded-full h-7 w-7 flex items-center justify-center text-paper/50 hover:bg-white/10 hover:text-accent"
+            className="rounded-full h-7 w-7 flex items-center justify-center text-paper/65 hover:bg-white/10 hover:text-accent"
           >
             ✕
           </button>
@@ -277,20 +277,20 @@ function FloatingWindow({ title, onClose, children, maxWidth = 'max-w-md', foote
         className="flex shrink-0 cursor-move select-none items-center gap-1 px-4 pb-2 pt-3"
         style={{ touchAction: 'none' }}
       >
-        <span aria-hidden className="text-paper/30">⠿</span>
+        <span aria-hidden className="text-paper/65">⠿</span>
         <h3 className="min-w-0 flex-1 truncate font-display text-[1.1rem] leading-tight text-accent"><GlyphText text={title} /></h3>
         <button
           onClick={reset}
           aria-label="Replacer la fenêtre à sa position et sa taille d'origine"
           title="Replacer"
-          className="flex h-7 w-7 items-center justify-center rounded-full text-paper/50 hover:bg-white/10 hover:text-accent"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-paper/65 hover:bg-white/10 hover:text-accent"
         >
           ⤾
         </button>
         <button
           onClick={onClose}
           aria-label="Fermer"
-          className="flex h-7 w-7 items-center justify-center rounded-full text-paper/50 hover:bg-white/10 hover:text-accent"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-paper/65 hover:bg-white/10 hover:text-accent"
         >
           ✕
         </button>
@@ -304,7 +304,7 @@ function FloatingWindow({ title, onClose, children, maxWidth = 'max-w-md', foote
       {handle('s', 'bottom-0 left-3 right-3 h-1.5 cursor-ns-resize')}
       {handle('sw', 'bottom-0 left-0 h-3 w-3 cursor-nesw-resize')}
       {handle('se', 'bottom-0 right-0 h-4 w-4 cursor-nwse-resize')}
-      <span aria-hidden className="pointer-events-none absolute bottom-0.5 right-1 text-[10px] leading-none text-paper/35">◢</span>
+      <span aria-hidden className="pointer-events-none absolute bottom-0.5 right-1 text-[10px] leading-none text-paper/65">◢</span>
     </div>
   );
 }

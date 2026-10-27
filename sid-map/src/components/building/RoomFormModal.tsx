@@ -43,7 +43,7 @@ export default function RoomFormModal({
         </select>
         {type === 'Escalier' && (
           <div className="space-y-1">
-            <label className="text-[11px] uppercase tracking-wide text-paper/50">
+            <label className="text-[11px] uppercase tracking-wide text-paper/65">
               Mène à l'étage n° (0 = rez-de-chaussée, négatif = sous-sol)
             </label>
             <input

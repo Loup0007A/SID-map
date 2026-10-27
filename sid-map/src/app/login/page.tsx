@@ -98,7 +98,7 @@ function LoginForm() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-display text-[10px] uppercase tracking-wide text-paper/50">
+              <label className="font-display text-[10px] uppercase tracking-wide text-paper/65">
                 Identifiant (email)
               </label>
               <input
@@ -111,7 +111,7 @@ function LoginForm() {
             </div>
 
             <div className="space-y-1">
-              <label className="font-display text-[10px] uppercase tracking-wide text-paper/50">
+              <label className="font-display text-[10px] uppercase tracking-wide text-paper/65">
                 Mot de passe
               </label>
               <input
@@ -133,7 +133,7 @@ function LoginForm() {
               {loading ? 'Vérification…' : 'Entrer'}
             </button>
 
-            <p className="text-center text-[11px] text-paper/40">
+            <p className="text-center text-[11px] text-paper/65">
               Utilise le même dossier que sur le site principal S.I.D.
             </p>
             <LegalLinks />

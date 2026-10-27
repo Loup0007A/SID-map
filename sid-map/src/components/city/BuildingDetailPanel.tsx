@@ -84,7 +84,7 @@ export default function BuildingDetailPanel({
 
       {building.type === 'maison' && (
         <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-2.5 text-sm">
-          <p className="text-[10px] uppercase tracking-wide text-paper/40">Propriétaire</p>
+          <p className="text-[10px] uppercase tracking-wide text-paper/65">Propriétaire</p>
           <div className="mt-1 flex items-center justify-between gap-2">
             <span className="text-paper/90">{ownerLabel ?? (ownerId ? 'Membre assigné' : 'Aucun')}</span>
             {canEdit && (

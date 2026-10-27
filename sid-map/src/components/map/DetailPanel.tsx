@@ -142,7 +142,7 @@ export default function DetailPanel({
 
       {canEdit && (
         <div className="mt-3 space-y-1">
-          <label className="text-[11px] uppercase tracking-wide text-paper/50">
+          <label className="text-[11px] uppercase tracking-wide text-paper/65">
             <SidIcon name="flag" /> Contrôlé par (territoire)
           </label>
           <select

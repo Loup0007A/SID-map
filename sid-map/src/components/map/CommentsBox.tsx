@@ -55,17 +55,17 @@ export default function CommentsBox({
 
   return (
     <div className="space-y-3">
-      <h3 className="font-display text-sm uppercase tracking-wide text-accent">Commentaires</h3>
+      <h2 className="font-display text-sm uppercase tracking-wide text-accent">Commentaires</h2>
 
       <div className="space-y-2 max-h-52 overflow-y-auto scrollbar-thin pr-1">
-        {loading && <p className="text-xs text-paper/50">Chargement…</p>}
+        {loading && <p className="text-xs text-paper/65">Chargement…</p>}
         {!loading && comments.length === 0 && (
-          <p className="text-xs text-paper/50">Aucun commentaire pour l'instant.</p>
+          <p className="text-xs text-paper/65">Aucun commentaire pour l'instant.</p>
         )}
         {comments.map((c) => (
           <div key={c.id} className="glass rounded-xl p-3 text-sm">
             <p className="text-paper/90">{c.content}</p>
-            <p className="mt-1 text-[10px] uppercase tracking-wide text-paper/40">
+            <p className="mt-1 text-[10px] uppercase tracking-wide text-paper/65">
               {c.member_rank ?? 'Membre'} · {new Date(c.created_at).toLocaleDateString('fr-FR')}
             </p>
           </div>

@@ -99,7 +99,7 @@ export default function BuildingFormModal({
           />
 
           <div className="space-y-1">
-            <label className="flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/50">
+            <label className="flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/65">
               <span>{shape === 'circle' ? 'Taille (rayon)' : 'Largeur'}</span>
               <span className="text-accent">{width.toFixed(1)}</span>
             </label>
@@ -116,7 +116,7 @@ export default function BuildingFormModal({
 
           {shape === 'rect' && (
             <div className="space-y-1">
-              <label className="flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/50">
+              <label className="flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/65">
                 <span>Hauteur</span>
                 <span className="text-accent">{height.toFixed(1)}</span>
               </label>
@@ -134,7 +134,7 @@ export default function BuildingFormModal({
 
           {type === 'maison' && (
             <div>
-              <label className="mb-1 block text-[11px] uppercase tracking-wide text-paper/50">
+              <label className="mb-1 block text-[11px] uppercase tracking-wide text-paper/65">
                 Propriétaire
               </label>
               <button

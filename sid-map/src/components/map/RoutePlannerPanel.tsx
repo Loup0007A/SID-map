@@ -27,7 +27,7 @@ function PlacePicker({
 
   return (
     <div className="space-y-1">
-      <label className="text-[10px] uppercase tracking-wide text-paper/50">{label}</label>
+      <label className="text-[10px] uppercase tracking-wide text-paper/65">{label}</label>
       <input
         value={selected ? selected.name : query}
         onChange={(e) => {
@@ -130,7 +130,7 @@ export default function RoutePlannerPanel({
             onHighlight(null);
             onClose();
           }}
-          className="text-paper/50 hover:text-accent"
+          className="text-paper/65 hover:text-accent"
         >
           ✕
         </button>
@@ -148,7 +148,7 @@ export default function RoutePlannerPanel({
         <div className="border-t border-white/10 pt-2 text-sm">
           {plan ? (
             plan.steps.length === 0 ? (
-              <p className="text-paper/50">Départ et arrivée sont le même lieu.</p>
+              <p className="text-paper/65">Départ et arrivée sont le même lieu.</p>
             ) : (
               <>
                 <p className="text-accent">
@@ -174,18 +174,18 @@ export default function RoutePlannerPanel({
                       <GlyphText text={starting ? 'Départ…' : plan.steps.length > 1 ? `🚶 Partir (${plan.steps.length} étapes)` : '🚶 Partir'} />
                     </button>
                     {traveling ? (
-                      <p className="mt-1 text-[11px] text-paper/50">Tu es déjà en route : attends d’être arrivé.</p>
+                      <p className="mt-1 text-[11px] text-paper/65">Tu es déjà en route : attends d’être arrivé.</p>
                     ) : !myPlaceId ? (
-                      <p className="mt-1 text-[11px] text-paper/50">Choisis d’abord où commence ton personnage (Ma position).</p>
+                      <p className="mt-1 text-[11px] text-paper/65">Choisis d’abord où commence ton personnage (Ma position).</p>
                     ) : !fromMe ? (
-                      <p className="mt-1 text-[11px] text-paper/50">Pour partir, le départ doit être ta position actuelle.</p>
+                      <p className="mt-1 text-[11px] text-paper/65">Pour partir, le départ doit être ta position actuelle.</p>
                     ) : null}
                   </div>
                 )}
               </>
             )
           ) : (
-            <p className="text-paper/50">Aucun itinéraire trouvé entre ces deux lieux.</p>
+            <p className="text-paper/65">Aucun itinéraire trouvé entre ces deux lieux.</p>
           )}
         </div>
       )}

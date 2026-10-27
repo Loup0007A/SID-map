@@ -101,7 +101,7 @@ export default function FloorView({
       </div>
 
       {canEdit && (
-        <p className="text-xs text-paper/50">Clique-glisse sur le plan pour dessiner une nouvelle pièce.</p>
+        <p className="text-xs text-paper/65">Clique-glisse sur le plan pour dessiner une nouvelle pièce.</p>
       )}
 
       <div className="glass overflow-hidden rounded-xl">

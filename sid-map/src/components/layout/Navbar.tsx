@@ -109,7 +109,7 @@ export default function Navbar() {
         <button
           onClick={toggle}
           title="Replier la barre de navigation"
-          className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-paper/50 hover:bg-white/10 hover:text-accent"
+          className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-paper/65 hover:bg-white/10 hover:text-accent"
         >
           ▴
         </button>

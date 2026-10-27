@@ -9,7 +9,7 @@ export default function QuestPopup({ quest, onClose }: { quest: MapQuest; onClos
     <div className="glass-strong absolute bottom-20 left-3 z-30 w-64 max-w-[calc(100%-1.5rem)] rounded-xl p-3 text-xs text-paper md:bottom-6 md:w-60">
       <div className="flex items-start justify-between gap-2">
         <p className="font-semibold text-[#e7c34a]"><SidIcon name="scroll" /> {quest.title}</p>
-        <button onClick={onClose} className="text-paper/50 hover:text-accent">
+        <button onClick={onClose} className="text-paper/65 hover:text-accent">
           ✕
         </button>
       </div>

@@ -88,11 +88,17 @@ function Halloween() {
   return (
     <>
       <path className="hz-a" d={ridge(190, 60, 1.3)} />
-      <g transform="translate(1290 170)">
-        <path className="hz-b" d="M-40 0 L-40 -130 L-46 -130 L-20 -186 L6 -130 L0 -130 L0 -80 L70 -120 L140 -80 L140 -104 L134 -104 L156 -152 L178 -104 L172 -104 L172 0 Z" />
+      {/* Réduit pour que la pointe de la tour reste dans le cadre (elle en sortait). */}
+      <g transform="translate(1290 172) scale(0.84)">
+        <path className="hz-b" d="M-40 0 L-40 -130 L-46 -130 L-20 -186 L6 -130 L0 -130 L0 -80 L70 -120 L140 -80 L140 -104 L134 -104 L156 -152 L178 -104 L172 -104 L172 0 Z M96 -110 L96 -128 L106 -128 L106 -103 Z" />
+        <path className="hz-rim" d="M-46 -130 L-20 -186 L6 -130 M0 -80 L70 -120 L140 -80 M134 -104 L156 -152 L178 -104" />
+        <path className="hz-vane" d="M-20 -186 L-20 -200 M156 -152 L156 -164" />
+        <path className="hz-b" d="M-20 -200 L-10 -196.5 L-20 -193 Z M156 -164 L166 -160.5 L156 -157 Z" />
         {lit.map(([x, y], i) => (
           <rect key={i} x={x} y={y} width="10" height="15" rx="5" className={`hz-glow ${i % 2 ? 'is-flicker' : ''}`} style={{ animationDelay: `${i * 0.9}s` }} />
         ))}
+        <circle cx="70" cy="-98" r="7" className="hz-glow is-flicker" style={{ animationDelay: '2.2s' }} />
+        <path className="hz-door" d="M58 0 L58 -22 Q66 -32 74 -22 L74 0 Z" />
       </g>
       <path className="hz-c" d={ridge(230, 30, 4.2)} />
       <path className="hz-tree" d="M180 230 C184 200 180 176 170 156 M170 156 C160 142 146 136 132 132 M172 170 C188 158 206 154 222 140 M206 154 C214 146 218 136 218 124 M176 196 C160 190 146 188 130 190" />

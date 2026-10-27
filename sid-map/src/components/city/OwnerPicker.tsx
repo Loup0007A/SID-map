@@ -56,9 +56,9 @@ export default function OwnerPicker({
         )}
 
         <div className="max-h-72 space-y-1 overflow-y-auto scrollbar-thin pr-1">
-          {loading && <p className="text-xs text-paper/50">Chargement du roster…</p>}
+          {loading && <p className="text-xs text-paper/65">Chargement du roster…</p>}
           {!loading && results.length === 0 && (
-            <p className="text-xs text-paper/50">Aucun membre trouvé.</p>
+            <p className="text-xs text-paper/65">Aucun membre trouvé.</p>
           )}
           {results.map((p) => (
             <button
@@ -78,7 +78,7 @@ export default function OwnerPicker({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-paper">{displayName(p)}</p>
                 {p.member_rank && (
-                  <p className="text-[10px] uppercase tracking-wide text-paper/40">{p.member_rank}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-paper/65">{p.member_rank}</p>
                 )}
               </div>
               {p.id === currentOwnerId && <span className="text-accent">✓</span>}

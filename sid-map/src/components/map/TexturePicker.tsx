@@ -39,7 +39,7 @@ export default function TexturePicker({
 
   return (
     <div className="space-y-1.5">
-      <label className="text-[11px] uppercase tracking-wide text-paper/50">Texture</label>
+      <label className="text-[11px] uppercase tracking-wide text-paper/65">Texture</label>
       <div className="grid max-h-44 grid-cols-4 gap-1.5 overflow-y-auto scrollbar-thin pr-1">
         <button type="button" onClick={() => onChange(null)} className={`${base} ${value === null ? on : off}`}>
           <span className="flex h-10 w-10 items-center justify-center text-lg"><SidIcon name="sparkle" /></span>

@@ -53,7 +53,7 @@ export default function PlaceSearch({
                 setOpen(false);
                 setQuery('');
               }}
-              className="shrink-0 rounded-lg px-2 py-1.5 text-paper/50 hover:text-accent"
+              className="shrink-0 rounded-lg px-2 py-1.5 text-paper/65 hover:text-accent"
               aria-label="Fermer la recherche"
             >
               ✕
@@ -61,9 +61,9 @@ export default function PlaceSearch({
           </div>
           {!query.trim() && (
             <div className="mt-1.5 max-h-48 space-y-0.5 overflow-y-auto scrollbar-thin">
-              <p className="px-2.5 pt-1 font-display text-[10px] uppercase tracking-wide text-paper/45">★ Favoris</p>
+              <p className="px-2.5 pt-1 font-display text-[10px] uppercase tracking-wide text-paper/65">★ Favoris</p>
               {favorites.length === 0 && (
-                <p className="px-2.5 pb-1 text-xs text-paper/50">Aucun pour l'instant : ouvre un lieu et clique ☆ pour le retrouver ici.</p>
+                <p className="px-2.5 pb-1 text-xs text-paper/65">Aucun pour l'instant : ouvre un lieu et clique ☆ pour le retrouver ici.</p>
               )}
               {favorites.map((p) => (
                 <button key={p.id} onClick={() => pick(p)} className="block w-full rounded-lg px-2.5 py-1.5 text-left text-sm text-paper/80 hover:bg-white/10">
@@ -73,7 +73,7 @@ export default function PlaceSearch({
             </div>
           )}
           {query.trim() && results.length === 0 && (
-            <p className="mt-1.5 px-2.5 pb-1 text-xs text-paper/50">Aucun lieu ne s'appelle ainsi.</p>
+            <p className="mt-1.5 px-2.5 pb-1 text-xs text-paper/65">Aucun lieu ne s'appelle ainsi.</p>
           )}
           {results.length > 0 && (
             <div className="mt-1.5 max-h-48 space-y-0.5 overflow-y-auto scrollbar-thin">

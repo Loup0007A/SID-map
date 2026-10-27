@@ -58,7 +58,7 @@ export default function IconPicker({
 
   return (
     <div className="space-y-1.5">
-      <label className="text-[11px] uppercase tracking-wide text-paper/50">Icône</label>
+      <label className="text-[11px] uppercase tracking-wide text-paper/65">Icône</label>
       <div className="grid grid-cols-6 gap-1 rounded-lg border border-white/10 bg-white/5 p-2">
         {ICON_CATALOG.map((icon) => (
           <button key={icon} type="button" onClick={() => onChange(icon)} className={cell(value === icon)}>
@@ -69,7 +69,7 @@ export default function IconPicker({
 
       <div className="space-y-1.5 rounded-lg border border-white/10 bg-white/5 p-2">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] uppercase tracking-wide text-paper/50">Icônes importées</span>
+          <span className="text-[11px] uppercase tracking-wide text-paper/65">Icônes importées</span>
           <button
             type="button"
             disabled={busy}
@@ -81,7 +81,7 @@ export default function IconPicker({
           <input ref={fileRef} type="file" accept={ICON_ACCEPT} onChange={onFile} className="hidden" />
         </div>
         {images.length === 0 ? (
-          <p className="text-[11px] leading-snug text-paper/45">
+          <p className="text-[11px] leading-snug text-paper/65">
             Aucune pour l'instant. Une image carrée à fond transparent rend le mieux ; 512 Ko maximum.
           </p>
         ) : (

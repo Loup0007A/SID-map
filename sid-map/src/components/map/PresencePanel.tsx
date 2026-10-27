@@ -52,7 +52,7 @@ export default function PresencePanel({
             Présences ({positions.length})
           </p>
           {positions.length === 0 && (
-            <p className="text-xs text-paper/40">Personne n'a encore indiqué sa position.</p>
+            <p className="text-xs text-paper/65">Personne n'a encore indiqué sa position.</p>
           )}
           {positions.map((p) => (
             <button
@@ -69,10 +69,10 @@ export default function PresencePanel({
               )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-paper">{p.nickname ?? 'Membre'}</p>
-                <p className="truncate text-[11px] text-paper/50"><GlyphText text={locationLabel(p)} /></p>
-                {p.status && <p className="truncate text-[10px] italic text-paper/40">"{p.status}"</p>}
+                <p className="truncate text-[11px] text-paper/65"><GlyphText text={locationLabel(p)} /></p>
+                {p.status && <p className="truncate text-[10px] italic text-paper/65">"{p.status}"</p>}
               </div>
-              <span className="shrink-0 text-[9px] text-paper/30">{timeAgo(p.updated_at)}</span>
+              <span className="shrink-0 text-[9px] text-paper/65">{timeAgo(p.updated_at)}</span>
             </button>
           ))}
         </div>

@@ -103,10 +103,10 @@ export default function MountRentalSection({
       <MountsModal settings={settings} myPosition={null} onClose={() => { setShowNewMountType(false); mounts.reload(); }} />
     )}
     <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
-      <p className="text-[11px] uppercase tracking-wide text-paper/50"><SidIcon name="horse" /> Montures louables ici</p>
+      <p className="text-[11px] uppercase tracking-wide text-paper/65"><SidIcon name="horse" /> Montures louables ici</p>
 
       {rentals.length === 0 && !canEdit && (
-        <p className="text-xs text-paper/40">Aucune monture disponible ici.</p>
+        <p className="text-xs text-paper/65">Aucune monture disponible ici.</p>
       )}
 
       {rentals.map((r) => {

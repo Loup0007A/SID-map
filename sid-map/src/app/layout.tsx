@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 // Polices servies par le site lui-même (paquets @fontsource).
+import { LabelLinker } from '@/components/a11y/LabelLinker';
 import '@fontsource/alegreya-sans/400.css';
 import '@fontsource/alegreya-sans/500.css';
 import '@fontsource/alegreya-sans/700.css';
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SessionGuard />
         <TermsBanner />
         <EventDecor variant="map" />
+        <LabelLinker />
       </body>
     </html>
   );

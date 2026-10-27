@@ -127,7 +127,7 @@ export default function PlaceFormModal({
 
         {shape === 'circle' ? (
           <div className="space-y-1">
-            <label className="flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/50">
+            <label className="flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/65">
               <span>Taille (rayon) — ajuste l'icône</span>
               <span className="text-accent">{radius.toFixed(1)}</span>
             </label>
@@ -144,7 +144,7 @@ export default function PlaceFormModal({
         ) : (
           <>
             <div className="space-y-1">
-              <label className="flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/50">
+              <label className="flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/65">
                 <span>Largeur</span>
                 <span className="text-accent">{width.toFixed(1)}</span>
               </label>
@@ -159,7 +159,7 @@ export default function PlaceFormModal({
               />
             </div>
             <div className="space-y-1">
-              <label className="flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/50">
+              <label className="flex items-center justify-between text-[11px] uppercase tracking-wide text-paper/65">
                 <span>Hauteur</span>
                 <span className="text-accent">{height.toFixed(1)}</span>
               </label>

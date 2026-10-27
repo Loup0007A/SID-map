@@ -148,7 +148,7 @@ export default function PlaceBuildingClient({ placeId }: { placeId: string }) {
                 </button>
               </div>
 
-              {floors.length === 0 && <p className="text-sm text-paper/50">Aucun étage renseigné pour le moment.</p>}
+              {floors.length === 0 && <p className="text-sm text-paper/65">Aucun étage renseigné pour le moment.</p>}
 
               {floors.length > 0 && view3D && <Building3DView floors={floors} />}
 

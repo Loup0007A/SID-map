@@ -113,10 +113,10 @@ export default function PositionPickerModal({
           <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
             <div className="h-full bg-accent transition-all" style={{ width: `${pct}%` }} />
           </div>
-          <p className="text-xs text-paper/50">
+          <p className="text-xs text-paper/65">
             {remaining <= 0 ? 'Arrivée imminente…' : `Arrivée dans ${formatMinutes(remaining)}`}
           </p>
-          <p className="text-[11px] text-paper/30">
+          <p className="text-[11px] text-paper/65">
             Le trajet continue même si tu fermes la page : tu arriveras à l’heure prévue.
           </p>
         </div>
@@ -133,7 +133,7 @@ export default function PositionPickerModal({
     return (
       <Modal title="Où commence ton personnage ?" windowId="position" onClose={onClose}>
         <div className="space-y-2">
-          <p className="text-xs text-paper/50">
+          <p className="text-xs text-paper/65">
             Ce choix ne se fait qu'une fois. Ensuite, tout déplacement sera un vrai trajet (à pied, sur une
             monture ou en vol) — choisis donc le lieu où ton personnage commence réellement son histoire.
           </p>
@@ -143,7 +143,7 @@ export default function PositionPickerModal({
             </p>
           )}
           {places.length > 0 && results.length === 0 && (
-            <p className="text-xs text-paper/50">Aucun lieu ne correspond à « {placeQuery} ».</p>
+            <p className="text-xs text-paper/65">Aucun lieu ne correspond à « {placeQuery} ».</p>
           )}
           <input
             value={placeQuery}
@@ -183,14 +183,14 @@ export default function PositionPickerModal({
     <Modal title="Ma position" windowId="position" onClose={onClose} maxWidth="max-w-sm">
       <div className="space-y-4">
         <div className="rounded-lg border border-white/10 bg-white/5 p-2.5 text-sm">
-          <p className="text-paper/50 text-[10px] uppercase tracking-wide">Actuellement</p>
+          <p className="text-paper/65 text-[10px] uppercase tracking-wide">Actuellement</p>
           <p className="text-paper">
             <Icon value={currentPlace?.icon ?? '📍'} /> {currentPlace?.name ?? '?'}
             {activeMount && (
               <span className="ml-2 text-accent">
                 <Icon value={activeMount.icon} /> {activeMount.name}
                 {myPosition.mount_expires_at && (
-                  <span className="ml-1 text-[11px] text-paper/50">
+                  <span className="ml-1 text-[11px] text-paper/65">
                     ({formatMinutes(Math.max(0, (new Date(myPosition.mount_expires_at).getTime() - now) / 60000))} restantes)
                   </span>
                 )}
@@ -199,7 +199,7 @@ export default function PositionPickerModal({
                     const { error } = await unequipMount();
                     showToast(error ? 'Impossible de descendre.' : 'Monture rendue.', error ? 'error' : 'success');
                   }}
-                  className="ml-2 text-[11px] text-paper/50 underline hover:text-accent"
+                  className="ml-2 text-[11px] text-paper/65 underline hover:text-accent"
                 >
                   descendre
                 </button>
@@ -209,7 +209,7 @@ export default function PositionPickerModal({
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[11px] uppercase tracking-wide text-paper/50">
+          <label className="text-[11px] uppercase tracking-wide text-paper/65">
             Statut libre (indépendant du lieu)
           </label>
           <div className="flex gap-2">
@@ -232,7 +232,7 @@ export default function PositionPickerModal({
 
         {buildings && buildings.length > 0 && cityId === myPosition.place_id && (
           <div className="space-y-1">
-            <label className="text-[11px] uppercase tracking-wide text-paper/50">Bâtiment (dans cette ville)</label>
+            <label className="text-[11px] uppercase tracking-wide text-paper/65">Bâtiment (dans cette ville)</label>
             <select
               value={myPosition.building_id ?? ''}
               onChange={(e) => setCurrentBuilding(e.target.value || null)}
@@ -250,11 +250,11 @@ export default function PositionPickerModal({
         )}
 
         <div className="border-t border-white/10 pt-3">
-          <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50">
+          <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/65">
             <SidIcon name="road" /> Voyager (à pied{activeMount ? ` / ${activeMount.name}` : ''})
           </p>
           {connectedRoutes.length === 0 && (
-            <p className="text-xs text-paper/40">
+            <p className="text-xs text-paper/65">
               Aucune route ne part d'ici pour l'instant. Pour quitter ce lieu, il faut une monture volante, un cristal
               de téléportation, ou qu'un admin trace une route.
             </p>
@@ -296,7 +296,7 @@ export default function PositionPickerModal({
 
         {activeMount?.can_fly && (
           <div className="border-t border-white/10 pt-3">
-            <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/50"><SidIcon name="dove" /> Voler n'importe où (sans chemin){activeMount?.flight_range_km ? ` (portée ${activeMount.flight_range_km} ${settings.unit_label})` : ''}</p>
+            <p className="mb-1.5 text-[11px] uppercase tracking-wide text-paper/65"><SidIcon name="dove" /> Voler n'importe où (sans chemin){activeMount?.flight_range_km ? ` (portée ${activeMount.flight_range_km} ${settings.unit_label})` : ''}</p>
             <input
               value={flightQuery}
               onChange={(e) => setFlightQuery(e.target.value)}
@@ -329,7 +329,7 @@ export default function PositionPickerModal({
                       </span>
                       <span className="text-right text-[11px] text-accent">
                         {formatDistance(km, settings.unit_label)}
-                        <span className="block text-paper/50">
+                        <span className="block text-paper/65">
                           {outOfRange ? 'hors de portée' : blocked ? `biome interdit (${BIOME_LABELS[blocked] ?? blocked})` : formatMinutes(flightMinutes(km, activeMount, settings))}
                         </span>
                       </span>
