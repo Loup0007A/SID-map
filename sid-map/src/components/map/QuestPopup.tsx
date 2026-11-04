@@ -109,10 +109,10 @@ export default function QuestPopup({
           <p className="text-[11px] text-paper/70">
             {onPlace ? (
               <>
-                <SidIcon name="pin" /> Tu es ici : tu peux prendre ces quêtes.
+                <SidIcon name="pin" /> Tu es sur place.
               </>
             ) : (
-              'Ces quêtes se prennent sur place.'
+              'À prendre sur place.'
             )}
           </p>
         </div>

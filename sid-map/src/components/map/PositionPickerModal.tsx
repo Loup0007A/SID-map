@@ -117,7 +117,7 @@ export default function PositionPickerModal({
             {remaining <= 0 ? 'Arrivée imminente…' : `Arrivée dans ${formatMinutes(remaining)}`}
           </p>
           <p className="text-[11px] text-paper/65">
-            Le trajet continue même si tu fermes la page : tu arriveras à l’heure prévue.
+            Le trajet continue même page fermée.
           </p>
         </div>
       </Modal>
@@ -134,8 +134,7 @@ export default function PositionPickerModal({
       <Modal title="Où commence ton personnage ?" windowId="position" onClose={onClose}>
         <div className="space-y-2">
           <p className="text-xs text-paper/65">
-            Ce choix ne se fait qu'une fois. Ensuite, tout déplacement sera un vrai trajet (à pied, sur une
-            monture ou en vol) — choisis donc le lieu où ton personnage commence réellement son histoire.
+            Une seule fois : ensuite, on se déplace par trajets.
           </p>
           {places.length === 0 && (
             <p className="rounded-lg bg-white/5 px-3 py-2 text-xs text-paper/60">

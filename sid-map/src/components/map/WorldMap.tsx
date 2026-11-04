@@ -2119,11 +2119,6 @@ export default function WorldMap() {
         );
       })()}
 
-      {!modeHint && (
-        <div className="glass absolute bottom-3 left-1/2 z-10 hidden -translate-x-1/2 rounded-full px-4 py-1.5 font-display text-[10px] uppercase tracking-wide text-paper/60 md:block">
-          Glisse pour naviguer · molette pour zoomer · clique un élément pour l'explorer
-        </div>
-      )}
       </div>
       {envers.layer}
     </div>
