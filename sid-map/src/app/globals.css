@@ -700,7 +700,9 @@ html.ev-grande_chasse .map-vignette {
 
 /* Quêtes sur la carte (Lot 59) : halo des parchemins et tableau du lieu. */
 .quest-marker .quest-halo { fill: #f2d98f; opacity: .35; transform-box: fill-box; transform-origin: center; animation: quest-halo 2.6s ease-in-out infinite; }
-.quest-marker:focus-visible { outline: none; }
+/* Le contour de focus natif d'un élément SVG est tracé à l'échelle de la carte :
+   au clic, il devenait un gros rond noir. Au clavier, c'est le halo qui s'allume. */
+.quest-marker:focus, .quest-marker:focus-visible { outline: none; }
 .quest-marker:focus-visible .quest-halo { opacity: .8; stroke: #fff4dc; stroke-width: .3; }
 @keyframes quest-halo { 0%, 100% { transform: scale(.8); opacity: .15; } 50% { transform: scale(1.25); opacity: .45; } }
 @media (prefers-reduced-motion: reduce) { .quest-marker .quest-halo { animation: none; } }
