@@ -14,6 +14,13 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
+## Noms et adresses (Lot 77)
+
+Le nom du RP, des sites, de la monnaie et les adresses des trois sites se
+règlent dans `app_config` : voir `SETUP.md` dans le dépôt du Dossier Central
+(sid-website). Les fichiers `src/lib/brand.ts` et `src/brand/` sont des copies
+de ceux du Dossier Central : les garder identiques.
+
 ## Mise en place de la base
 
 1. Ouvre `supabase/migrations/0100_rp_map_schema.sql`.

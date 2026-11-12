@@ -1,5 +1,6 @@
 'use client';
 
+import { BRAND } from '@/lib/brand';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { CharacterPosition, MapPlace, MapQuest } from '@/lib/types';
@@ -22,7 +23,6 @@ type Detail = {
   reputation_reward: number | null;
 };
 
-const QUEST_SITE = 'https://sid-quest.vercel.app';
 
 function due(deadline: string | null) {
   if (!deadline) return null;
@@ -164,7 +164,7 @@ export default function QuestPopup({
                   </button>
                 )}
                 <a
-                  href={`${QUEST_SITE}/dashboard/quests?quete=${q.id}`}
+                  href={`${BRAND.urls.site}/dashboard/quests?quete=${q.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="ml-auto text-[11px] text-[#7a5a1e] underline"

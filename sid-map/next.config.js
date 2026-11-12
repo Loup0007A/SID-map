@@ -17,5 +17,14 @@ const nextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: SECURITY_HEADERS }];
   },
+  webpack: (config) => {
+    // Lot 77 : le JSX passe par src/brand (tsconfig jsxImportSource). Le cache
+    // de compilation gardé d'un build à l'autre (Vercel compris) ne doit pas
+    // resservir les modules compilés avant ce changement.
+    if (config.cache && typeof config.cache === 'object') {
+      config.cache.version = `${config.cache.version || ''}|jsx-brand-1`;
+    }
+    return config;
+  },
 };
 module.exports = nextConfig;

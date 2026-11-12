@@ -16,38 +16,47 @@ import { GuideProvider } from '@/components/guide/GuideProvider';
 import EventDecor from '@/components/EventDecor';
 import SessionGuard from '@/components/auth/SessionGuard';
 import './globals.css';
+import { BrandProvider } from '@/components/BrandProvider';
+import { brandify } from '@/lib/brand';
+import { getBrand } from '@/lib/brand-server';
 
 
-export const metadata: Metadata = {
-  title: 'S.I.D. — Cartographie',
-  description: 'Cartographie du monde — S.I.D.',
-  manifest: '/manifest.webmanifest',
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'S.I.D. Carte' },
-  icons: {
-    icon: [
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' }
-    ],
-    apple: '/apple-touch-icon.png'
-  }
-};
+// Noms tirés de app_config (Lot 77, voir SETUP.md du site principal).
+export async function generateMetadata(): Promise<Metadata> {
+  const b = await getBrand();
+  return {
+    title: { default: `${b.name} — ${b.map}`, template: `%s · ${b.name} ${b.map}` },
+    description: brandify('Cartographie du monde — S.I.D.'),
+    appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: brandify('S.I.D. Carte') },
+    icons: {
+      icon: [
+        { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { url: '/icon-512.png', sizes: '512x512', type: 'image/png' }
+      ],
+      apple: '/apple-touch-icon.png'
+    }
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: '#121927',
   viewportFit: 'cover'
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const brand = await getBrand();
   return (
     <html lang="fr">
       <body className="bg-ink text-paper font-body antialiased">
-        <ToastProvider>
-          <GuideProvider>{children}</GuideProvider>
-        </ToastProvider>
-        <SessionGuard />
-        <TermsBanner />
-        <EventDecor variant="map" />
-        <LabelLinker />
+        <BrandProvider brand={brand}>
+          <ToastProvider>
+            <GuideProvider>{children}</GuideProvider>
+          </ToastProvider>
+          <SessionGuard />
+          <TermsBanner />
+          <EventDecor variant="map" />
+          <LabelLinker />
+        </BrandProvider>
       </body>
     </html>
   );

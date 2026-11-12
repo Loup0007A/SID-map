@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BRAND } from '@/lib/brand';
 
 /** Mise en page des pages publiques (CGU, confidentialité) : lisibles sans être connecté. */
 export default function LegalPage({ title, children }: { title: string; children: React.ReactNode }) {
@@ -26,7 +27,7 @@ export function LegalLinks({ className = '' }: { className?: string }) {
     <p className={`flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] uppercase tracking-wide text-paper/65 ${className}`}>
       <Link href="/cgu" className="hover:text-accent hover:underline">Conditions d&apos;utilisation</Link>
       <Link href="/confidentialite" className="hover:text-accent hover:underline">Confidentialité</Link>
-      <a href="https://sid-quest.vercel.app/dashboard/privacy" className="hover:text-accent hover:underline">Mes données</a>
+      <a href={`${BRAND.urls.site}/dashboard/privacy`} className="hover:text-accent hover:underline">Mes données</a>
     </p>
   );
 }
