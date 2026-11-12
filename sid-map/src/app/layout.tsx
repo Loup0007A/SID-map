@@ -17,6 +17,7 @@ import EventDecor from '@/components/EventDecor';
 import SessionGuard from '@/components/auth/SessionGuard';
 import './globals.css';
 import { BrandProvider } from '@/components/BrandProvider';
+import SiteGate from '@/components/SiteGate';
 import { brandify } from '@/lib/brand';
 import { getBrand } from '@/lib/brand-server';
 
@@ -49,9 +50,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="fr">
       <body className="bg-ink text-paper font-body antialiased">
         <BrandProvider brand={brand}>
-          <ToastProvider>
-            <GuideProvider>{children}</GuideProvider>
-          </ToastProvider>
+          <SiteGate>
+            <ToastProvider>
+              <GuideProvider>{children}</GuideProvider>
+            </ToastProvider>
+          </SiteGate>
           <SessionGuard />
           <TermsBanner />
           <EventDecor variant="map" />
