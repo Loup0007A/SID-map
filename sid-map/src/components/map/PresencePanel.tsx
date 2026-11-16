@@ -68,8 +68,8 @@ export default function PresencePanel({
                 {p.avatar_url ? (
                   <img src={p.avatar_url} alt="" className={`h-7 w-7 shrink-0 rounded-full object-cover${lost ? ' gl-avatar' : ''}`} />
                 ) : (
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px]">
-                    {lost ? <GlitchText text={(p.nickname ?? '?').slice(0, 2).toUpperCase()} /> : (p.nickname ?? '?').slice(0, 2).toUpperCase()}
+                  <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px]${lost ? ' gl-avatar' : ''}`}>
+                    {(p.nickname ?? '?').slice(0, 2).toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
