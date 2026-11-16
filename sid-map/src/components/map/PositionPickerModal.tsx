@@ -1,5 +1,6 @@
 'use client';
 
+import { GlitchText } from './Glitch';
 import Icon from '@/components/ui/Icon';
 
 import { useState } from 'react';
@@ -39,7 +40,7 @@ export default function PositionPickerModal({
   const now = useNow(1000);
   const mounts = useMountTypes();
   const { unequipMount } = positionsHook;
-  const { myPosition, setInitialPlace, startJourney, setCurrentBuilding, setStatus } = positionsHook;
+  const { myPosition, setInitialPlace, startJourney, setCurrentBuilding, setStatus, setGlitch } = positionsHook;
 
   const [statusText, setStatusText] = useState(myPosition?.status ?? '');
   const [savingStatus, setSavingStatus] = useState(false);
@@ -206,6 +207,28 @@ export default function PositionPickerModal({
             )}
           </p>
         </div>
+
+        {/* Lieu inconnu (Lot 80) : activé depuis L'Envers, coupé d'ici aussi. */}
+        {myPosition.glitched && (
+          <div className="rounded-lg border border-[#39ff8a]/40 bg-[#03120a]/80 p-2.5 text-sm">
+            <p className="text-[10px] uppercase tracking-wide text-[#7dffb0]/80">Pour les autres</p>
+            <p>
+              <GlitchText />
+            </p>
+            <button
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                const r = await setGlitch(false);
+                setBusy(false);
+                showToast(r.error ? 'Impossible de rétablir ta position.' : 'Ta position est de nouveau visible.', r.error ? 'error' : 'success');
+              }}
+              className="mt-1.5 text-[11px] text-paper/70 underline hover:text-accent disabled:opacity-50"
+            >
+              Rétablir ma position
+            </button>
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <label className="text-[11px] uppercase tracking-wide text-paper/65">

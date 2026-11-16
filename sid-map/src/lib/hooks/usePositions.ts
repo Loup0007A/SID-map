@@ -12,6 +12,7 @@ export function usePositions() {
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const arrivingRef = useRef(false);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const load = useCallback(async () => {
     const { data } = await supabase.rpc('list_active_positions');
@@ -26,7 +27,11 @@ export function usePositions() {
     const channel = supabase
       .channel('character-positions-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'character_positions' }, () => load())
+      // Un membre qui brouille sa position (Lot 80) n'émet plus de changement
+      // visible par les autres : il les prévient lui-même.
+      .on('broadcast', { event: 'refresh' }, () => load())
       .subscribe();
+    channelRef.current = channel;
 
     return () => {
       supabase.removeChannel(channel);
@@ -113,6 +118,17 @@ export function usePositions() {
     return { error: error?.message ?? data?.error ?? null };
   }
 
+  /** Lieu inconnu (Lot 80) : null = lire l'état, true / false = activer / couper. */
+  async function setGlitch(on: boolean | null) {
+    const { data, error } = await supabase.rpc('position_glitch', { p_on: on });
+    const d = data as { glitched?: boolean; can_glitch?: boolean; has_position?: boolean; error?: string } | null;
+    if (on !== null && !error && !d?.error) {
+      await load();
+      channelRef.current?.send({ type: 'broadcast', event: 'refresh', payload: {} });
+    }
+    return { error: error ? 'rpc' : d?.error ?? null, glitched: !!d?.glitched, canGlitch: !!d?.can_glitch, hasPosition: !!d?.has_position };
+  }
+
   async function checkQuestArrival() {
     const { data } = await supabase.rpc('check_quest_arrival');
     return data as { quest_id: string; validated: boolean; reputation?: number; error?: string }[] | null;
@@ -128,6 +144,7 @@ export function usePositions() {
     startRoutePlan,
     setCurrentBuilding,
     setStatus,
+    setGlitch,
     rentMount,
     unequipMount,
     checkQuestArrival,

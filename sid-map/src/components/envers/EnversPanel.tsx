@@ -6,6 +6,8 @@ import { useToast } from '@/components/ui/Toast';
 import { SidIcon } from '@/components/icons/SidIcon';
 import EnversBackdrop from './EnversBackdrop';
 import EnversAdmin from './EnversAdmin';
+import { GlitchText } from '@/components/map/Glitch';
+import type { GlitchSetter } from './useEnvers';
 
 export type EnversState = {
   access: boolean;
@@ -44,11 +46,14 @@ const hhmm = (iso: string) => new Date(iso).toLocaleTimeString('fr-FR', { hour: 
 export default function EnversPanel({
   first,
   onClose,
-  onPickSpot
+  onPickSpot,
+  setGlitch
 }: {
   first: boolean;
   onClose: () => void;
   onPickSpot: () => void;
+  /** Lieu inconnu (Lot 80), fourni par la carte pour prévenir les autres en direct. */
+  setGlitch?: GlitchSetter;
 }) {
   const supabase = createClient();
   const { showToast } = useToast();
@@ -57,6 +62,34 @@ export default function EnversPanel({
   const [qty, setQty] = useState<Record<string, number>>({});
   const [, setTick] = useState(0);
   const skew = useRef(0); // horloge du serveur - horloge locale
+  const [glitch, setGlitchState] = useState<{ glitched: boolean; canGlitch: boolean; hasPosition: boolean } | null>(null);
+
+  // Lieu inconnu (Lot 80) : état du brouillage, puis bascule.
+  const glitchCall = useCallback(
+    async (on: boolean | null) => {
+      if (setGlitch) return setGlitch(on);
+      const { data, error } = await supabase.rpc('position_glitch', { p_on: on });
+      const d = data as { glitched?: boolean; can_glitch?: boolean; has_position?: boolean; error?: string } | null;
+      return { error: error ? 'rpc' : d?.error ?? null, glitched: !!d?.glitched, canGlitch: !!d?.can_glitch, hasPosition: !!d?.has_position };
+    },
+    [setGlitch] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  useEffect(() => {
+    glitchCall(null).then((r) => !r.error && setGlitchState(r));
+  }, [glitchCall]);
+
+  async function toggleGlitch(on: boolean) {
+    setBusy(true);
+    const r = await glitchCall(on);
+    setBusy(false);
+    if (r.error) {
+      showToast(ERRORS[r.error] ?? 'Ça n’a pas marché.', 'error');
+      return;
+    }
+    const s = await glitchCall(null);
+    if (!s.error) setGlitchState(s);
+    showToast(on ? 'Ta trace s’efface. Pour les autres, tu n’es plus nulle part.' : 'Ta position est de nouveau visible.', 'success');
+  }
 
   const load = useCallback(async () => {
     const { data } = await supabase.rpc('envers_state');
@@ -190,6 +223,33 @@ export default function EnversPanel({
                 Depuis ta première venue : <span className="text-[#efe4c8]">{nf(totalKm, 1)} km</span> parcourus dans L’Envers.
               </p>
             </section>
+
+            {/* ----------------------------------------------- Lieu inconnu (Lot 80) */}
+            {glitch && (
+              <section className="envers-card envers-rise mt-6" style={{ animationDelay: '0.18s' }}>
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h2 className="envers-h2">Effacer sa trace</h2>
+                  {glitch.glitched && <GlitchText className="text-sm" />}
+                </div>
+                <p className="mt-1 font-serif text-sm italic text-[#9aa6c4]">Un fil dépasse du vélin. Tire dessus, et ta place sur la carte se défait.</p>
+                <p className="mt-3 text-sm leading-snug text-[#c9d1e2]">
+                  Pour les autres, tu deviens un bug de la carte : « Lieu inconnu », un point qui saute d’un endroit à l’autre. Toi, tu restes où tu es. Tu
+                  peux tout rétablir quand tu veux, ici ou dans « Ma position ».
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  {glitch.glitched ? (
+                    <button disabled={busy} onClick={() => toggleGlitch(false)} className="envers-btn-ghost">
+                      Rétablir ma position
+                    </button>
+                  ) : (
+                    <button disabled={busy || !glitch.hasPosition || !glitch.canGlitch} onClick={() => toggleGlitch(true)} className="envers-btn">
+                      Brouiller ma position
+                    </button>
+                  )}
+                  {!glitch.hasPosition && <span className="text-xs text-[#9aa6c4]">{ERRORS.no_position}</span>}
+                </div>
+              </section>
+            )}
 
             {/* ----------------------------------------------- Le Comptoir */}
             <section className="envers-card envers-rise mt-6" style={{ animationDelay: '0.24s' }}>

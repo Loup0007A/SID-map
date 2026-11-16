@@ -125,6 +125,8 @@ export interface CharacterPosition {
   mount_expires_at?: string | null;
   status: string | null;
   is_visible: boolean;
+  /** Position brouillée depuis L'Envers (Lot 80) : pour les autres, aucun lieu. */
+  glitched?: boolean;
   updated_at: string;
   nickname: string | null;
   avatar_url: string | null;

@@ -139,7 +139,7 @@ export default function WorldMap() {
   const now = useNow(15000);
   const groupsHook = useGroups();
   const { showToast } = useToast();
-  const envers = useEnvers(!!positionsHook.myUserId, searchParams.get('envers') !== null, () => setSelected(null));
+  const envers = useEnvers(!!positionsHook.myUserId, searchParams.get('envers') !== null, () => setSelected(null), positionsHook.setGlitch);
 
   const [zones, setZones] = useState<MapZone[]>([]);
   const [places, setPlaces] = useState<MapPlace[]>([]);
@@ -1731,7 +1731,7 @@ export default function WorldMap() {
           />
         )}
 
-        <PresenceMarkers positions={positionsHook.positions} places={places} routes={routes} openGroup={openPresenceId} onToggle={(id) => setOpenPresenceId((c) => (c === id ? null : id))} />
+        <PresenceMarkers positions={positionsHook.positions} places={places} routes={routes} myUserId={positionsHook.myUserId} openGroup={openPresenceId} onToggle={(id) => setOpenPresenceId((c) => (c === id ? null : id))} />
       </svg>
 
       {openPresenceId && (

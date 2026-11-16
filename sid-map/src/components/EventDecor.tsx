@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * Affichage événementiel (Halloween, Noël, la Grande Chasse et les fêtes de
+ * Affichage événementiel (Halloween, Noël, la Grande Chasse, l'élection du
+ * Dictateur et les fêtes de
  * l'année : Saint-Valentin, poisson d'avril, Pâques, 1er mai, fête de la
  * musique, 14 juillet, 11 novembre) — même réglage que le Dossier Central (fonction site_decor,
  * Modération → Affichage événementiel). Fichier identique dans la
@@ -17,12 +18,13 @@ import { createClient } from '@/lib/supabase/client';
 
 const HOLIDAYS = ['saint_valentin', 'poisson_avril', 'paques', 'premier_mai', 'fete_musique', 'quatorze_juillet', 'armistice'] as const;
 type HolidayKey = (typeof HOLIDAYS)[number];
-type Decor = { halloween: boolean; noel: boolean; grande_chasse?: boolean } & Partial<Record<HolidayKey, boolean>>;
+type Decor = { halloween: boolean; noel: boolean; grande_chasse?: boolean; election?: boolean } & Partial<Record<HolidayKey, boolean>>;
 
 const HalloweenLayer = dynamic(() => import('./EventDecorLayers').then((m) => m.HalloweenLayer), { ssr: false });
 const NoelLayer = dynamic(() => import('./EventDecorLayers').then((m) => m.NoelLayer), { ssr: false });
 const HolidayLayer = dynamic(() => import('./EventDecorLayers').then((m) => m.HolidayLayer), { ssr: false });
 const ChasseLayer = dynamic(() => import('./EventDecorLayers').then((m) => m.ChasseLayer), { ssr: false });
+const ElectionLayer = dynamic(() => import('./ElectionLayer').then((m) => m.ElectionLayer), { ssr: false });
 
 const STORE_KEY = 'sid-decor-v1';
 const FRESH_MS = 5 * 60_000;
@@ -55,7 +57,7 @@ export function useEventDecor(): Decor | null {
       .rpc('site_decor')
       .then(({ data, error }) => {
         const d = (error ? null : data) as Partial<Decor> | null;
-        const value: Decor = { halloween: !!d?.halloween, noel: !!d?.noel, grande_chasse: !!d?.grande_chasse };
+        const value: Decor = { halloween: !!d?.halloween, noel: !!d?.noel, grande_chasse: !!d?.grande_chasse, election: !!d?.election };
         for (const k of HOLIDAYS) value[k] = !!d?.[k];
         cache = { at: Date.now(), value };
         try {
@@ -81,6 +83,7 @@ export default function EventDecor({ variant }: { variant: 'map' | 'wiki' }) {
       {decor?.noel && <NoelLayer variant={variant} on />}
       {holiday && <HolidayLayer variant={variant} which={holiday} />}
       {decor?.grande_chasse && <ChasseLayer variant={variant} />}
+      {decor?.election && <ElectionLayer variant={variant} />}
     </>
   );
 }

@@ -22,7 +22,9 @@ type Click = { x: number; y: number; pt: Point; t: number };
  * le bon endroit, la feuille se déchire. Le navigateur ne connaît pas
  * l'endroit : il demande seulement au serveur « ici ? ».
  */
-export function useEnvers(enabled: boolean, wantsAdminOpen: boolean, onTear?: () => void) {
+export type GlitchSetter = (on: boolean | null) => Promise<{ error: string | null; glitched: boolean; canGlitch: boolean; hasPosition: boolean }>;
+
+export function useEnvers(enabled: boolean, wantsAdminOpen: boolean, onTear?: () => void, setGlitch?: GlitchSetter) {
   const supabase = createClient();
   const { showToast } = useToast();
   const clicks = useRef<Click[]>([]);
@@ -159,6 +161,7 @@ export function useEnvers(enabled: boolean, wantsAdminOpen: boolean, onTear?: ()
       {panel && (
         <EnversPanel
           first={panel.first}
+          setGlitch={setGlitch}
           onClose={() => setPanel(null)}
           onPickSpot={() => {
             setPanel(null);

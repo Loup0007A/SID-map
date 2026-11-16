@@ -5,6 +5,7 @@ import type { CharacterPosition, MapPlace, MapRoute } from '@/lib/types';
 import { useNow } from '@/lib/hooks/useNow';
 import { computeProgress, tripInfo } from '@/lib/travel';
 import { SidIcon, GlyphText } from '@/components/icons/SidIcon';
+import { GlitchText } from './Glitch';
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -69,10 +70,13 @@ export default function PresencePanel({
               )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-paper">{p.nickname ?? 'Membre'}</p>
-                <p className="truncate text-[11px] text-paper/65"><GlyphText text={locationLabel(p)} /></p>
+                <p className="truncate text-[11px] text-paper/65">
+                  {/* Brouillé depuis L'Envers (Lot 80) : pas de lieu pour les autres. */}
+                  {p.glitched && !p.place_id && !p.travel_started_at ? <GlitchText /> : <GlyphText text={locationLabel(p)} />}
+                </p>
                 {p.status && <p className="truncate text-[10px] italic text-paper/65">"{p.status}"</p>}
               </div>
-              <span className="shrink-0 text-[9px] text-paper/65">{timeAgo(p.updated_at)}</span>
+              <span className="shrink-0 text-[9px] text-paper/65">{p.glitched && !p.place_id ? <GlitchText text="??" /> : timeAgo(p.updated_at)}</span>
             </button>
           ))}
         </div>
