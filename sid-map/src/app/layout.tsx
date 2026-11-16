@@ -19,7 +19,8 @@ import './globals.css';
 import { BrandProvider } from '@/components/BrandProvider';
 import SiteGate from '@/components/SiteGate';
 import { brandify } from '@/lib/brand';
-import { getBrand } from '@/lib/brand-server';
+import { getBrand, getGlitched } from '@/lib/brand-server';
+import { GlitchSync } from '@/components/glitch/GlitchSync';
 
 
 // Noms tirés de app_config (Lot 77, voir SETUP.md du site principal).
@@ -45,11 +46,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const brand = await getBrand();
+  const [brand, glitched] = await Promise.all([getBrand(), getGlitched()]);
   return (
     <html lang="fr">
       <body className="bg-ink text-paper font-body antialiased">
-        <BrandProvider brand={brand}>
+        <BrandProvider brand={brand} glitched={glitched}>
           <SiteGate>
             <ToastProvider>
               <GuideProvider>{children}</GuideProvider>
@@ -59,6 +60,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <TermsBanner />
           <EventDecor variant="map" />
           <LabelLinker />
+          <GlitchSync />
         </BrandProvider>
       </body>
     </html>

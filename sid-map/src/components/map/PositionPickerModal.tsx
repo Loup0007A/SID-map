@@ -1,6 +1,6 @@
 'use client';
 
-import { GlitchText } from './Glitch';
+import { GlitchText } from '@/components/glitch/GlitchName';
 import Icon from '@/components/ui/Icon';
 
 import { useState } from 'react';
@@ -213,8 +213,9 @@ export default function PositionPickerModal({
           <div className="rounded-lg border border-[#39ff8a]/40 bg-[#03120a]/80 p-2.5 text-sm">
             <p className="text-[10px] uppercase tracking-wide text-[#7dffb0]/80">Pour les autres</p>
             <p>
-              <GlitchText />
+              <GlitchText tone="matrix" />
             </p>
+            <p className="mt-1 text-[11px] text-paper/65">Tu n&apos;es plus sur la carte des autres ; ton pseudo et ton avatar buguent sur les trois sites.</p>
             <button
               disabled={busy}
               onClick={async () => {

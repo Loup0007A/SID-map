@@ -726,57 +726,19 @@ svg.map-night .map-place > .place-disc { fill: #fff0c2; filter: drop-shadow(0 0 
 .note-marker { transition: transform .15s; }
 .note-marker:hover { filter: brightness(1.08); }
 
-/* Lieu inconnu (Lot 80, L'Envers) : un membre brouillé apparaît comme un bug. */
-.glitch-text { position: relative; display: inline-block; color: #7dffb0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .02em; text-shadow: 0 0 6px rgb(60 255 140 / .55); white-space: pre; }
-.glitch-text::before, .glitch-text::after { content: attr(data-text); position: absolute; inset: 0; pointer-events: none; opacity: 0; }
-.glitch-text::before { color: #ff3b6b; clip-path: inset(0 0 52% 0); animation: glitch-slice 2.3s steps(1) infinite; }
-.glitch-text::after { color: #3be0ff; clip-path: inset(48% 0 0 0); animation: glitch-slice 1.7s steps(1) infinite reverse; }
-@keyframes glitch-slice {
-  0%, 84%, 100% { opacity: 0; transform: translate(0, 0); }
-  86% { opacity: .9; transform: translate(-2px, 1px); }
-  90% { opacity: .9; transform: translate(2px, -1px); }
-  94% { opacity: .6; transform: translate(-1px, 0); }
-}
-.glitch-marker { pointer-events: none; }
-.glitch-marker-shake { animation: glitch-shake 1.9s steps(1) infinite; }
-@keyframes glitch-shake {
-  0%, 78%, 100% { transform: translate(0, 0) skewX(0deg); }
-  80% { transform: translate(.5px, -.2px) skewX(-9deg); }
-  84% { transform: translate(-.6px, .3px) skewX(7deg); }
-  88% { transform: translate(.2px, 0) skewX(0deg); }
-}
-.glitch-marker-box { fill: #03120a; stroke: #39ff8a; stroke-width: .22; filter: drop-shadow(0 0 .7px #39ff8a); }
-.glitch-marker-rain { font: 700 1.05px ui-monospace, Menlo, Consolas, monospace; fill: #7dffb0; }
-.glitch-marker-tear { fill: #39ff8a; opacity: 0; animation: glitch-tear 1.3s steps(1) infinite; }
-.glitch-marker-tear--b { fill: #ff3b6b; animation-duration: 1.7s; animation-delay: .4s; }
-@keyframes glitch-tear {
-  0%, 68%, 100% { opacity: 0; transform: translateX(0); }
-  70% { opacity: .9; transform: translateX(.8px); }
-  75% { opacity: .7; transform: translateX(-1px); }
-  80% { opacity: 0; }
-}
-.glitch-marker-label { font: 700 1.25px ui-monospace, Menlo, Consolas, monospace; fill: #b8ffd4; paint-order: stroke; stroke: #02100a; stroke-width: .35px; }
-.glitch-marker-label--r, .glitch-marker-label--c { stroke: none; opacity: .75; animation: glitch-rgb 1.6s steps(1) infinite; }
-.glitch-marker-label--r { fill: #ff3b6b; }
-.glitch-marker-label--c { fill: #3be0ff; animation-direction: reverse; }
-@keyframes glitch-rgb {
-  0%, 100% { transform: translate(-.18px, 0); }
-  33% { transform: translate(.28px, .05px); }
-  66% { transform: translate(-.32px, -.05px); }
-}
-.glitch-marker-name { font: 600 1px ui-monospace, Menlo, Consolas, monospace; fill: #7dffb0; opacity: .85; }
-.glitch-pop { animation: glitch-pop .42s steps(3); }
-@keyframes glitch-pop {
-  0% { opacity: 0; transform: scale(1.8, .1); }
-  40% { opacity: 1; transform: scale(.7, 1.4); }
-  70% { opacity: .5; transform: scale(1.1, .9); }
-  100% { opacity: 1; transform: scale(1, 1); }
+/* Lieu inconnu (Lot 80-81, L'Envers) : le membre brouillé n'a plus de
+   marqueur pour les autres ; le sien devient un fantôme dans un cadre qui
+   grésille. Pseudo et avatar : bloc .gl en fin de fichier. */
+.glitch-ghost { opacity: .45; animation: glitch-ghost 2.6s steps(1) infinite; }
+@keyframes glitch-ghost {
+  0%, 82%, 100% { opacity: .45; transform: translate(0, 0); }
+  84% { opacity: .15; transform: translate(.3px, 0); }
+  88% { opacity: .6; transform: translate(-.3px, .1px); }
 }
 .glitch-self { fill: none; stroke: #39ff8a; stroke-width: .2; stroke-dasharray: .7 .5; animation: glitch-self 1.4s steps(2) infinite; }
 @keyframes glitch-self { 50% { stroke: #ff3b6b; transform: translate(.2px, -.1px); } }
 @media (prefers-reduced-motion: reduce) {
-  .glitch-text::before, .glitch-text::after, .glitch-marker-shake, .glitch-marker-tear,
-  .glitch-marker-label--r, .glitch-marker-label--c, .glitch-pop, .glitch-self { animation: none; }
+  .glitch-ghost, .glitch-self { animation: none; }
 }
 
 /* Élection du Dictateur (Lot 80) : fanions, confettis, étiquette. */
@@ -807,3 +769,36 @@ svg.map-night .map-place > .place-disc { fill: #fff0c2; filter: drop-shadow(0 0 
   .el-pill-wiki { bottom: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { .el-confetti { display: none; } }
+
+/* Lieu inconnu (Lot 81) : pseudo et avatar d'un membre brouillé depuis
+   L'Envers de la Cartographie (GlitchText, src/brand/glitch.ts).
+   Bloc identique dans les trois sites. */
+.gl { position: relative; display: inline-block; white-space: pre; text-indent: 0; text-shadow: .07em 0 rgb(255 59 107 / .45), -.07em 0 rgb(47 216 255 / .45); }
+.gl::before, .gl::after { content: attr(data-text); position: absolute; left: 0; top: 0; white-space: pre; pointer-events: none; opacity: 0; text-shadow: none; }
+.gl::before { color: #ff3b6b; clip-path: inset(0 0 55% 0); animation: gl-slice 2.3s steps(1) infinite; }
+.gl::after { color: #2fd8ff; clip-path: inset(45% 0 0 0); animation: gl-slice 1.7s steps(1) infinite reverse; }
+.gl[data-burst]::before { animation: none; opacity: .85; transform: translate(-2px, 1px); }
+.gl[data-burst]::after { animation: none; opacity: .85; transform: translate(2px, -1px); }
+.gl[data-burst] > .gl-real { visibility: hidden; }
+.gl-fx { position: absolute; left: 0; top: 0; white-space: pre; }
+.gl-matrix { color: var(--gl-matrix, #7dffb0); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .02em; text-shadow: 0 0 6px rgb(60 255 140 / .45); }
+.gl-where { display: inline-flex; align-items: baseline; gap: .35em; }
+.gl-where-label { opacity: .7; }
+@keyframes gl-slice {
+  0%, 84%, 100% { opacity: 0; transform: translate(0, 0); }
+  86% { opacity: .9; transform: translate(-2px, 1px); }
+  90% { opacity: .9; transform: translate(2px, -1px); }
+  94% { opacity: .6; transform: translate(-1px, 0); }
+}
+img.gl-avatar { filter: drop-shadow(2px 0 0 rgb(255 59 107 / .75)) drop-shadow(-2px 0 0 rgb(47 216 255 / .75)); animation: gl-avatar 2.8s steps(1) infinite; }
+@keyframes gl-avatar {
+  0%, 76%, 100% { clip-path: inset(0); transform: none; }
+  78% { clip-path: inset(12% 0 58% 0); transform: translateX(3px); }
+  81% { clip-path: inset(48% 0 18% 0); transform: translateX(-4px) skewX(10deg); }
+  84% { clip-path: inset(0); transform: translateX(2px); filter: hue-rotate(110deg) saturate(2.4) drop-shadow(3px 0 0 rgb(255 59 107 / .8)); }
+  87% { clip-path: inset(70% 0 0 0); transform: translateX(-2px); }
+  90% { clip-path: inset(0); transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gl::before, .gl::after, img.gl-avatar { animation: none; }
+}

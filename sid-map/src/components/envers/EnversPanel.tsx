@@ -6,7 +6,8 @@ import { useToast } from '@/components/ui/Toast';
 import { SidIcon } from '@/components/icons/SidIcon';
 import EnversBackdrop from './EnversBackdrop';
 import EnversAdmin from './EnversAdmin';
-import { GlitchText } from '@/components/map/Glitch';
+import { GlitchText } from '@/components/glitch/GlitchName';
+import { GLITCH_CHANGED_EVENT } from '@/components/glitch/GlitchSync';
 import type { GlitchSetter } from './useEnvers';
 
 export type EnversState = {
@@ -69,6 +70,7 @@ export default function EnversPanel({
     async (on: boolean | null) => {
       if (setGlitch) return setGlitch(on);
       const { data, error } = await supabase.rpc('position_glitch', { p_on: on });
+      if (on !== null && !error) window.dispatchEvent(new Event(GLITCH_CHANGED_EVENT));
       const d = data as { glitched?: boolean; can_glitch?: boolean; has_position?: boolean; error?: string } | null;
       return { error: error ? 'rpc' : d?.error ?? null, glitched: !!d?.glitched, canGlitch: !!d?.can_glitch, hasPosition: !!d?.has_position };
     },
@@ -229,11 +231,12 @@ export default function EnversPanel({
               <section className="envers-card envers-rise mt-6" style={{ animationDelay: '0.18s' }}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <h2 className="envers-h2">Effacer sa trace</h2>
-                  {glitch.glitched && <GlitchText className="text-sm" />}
+                  {glitch.glitched && <GlitchText tone="matrix" className="text-sm" />}
                 </div>
                 <p className="mt-1 font-serif text-sm italic text-[#9aa6c4]">Un fil dépasse du vélin. Tire dessus, et ta place sur la carte se défait.</p>
                 <p className="mt-3 text-sm leading-snug text-[#c9d1e2]">
-                  Pour les autres, tu deviens un bug de la carte : « Lieu inconnu », un point qui saute d’un endroit à l’autre. Toi, tu restes où tu es. Tu
+                  Pour les autres, tu disparais de la carte. Il ne reste de toi qu’un bug : « Lieu inconnu » dans les présences, et ton pseudo et
+                  ton avatar qui se brouillent sur la Cartographie, le Dossier Central et le Wiki. Toi, tu vois encore ton marqueur, en fantôme. Tu
                   peux tout rétablir quand tu veux, ici ou dans « Ma position ».
                 </p>
                 <div className="mt-4 flex flex-wrap items-center gap-3">

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { currentUser } from '@/lib/supabase/session';
 import type { CharacterPosition } from '@/lib/types';
 import { computeRemainingMinutes } from '@/lib/travel';
+import { GLITCH_CHANGED_EVENT } from '@/components/glitch/GlitchSync';
 
 export function usePositions() {
   const supabase = createClient();
@@ -125,6 +126,8 @@ export function usePositions() {
     if (on !== null && !error && !d?.error) {
       await load();
       channelRef.current?.send({ type: 'broadcast', event: 'refresh', payload: {} });
+      // Pseudo et avatar brouillés partout (Lot 81) : relire la liste tout de suite.
+      window.dispatchEvent(new Event(GLITCH_CHANGED_EVENT));
     }
     return { error: error ? 'rpc' : d?.error ?? null, glitched: !!d?.glitched, canGlitch: !!d?.can_glitch, hasPosition: !!d?.has_position };
   }

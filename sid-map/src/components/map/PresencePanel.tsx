@@ -5,7 +5,7 @@ import type { CharacterPosition, MapPlace, MapRoute } from '@/lib/types';
 import { useNow } from '@/lib/hooks/useNow';
 import { computeProgress, tripInfo } from '@/lib/travel';
 import { SidIcon, GlyphText } from '@/components/icons/SidIcon';
-import { GlitchText } from './Glitch';
+import { GlitchText } from '@/components/glitch/GlitchName';
 
 function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -55,30 +55,34 @@ export default function PresencePanel({
           {positions.length === 0 && (
             <p className="text-xs text-paper/65">Personne n'a encore indiqué sa position.</p>
           )}
-          {positions.map((p) => (
-            <button
-              key={p.user_id}
-              onClick={() => p.place_id && onFocusPlace?.(p.place_id)}
-              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10"
-            >
-              {p.avatar_url ? (
-                <img src={p.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
-              ) : (
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px]">
-                  {(p.nickname ?? '?').slice(0, 2).toUpperCase()}
+          {positions.map((p) => {
+            // Brouillé depuis L'Envers : absent de la carte, il ne reste ici
+            // qu'un bug (pseudo, avatar, « Lieu inconnu »).
+            const lost = !!p.glitched && !p.place_id && !p.travel_started_at;
+            return (
+              <button
+                key={p.user_id}
+                onClick={() => p.place_id && onFocusPlace?.(p.place_id)}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10"
+              >
+                {p.avatar_url ? (
+                  <img src={p.avatar_url} alt="" className={`h-7 w-7 shrink-0 rounded-full object-cover${lost ? ' gl-avatar' : ''}`} />
+                ) : (
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px]">
+                    {lost ? <GlitchText text={(p.nickname ?? '?').slice(0, 2).toUpperCase()} /> : (p.nickname ?? '?').slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-paper">{lost ? <GlitchText text={p.nickname ?? 'Membre'} /> : p.nickname ?? 'Membre'}</p>
+                  <p className="truncate text-[11px] text-paper/65">
+                    {lost ? <GlitchText tone="matrix" /> : <GlyphText text={locationLabel(p)} />}
+                  </p>
+                  {p.status && <p className="truncate text-[10px] italic text-paper/65">"{p.status}"</p>}
                 </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-paper">{p.nickname ?? 'Membre'}</p>
-                <p className="truncate text-[11px] text-paper/65">
-                  {/* Brouillé depuis L'Envers (Lot 80) : pas de lieu pour les autres. */}
-                  {p.glitched && !p.place_id && !p.travel_started_at ? <GlitchText /> : <GlyphText text={locationLabel(p)} />}
-                </p>
-                {p.status && <p className="truncate text-[10px] italic text-paper/65">"{p.status}"</p>}
-              </div>
-              <span className="shrink-0 text-[9px] text-paper/65">{p.glitched && !p.place_id ? <GlitchText text="??" /> : timeAgo(p.updated_at)}</span>
-            </button>
-          ))}
+                <span className="shrink-0 text-[9px] text-paper/65">{lost ? <GlitchText tone="matrix" text="??" /> : timeAgo(p.updated_at)}</span>
+              </button>
+            );
+          })}
         </div>
       )}
       <button
