@@ -56,14 +56,34 @@ export function useEnvers(enabled: boolean, wantsAdminOpen: boolean, onTear?: ()
     if (seen) supabase.rpc('envers_ping').then(() => undefined);
   }, [enabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Accès direct réservé à l'administration (?envers=1).
-  useEffect(() => {
-    if (!enabled || !wantsAdminOpen) return;
+  // Accès déjà ouvert (faille trouvée il y a peu, clé de la faille, Chemin
+  // sans fin, administration) : ?envers=1 ouvre L'Envers directement, et un
+  // bouton permet d'y revenir tant que l'accès dure.
+  const [access, setAccess] = useState<{ open: boolean; admin: boolean }>({ open: false, admin: false });
+  const autoOpened = useRef(false);
+  const checkAccess = useCallback(() => {
     supabase.rpc('envers_state').then(({ data }) => {
       const s = data as { access?: boolean; is_admin?: boolean } | null;
-      if (s?.access && s.is_admin) openAt(window.innerWidth / 2, window.innerHeight / 2, false);
+      const open = !!s?.access;
+      setAccess({ open, admin: !!s?.is_admin });
+      if (open && wantsAdminOpen && !autoOpened.current) {
+        autoOpened.current = true;
+        openAt(window.innerWidth / 2, window.innerHeight / 2, false);
+      }
     });
-  }, [enabled, wantsAdminOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [wantsAdminOpen, openAt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!enabled) return;
+    checkAccess();
+    const onFocus = () => checkAccess();
+    window.addEventListener('focus', onFocus);
+    const t = window.setInterval(checkAccess, 60_000);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.clearInterval(t);
+    };
+  }, [enabled, checkAccess]);
 
   const countClick = useCallback(
     (x: number, y: number, pt: Point, at: number) => {
@@ -162,12 +182,25 @@ export function useEnvers(enabled: boolean, wantsAdminOpen: boolean, onTear?: ()
         <EnversPanel
           first={panel.first}
           setGlitch={setGlitch}
-          onClose={() => setPanel(null)}
+          onClose={() => {
+            setPanel(null);
+            checkAccess();
+          }}
           onPickSpot={() => {
             setPanel(null);
             setPicking(true);
           }}
         />
+      )}
+      {access.open && !access.admin && !panel && !tear && !picking && (
+        <div className="pointer-events-none fixed inset-x-0 top-[7.25rem] z-[55] flex justify-center px-4">
+          <button
+            onClick={() => openAt(window.innerWidth / 2, window.innerHeight / 2, false)}
+            className="pointer-events-auto rounded-full border border-[#c9d3e6]/30 bg-[#0d0b18]/90 px-4 py-2 font-serif text-sm text-[#dfe6f2] shadow-xl hover:bg-[#1a1630]"
+          >
+            La faille est ouverte · Entrer dans L’Envers
+          </button>
+        </div>
       )}
       {picking && (
         <div className="pointer-events-none fixed inset-x-0 top-16 z-[60] flex justify-center px-4">
