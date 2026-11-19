@@ -1,7 +1,8 @@
 'use client';
 
 import { PlaceNoteBox, type PlaceNote } from './PlaceNotes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { BRAND } from '@/lib/brand';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { usePermission } from '@/lib/hooks/usePermission';
@@ -27,8 +28,11 @@ export default function DetailPanel({
   onToggleFavorite,
   onGoHere,
   note,
-  onNoteChanged
+  onNoteChanged,
+  discoverer
 }: {
+  /** Brouillard d'exploration : premier membre arrivé sur ce lieu. */
+  discoverer?: { nickname: string; at: string } | null;
   /** ouvre l'itinéraire vers ce lieu */
   onGoHere?: (placeId: string) => void;
   /** ma note privée sur ce lieu (carnet de route) */
@@ -53,6 +57,36 @@ export default function DetailPanel({
   const [controllingGroupId, setControllingGroupId] = useState(entity.controlling_group_id);
   const [allowsBM, setAllowsBM] = useState(kind === 'place' ? !!(entity as MapPlace).allows_black_market : false);
   const [isBuilding, setIsBuilding] = useState(kind === 'place' ? (entity as MapPlace).is_building : false);
+
+  // Fiches du Wiki liées à ce lieu (migration 0118).
+  const [wikiEntries, setWikiEntries] = useState<{ category: string; number: number; discovered: boolean; title: string | null; image_url: string | null }[]>([]);
+  useEffect(() => {
+    if (kind !== 'place' || (entity as MapPlace).fogUnknown) return setWikiEntries([]);
+    supabase
+      .rpc('place_wiki_entries', { p_place: entity.id })
+      .then(({ data, error }) => setWikiEntries(error ? [] : ((data as typeof wikiEntries) ?? [])));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entity.id, kind]);
+
+  if (kind === 'place' && (entity as MapPlace).fogUnknown) {
+    return (
+      <aside className="detail-sheet absolute inset-x-0 bottom-0 z-30 max-h-[58%] overflow-y-auto glass-strong rounded-t-2xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:inset-x-auto sm:right-0 sm:top-0 sm:h-full sm:max-h-none sm:w-full sm:max-w-sm sm:rounded-none sm:rounded-l-2xl sm:pb-5">
+        <button onClick={onClose} className="mb-4 text-sm text-paper/60 hover:text-accent">
+          ✕ Fermer
+        </button>
+        <p className="text-xs uppercase tracking-wide text-accent">Terra incognita</p>
+        <h2 className="font-display text-2xl">Lieu inexploré</h2>
+        <p className="mt-3 text-sm text-paper/80">
+          Une route y mène depuis un endroit que tu connais. Personne ne t&apos;a encore dit ce qui s&apos;y trouve : vas-y pour le découvrir.
+        </p>
+        {onGoHere && (
+          <button onClick={() => onGoHere(entity.id)} className="btn-accent mt-4 rounded-lg px-4 py-2 text-sm font-semibold text-paper">
+            <SidIcon name="compass" /> Y aller
+          </button>
+        )}
+      </aside>
+    );
+  }
 
   const label =
     kind === 'zone' ? ZONE_LABELS[(entity as MapZone).type] : PLACE_LABELS[(entity as MapPlace).type];
@@ -142,9 +176,44 @@ export default function DetailPanel({
         </div>
       )}
 
+      {discoverer && (
+        <p className="mt-2 text-xs text-paper/70">
+          <SidIcon name="compass" /> Découvert par <span className="text-accent">{discoverer.nickname}</span> le{' '}
+          {new Date(discoverer.at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </p>
+      )}
+
       <p className="mt-3 whitespace-pre-wrap text-sm text-paper/80">
         {entity.description || 'Aucune description pour le moment.'}
       </p>
+
+      {wikiEntries.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <p className="text-[11px] uppercase tracking-wide text-paper/65">
+            <SidIcon name="book" /> Dans le Wiki
+          </p>
+          <ul className="grid grid-cols-2 gap-2">
+            {wikiEntries.map((w) => (
+              <li key={`${w.category}-${w.number}`}>
+                <a
+                  href={`${BRAND.urls.wiki}/${w.category}/${String(w.number).padStart(3, '0')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-1.5 text-xs hover:border-accent"
+                >
+                  {w.discovered && w.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={w.image_url} alt="" className="h-8 w-8 shrink-0 rounded object-cover" />
+                  ) : (
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/30 font-display text-paper/50">?</span>
+                  )}
+                  <span className="min-w-0 truncate">{w.discovered ? w.title : `N° ${String(w.number).padStart(3, '0')} · à découvrir`}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {canEdit && (
         <div className="mt-3 space-y-1">

@@ -82,6 +82,15 @@ const ReliefFormModal = dynamic(() => import('./ReliefFormModal'), { ssr: false 
 const BiomeFormModal = dynamic(() => import('./BiomeFormModal'), { ssr: false });
 import { NightLayer, SkyButton, useSky } from './DayNight';
 import { NoteMarkers, usePlaceNotes } from './PlaceNotes';
+import FogLayer from './FogLayer';
+import ExplorationPanel from './ExplorationPanel';
+import { useExploration } from '@/lib/hooks/useExploration';
+import WeatherLayer from './WeatherLayer';
+import WeatherPanel from './WeatherPanel';
+import IncursionLayer from './IncursionLayer';
+import IncursionCard from './IncursionCard';
+import { incursionPos, useEventSettings, useIncursion, useWeather } from '@/lib/hooks/useMapEvents';
+import { weatherRoutes } from '@/lib/weather';
 const QuestPopup = dynamic(() => import('./QuestPopup'), { ssr: false });
 const TexturePicker = dynamic(() => import('./TexturePicker'), { ssr: false });
 const CrystalsModal = dynamic(() => import('./CrystalsModal'), { ssr: false });
@@ -142,8 +151,42 @@ export default function WorldMap() {
   const envers = useEnvers(!!positionsHook.myUserId, searchParams.get('envers') !== null, () => setSelected(null), positionsHook.setGlitch);
 
   const [zones, setZones] = useState<MapZone[]>([]);
-  const [places, setPlaces] = useState<MapPlace[]>([]);
-  const [routes, setRoutes] = useState<MapRoute[]>([]);
+  const [allPlaces, setPlaces] = useState<MapPlace[]>([]);
+  const [allRoutes, setRoutes] = useState<MapRoute[]>([]);
+
+  // Brouillard d'exploration (migration 0118) : la carte ne montre que ce que
+  // le personnage a parcouru, plus les lieux voisins en « ? ». La gestion de
+  // la carte voit tout, sauf en mode « Voir comme un membre ».
+  const exploration = useExploration(`${positionsHook.myPosition?.place_id ?? ''}|${positionsHook.myPosition?.route_id ?? ''}`);
+  const [fogPreview, setFogPreview] = useState(false);
+  const fog = exploration.state;
+  const fogOn = !!fog?.enabled && (!fog.bypass || fogPreview);
+  const fogSets = useMemo(
+    () => ({ visited: new Set(fog?.visited ?? []), frontier: new Set(fog?.frontier ?? []), routes: new Set(fog?.routes ?? []) }),
+    [fog]
+  );
+  const places = useMemo<MapPlace[]>(() => {
+    if (!fogOn) return allPlaces;
+    return allPlaces
+      .filter((p) => fogSets.visited.has(p.id) || fogSets.frontier.has(p.id))
+      .map((p) =>
+        fogSets.visited.has(p.id)
+          ? p
+          : { ...p, name: 'Lieu inexploré', description: null, image_url: null, icon: '?', is_building: false, allows_black_market: false, controlling_group_id: null, fogUnknown: true }
+      );
+  }, [allPlaces, fogOn, fogSets]);
+  // Météo et incursions (migration 0119).
+  const { weather, reload: reloadWeather } = useWeather();
+  const { incursion, reload: reloadIncursion } = useIncursion();
+  const eventSettings = useEventSettings();
+  const [incursionOpen, setIncursionOpen] = useState(false);
+  const [weatherFocus, setWeatherFocus] = useState<string | null>(null);
+  const [showWeather, setShowWeather] = useState(true);
+
+  const routes = useMemo<MapRoute[]>(
+    () => (fogOn ? allRoutes.filter((r) => (!!r.from_place_id && fogSets.visited.has(r.from_place_id)) || (!!r.to_place_id && fogSets.visited.has(r.to_place_id))) : allRoutes),
+    [allRoutes, fogOn, fogSets]
+  );
   const [quests, setQuests] = useState<MapQuest[]>([]);
   const [openPresenceId, setOpenPresenceId] = useState<string | null>(null);
   const [openQuestPlace, setOpenQuestPlace] = useState<string | null>(null);
@@ -223,7 +266,7 @@ export default function WorldMap() {
   // Lien partageable : ?lieu=<id> ouvre et centre automatiquement sur
   // ce lieu au chargement de la page.
   useEffect(() => {
-    if (didInitialFocus || loading || !mapSettings.ready || places.length === 0) return;
+    if (didInitialFocus || loading || exploration.loading || !mapSettings.ready || places.length === 0) return;
     const placeId = searchParams.get('lieu');
     if (placeId) {
       const p = places.find((pl) => pl.id === placeId);
@@ -234,7 +277,7 @@ export default function WorldMap() {
     }
     setDidInitialFocus(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, places, mapSettings.ready]);
+  }, [loading, exploration.loading, places, mapSettings.ready]);
 
   function selectPlaceAndShare(p: MapPlace) {
     if (measureMode) return; // le clic sert à poser un point de mesure
@@ -400,7 +443,8 @@ export default function WorldMap() {
   const plannerProps = {
     initialToId: plannerTo,
     places,
-    routes,
+    // Durées corrigées par la météo du moment (le serveur refait le calcul au départ).
+    routes: weatherRoutes(routes, places, biomes, weather),
     onClose: () => {
       setShowPlanner(false);
       setPlannerTo(null);
@@ -1525,7 +1569,7 @@ export default function WorldMap() {
         <ZoomControls onZoomIn={vp.zoomIn} onZoomOut={vp.zoomOut} onReset={vp.resetView} onLocate={locateMe} />
       </div>
 
-      {loading && (
+      {(loading || exploration.loading) && (
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3">
           <span aria-hidden className="compass-spin text-3xl"><SidIcon name="compass" /></span>
           <p className="font-display text-xs uppercase tracking-widest2 text-paper/60">Chargement de la carte…</p>
@@ -1620,6 +1664,10 @@ export default function WorldMap() {
 
         {zoneLayer}
 
+        {showWeather && weather?.enabled && (
+          <WeatherLayer biomes={biomes} weather={weather} onPick={(id) => setWeatherFocus((c) => (c === id ? null : id))} />
+        )}
+
         {showGrid && <GridOverlay viewBox={vp.viewBox} />}
 
         {routeLayer}
@@ -1673,6 +1721,16 @@ export default function WorldMap() {
         )}
         {pointPreview && 'rectX' in pointPreview && (
           <rect x={pointPreview.rectX} y={pointPreview.rectY} width={pointPreview.w} height={pointPreview.h} fill="#d2463b" fillOpacity={0.3} stroke="#d2463b" strokeWidth={0.25} />
+        )}
+
+        {fogOn && fog && (
+          <FogLayer
+            world={world}
+            radius={Number(fog.radius) || world * 0.09}
+            visited={allPlaces.filter((p) => fogSets.visited.has(p.id))}
+            routes={allRoutes.filter((r) => fogSets.routes.has(r.id))}
+            places={new Map(allPlaces.map((p) => [p.id, p]))}
+          />
         )}
 
         {skyState.active && <NightLayer sky={skyState.sky!} world={world} />}
@@ -1731,7 +1789,11 @@ export default function WorldMap() {
           />
         )}
 
-        <PresenceMarkers positions={positionsHook.positions} places={places} routes={routes} myUserId={positionsHook.myUserId} openGroup={openPresenceId} onToggle={(id) => setOpenPresenceId((c) => (c === id ? null : id))} />
+        {incursion?.started && (
+          <IncursionLayer incursion={incursion} showReach={incursionOpen} onOpen={() => setIncursionOpen(true)} />
+        )}
+
+        <PresenceMarkers positions={positionsHook.positions} places={fogOn ? places.filter((p) => !p.fogUnknown) : places} routes={routes} myUserId={positionsHook.myUserId} openGroup={openPresenceId} onToggle={(id) => setOpenPresenceId((c) => (c === id ? null : id))} />
       </svg>
 
       {openPresenceId && (
@@ -1788,6 +1850,7 @@ export default function WorldMap() {
             setSelected(null);
           }}
           note={selected.kind === 'place' ? placeNotes.notes.get(selected.entity.id) : undefined}
+          discoverer={selected.kind === 'place' ? fog?.discoverers?.[selected.entity.id] ?? null : null}
           onNoteChanged={placeNotes.refresh}
         />
       )}
@@ -1988,7 +2051,40 @@ export default function WorldMap() {
         />
       )}
 
+      {incursion?.started && (
+        <IncursionCard
+          incursion={incursion}
+          open={incursionOpen}
+          onToggle={() => setIncursionOpen((v) => !v)}
+          onFocus={() => {
+            const p = incursionPos(incursion, Date.now());
+            vp.panTo(p.x, p.y, 30, isDesktop ? 0.5 : 0.4);
+          }}
+          onChanged={reloadIncursion}
+          toast={showToast}
+        />
+      )}
+
       <MapActionStack raised={canEdit && toolbarOpen && editMode}>
+        {weather && (weather.enabled || canEdit) && (
+          <WeatherPanel
+            weather={weather}
+            biomes={biomes}
+            canEdit={canEdit}
+            settings={eventSettings.settings}
+            focusBiome={weatherFocus}
+            shown={showWeather}
+            onShow={setShowWeather}
+            onChanged={() => {
+              reloadWeather();
+              reloadIncursion();
+              eventSettings.reload();
+            }}
+          />
+        )}
+        {fog && (fog.enabled || fog.bypass) && (
+          <ExplorationPanel state={fog} preview={fogPreview} onPreview={setFogPreview} onChanged={exploration.reload} />
+        )}
         <div data-guide="layers" className="glass flex gap-1 rounded-full p-1">
           <button
             onClick={() => setShowRelief((v) => !v)}

@@ -40,6 +40,10 @@ export interface MapPlace {
   controlling_group_id: string | null;
   is_building: boolean;
   allows_black_market?: boolean;
+  /** Brouillard d'exploration : lieu voisin pas encore visité (nom et détails cachés). */
+  fogUnknown?: boolean;
+  discovered_at?: string | null;
+  discovered_by?: string | null;
 }
 
 export interface CityDistrict {
