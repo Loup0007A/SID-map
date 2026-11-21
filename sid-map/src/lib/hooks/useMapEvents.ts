@@ -32,7 +32,9 @@ export type Incursion = {
   seen_by_me: boolean;
   reach: number;
   km_per_unit: number;
-  entry: { category: string; number: number; title: string | null; summary: string | null; image_url: string | null; rarity: number | null };
+  manual?: boolean;
+  /** unknown : créature pas encore découverte (nom et image cachés, pas de numéro). */
+  entry: { category: string; number: number | null; title: string | null; summary: string | null; image_url: string | null; rarity: number | null; unknown?: boolean };
 };
 
 /** Créature en incursion : vérifiée chaque minute. */

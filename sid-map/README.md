@@ -385,3 +385,41 @@ supabase/migrations/     schéma SQL additif
 - Polices auto-hébergées (`@fontsource`), plus d'appel à Google Fonts.
 - Facultatif : `NEXT_PUBLIC_CONTACT_EMAIL` pour afficher une adresse de
   contact dans les textes.
+
+## Lot 92 — Atlas terre cuite, créatures, météo des lieux, intérieurs (migration 0120)
+
+À lancer : `supabase/migrations/0120_creatures_meteo_lieux_proprietes.sql`
+(après 0119 ; peut être relancée).
+
+- **Apparence** : troisième style de la famille (Dossier Central, Wiki).
+  Fond terre cuite semé de lignes de niveau, roses des vents, vagues et
+  sommets ; poussière dorée qui monte. Panneaux en cuir d'encre liserés
+  d'or, feuilles de vélin (carte, plans, fiches, connexion), barre du haut
+  en cartouche de vélin, boutons or qui s'enfoncent. Couleurs, motifs et
+  particules : `node scripts/fonds.mjs` (thème `carto`, un par évent,
+  `election_force`) → `public/fonds/*.svg`, `src/app/fonds.css`. Le thème
+  suit l'affichage événementiel (`getFondTheme`, `EventDecor`, identique
+  au Wiki).
+- **Créatures** (gestion de la carte : Météo → « Gérer les créatures… », ou
+  « Gérer » sur le bandeau de l'incursion) : quelles fiches Mobs du Wiki
+  rôdent, leur fréquence (×1 à ×20), les lieux et biomes où elles peuvent
+  ou non apparaître, des lieux interdits à toutes ; faire apparaître une
+  créature tout de suite (départ, durée) ou renvoyer celle en cours. Une
+  créature pas encore découverte rôde sous le nom « Créature inconnue » ;
+  le premier signalement la révèle dans le Wiki.
+- **Météo des lieux** (fiche du lieu → « Règles de météo du lieu ») : temps
+  fixe, temps interdits, probabilités propres. Sans règle, le lieu suit son
+  biome. Le temps d'un lieu compte pour les trajets qui en partent ou y
+  arrivent. La fiche montre le temps qu'il fait ici à tout le monde.
+- **Propriétaire** : un lieu-bâtiment (case « bâtiment éditable ») peut être
+  donné à un membre depuis sa fiche ou son intérieur ; idem pour tous les
+  bâtiments des villes. Le propriétaire aménage les étages et modifie la
+  description et l'image. Il reçoit une notification (type `propriete`).
+- **Intérieurs** (`InteriorPage`, pour `/lieu/[id]` et `/batiment/[id]`) :
+  cartouche du lieu, coupe du bâtiment (toit, étages, sol, sous-sols), plan
+  sur vélin avec sols et mobilier selon le type de pièce (16 types,
+  `src/lib/rooms.ts`), escaliers qui mènent d'un étage à l'autre, pièces à
+  dessiner, déplacer, agrandir, renommer ; maquette 3D étage par étage.
+- **Plan de ville** : feuille de vélin, remparts autour des quartiers,
+  quartiers hachurés et nommés, bâtiments en toits (couleur selon le type)
+  avec ombre pleine, nom, sceau du propriétaire et présences.

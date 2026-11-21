@@ -132,10 +132,10 @@ export default function BuildingFormModal({
             </div>
           )}
 
-          {type === 'maison' && (
+          {(
             <div>
               <label className="mb-1 block text-[11px] uppercase tracking-wide text-paper/65">
-                Propriétaire
+                Propriétaire (facultatif)
               </label>
               <button
                 type="button"

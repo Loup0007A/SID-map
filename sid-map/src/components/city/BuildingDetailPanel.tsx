@@ -52,7 +52,7 @@ export default function BuildingDetailPanel({
   }
 
   return (
-    <aside className="absolute right-0 top-0 z-30 h-full w-full max-w-sm overflow-y-auto scrollbar-thin glass-strong sm:rounded-l-2xl p-5">
+    <aside className="detail-sheet absolute inset-x-0 bottom-0 z-30 max-h-[62%] overflow-y-auto scrollbar-thin glass-strong rounded-t-2xl p-5 sm:inset-x-auto sm:right-0 sm:top-0 sm:h-full sm:max-h-none sm:w-full sm:max-w-sm sm:rounded-none sm:rounded-l-2xl">
       <div className="mb-4 flex items-center justify-between">
         <button onClick={onClose} className="text-sm text-paper/60 hover:text-accent">
           ✕ Fermer
@@ -82,7 +82,7 @@ export default function BuildingDetailPanel({
         {building.description || 'Aucune description pour le moment.'}
       </p>
 
-      {building.type === 'maison' && (
+      {(ownerId || canEdit) && (
         <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-2.5 text-sm">
           <p className="text-[10px] uppercase tracking-wide text-paper/65">Propriétaire</p>
           <div className="mt-1 flex items-center justify-between gap-2">
@@ -103,7 +103,7 @@ export default function BuildingDetailPanel({
         href={`/batiment/${building.id}`}
         className="btn-accent mt-4 inline-block rounded-lg px-4 py-2 text-sm font-semibold text-paper"
       >
-        Voir les plans →
+        Entrer dans le bâtiment →
       </Link>
 
       <div className="mt-6 border-t border-white/10 pt-4">

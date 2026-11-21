@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { SidIcon } from '@/components/icons/SidIcon';
-import { BIOME_LABELS, type MapBiome } from '@/lib/types';
+import { BIOME_LABELS, type MapBiome, type MapPlace } from '@/lib/types';
 import { WEATHER_GLYPH, fmtFactor, type WeatherNow } from '@/lib/weather';
 
 type Settings = { weather_enabled?: boolean; incursions_enabled?: boolean; incursion_chance?: number; incursion_sight_reputation?: number };
@@ -15,10 +15,14 @@ export default function WeatherPanel({
   canEdit,
   settings,
   focusBiome,
+  places = [],
+  onOpenCreatures,
   shown,
   onShow,
   onChanged,
 }: {
+  places?: MapPlace[];
+  onOpenCreatures?: () => void;
   shown: boolean;
   onShow: (v: boolean) => void;
   weather: WeatherNow;
@@ -117,6 +121,28 @@ export default function WeatherPanel({
             </ul>
           )}
 
+          {weather.enabled && (weather.places?.length ?? 0) > 0 && (
+            <div>
+              <p className="font-display text-[10px] uppercase tracking-wide text-accent">Lieux au temps particulier</p>
+              <ul className="mt-1.5 space-y-1 text-xs">
+                {weather.places!.map((w) => {
+                  const p = places.find((x) => x.id === w.id);
+                  if (!p || p.fogUnknown) return null;
+                  return (
+                    <li key={w.id} className="flex items-center justify-between gap-2 rounded-lg border border-white/10 px-2 py-1">
+                      <span className="truncate">{p.name}</span>
+                      <span className="shrink-0">
+                        {WEATHER_GLYPH[w.kind]} {weather.kinds[w.kind]?.label}
+                        {w.fixed_kind ? ' · fixe' : ''}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              {canEdit && <p className="mt-1 text-[11px] text-paper/60">Les règles d&apos;un lieu se règlent depuis sa fiche.</p>}
+            </div>
+          )}
+
           {canEdit && (
             <div className="space-y-2 border-t border-white/10 pt-3 text-xs">
               <p className="font-display text-[10px] uppercase tracking-wide text-accent">Gestion de la carte</p>
@@ -128,6 +154,11 @@ export default function WeatherPanel({
                 <input type="checkbox" className="h-4 w-4 accent-[#d2463b]" checked={settings.incursions_enabled !== false} onChange={(e) => saveEvents({ i: e.target.checked })} />
                 Incursions de créatures
               </label>
+              {onOpenCreatures && (
+                <button onClick={onOpenCreatures} className="btn-accent w-full rounded-lg px-2 py-1.5 font-semibold text-paper">
+                  <SidIcon name="claws" /> Gérer les créatures…
+                </button>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <label>
                   Chance par 6 h (%)

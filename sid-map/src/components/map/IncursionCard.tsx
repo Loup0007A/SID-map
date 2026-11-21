@@ -21,7 +21,10 @@ export default function IncursionCard({
   onFocus,
   onChanged,
   toast,
+  onManage,
 }: {
+  /** Gestion de la carte : ouvrir la gestion des créatures. */
+  onManage?: () => void;
   incursion: Incursion;
   open: boolean;
   onToggle: () => void;
@@ -32,16 +35,22 @@ export default function IncursionCard({
   const now = useNow(15000);
   const { allowed: canQuest } = usePermission('manage_quests');
   const [busy, setBusy] = useState(false);
+  const unknown = !!incursion.entry.unknown || incursion.entry.number == null;
   const name = incursion.entry.title ?? 'Une créature';
-  const wikiHref = `${BRAND.urls.wiki}/${incursion.entry.category}/${String(incursion.entry.number).padStart(3, '0')}`;
+  const wikiHref = unknown ? null : `${BRAND.urls.wiki}/${incursion.entry.category}/${String(incursion.entry.number).padStart(3, '0')}`;
 
   async function sight() {
     setBusy(true);
     const { data, error } = await createClient().rpc('incursion_sight', { p_incursion: incursion.id });
     setBusy(false);
     if (error) return toast(error.message, 'error');
-    const r = data as { reputation: number };
-    toast(`Signalement enregistré${r.reputation ? ` (+${r.reputation} de renommée)` : ''}.`, 'success');
+    const r = data as { reputation: number; revealed?: boolean };
+    toast(
+      r.revealed
+        ? `Tu es le premier à la voir : elle entre dans le Wiki${r.reputation ? ` (+${r.reputation} de renommée)` : ''}.`
+        : `Signalement enregistré${r.reputation ? ` (+${r.reputation} de renommée)` : ''}.`,
+      'success'
+    );
     onChanged();
   }
 
@@ -63,7 +72,7 @@ export default function IncursionCard({
               // eslint-disable-next-line @next/next/no-img-element
               <img src={incursion.entry.image_url} alt="" className="h-full w-full object-cover" />
             ) : (
-              <span className="flex h-full w-full items-center justify-center bg-black/40 font-display">!</span>
+              <span className="flex h-full w-full items-center justify-center bg-black/40 font-display">{unknown ? '?' : '!'}</span>
             )}
           </span>
           <span className="min-w-0 flex-1">
@@ -92,9 +101,16 @@ export default function IncursionCard({
               >
                 {incursion.seen_by_me ? 'Déjà signalée' : 'Signaler'}
               </button>
-              <a href={wikiHref} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-white/15 px-3 py-1.5 text-xs hover:border-accent hover:text-accent">
-                <SidIcon name="book" /> Fiche
-              </a>
+              {wikiHref && (
+                <a href={wikiHref} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-white/15 px-3 py-1.5 text-xs hover:border-accent hover:text-accent">
+                  <SidIcon name="book" /> Fiche
+                </a>
+              )}
+              {onManage && (
+                <button onClick={onManage} className="rounded-lg border border-white/15 px-3 py-1.5 text-xs hover:border-accent hover:text-accent">
+                  <SidIcon name="tools" /> Gérer
+                </button>
+              )}
               {canQuest && !incursion.quest_id && (
                 <button onClick={hunt} disabled={busy} className="rounded-lg border border-[#e7c34a]/50 px-3 py-1.5 text-xs text-[#e7c34a] hover:bg-[#e7c34a]/10 disabled:opacity-50">
                   <SidIcon name="bow" /> Lancer une chasse

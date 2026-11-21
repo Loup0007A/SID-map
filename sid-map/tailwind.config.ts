@@ -1,19 +1,26 @@
 import type { Config } from 'tailwindcss';
 
-// Thème « Atlas » (Lot 50) : table d'encre, chemises de cuir, laiton, sceau de cire.
+// Thème « Atlas terre cuite » (Lot 92) : couleurs lues dans fonds.css (voir globals.css).
 const config: Config = {
   content: ['./src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        ink: '#161d2b', // la table : bleu d'encre
-        panel: '#1c2538', // cuir des chemises
-        panel2: '#243047', // cuir relevé / survol
-        paper: '#efe4c8', // texte clair couleur vélin
-        accent: '#d4aa50', // laiton (titres, filets, liens) ; les fonds bg-accent sont au sceau de cire (globals.css)
-        accent2: '#a83a28', // cire du sceau
-        vellum: '#ece0c2',
-        sepia: '#2e261d'
+        // Lot 92 : couleurs du thème (fonds.css). paper et accent changent
+        // selon l'endroit : clairs sur le fond et le cuir, foncés sur le vélin.
+        ink: 'rgb(var(--encre) / <alpha-value>)',
+        panel: 'rgb(var(--encre) / <alpha-value>)',
+        panel2: 'rgb(var(--encre) / <alpha-value>)',
+        paper: 'rgb(var(--t-paper) / <alpha-value>)',
+        accent: 'rgb(var(--t-accent) / <alpha-value>)',
+        accent2: 'rgb(var(--accent) / <alpha-value>)',
+        vellum: 'rgb(var(--creme) / <alpha-value>)',
+        sepia: 'rgb(var(--encre) / <alpha-value>)',
+        encre: 'rgb(var(--encre) / <alpha-value>)',
+        creme: 'rgb(var(--creme) / <alpha-value>)',
+        fond: 'rgb(var(--fond) / <alpha-value>)',
+        turquoise: 'rgb(var(--accent) / <alpha-value>)',
+        or: 'rgb(var(--accent-2) / <alpha-value>)'
       },
       fontFamily: {
         display: ['"Alegreya SC"', 'Georgia', 'serif'],

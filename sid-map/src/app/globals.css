@@ -3,52 +3,94 @@
 @tailwind utilities;
 
 /* =====================================================================
-   Thème « Atlas » (Lot 50) : la table du cartographe. La carte est une
-   feuille de vélin (voir WorldMap) ; autour, une table d'encre bleue,
-   des chemises de cuir à double filet laiton, des actions au sceau de
-   cire. Petites capitales d'Alegreya pour les titres et étiquettes.
-   Les couleurs de base sont dans tailwind.config.ts.
+   Thème « Atlas terre cuite » (Lot 92), troisième de la famille du
+   Dossier Central (Lot 90) et du Wiki (Lot 91) : fond vif semé d'un motif
+   (fonds.css, scripts/fonds.mjs), traits d'encre épais, ombres pleines,
+   boutons qui s'enfoncent. Ici : table en terre cuite, lignes de niveau et
+   roses des vents, instruments en cuir d'encre liserés d'or, feuilles de
+   vélin (carte, plans, fiches) et barre du haut en cartouche de vélin.
+   Les couleurs viennent de fonds.css (--fond, --encre, --creme, --accent,
+   --accent-2…) et changent avec les évents (html[data-theme]).
    ===================================================================== */
 
 :root {
   color-scheme: dark;
-  --gold: #d4aa50;
-  --brass: #d4aa50;
-  --seal: #a83a28;
-  --table: #161d2b;
-  --leather: #1c2538;
-  --leather-2: #243047;
-  --vellum: #ece0c2;
-  --ink-brown: #2e261d;
+  --trait: 3px;
+  --ombre: 0 5px 0 rgb(var(--encre));
+  --ombre-petite: 0 3px 0 rgb(var(--encre));
+  /* Couleurs de texte : claires sur le fond et dans le cuir, foncées sur le vélin. */
+  --t-paper: var(--creme);
+  --t-accent: var(--accent-2);
+  --gold: rgb(var(--accent-2));
+  --brass: rgb(var(--accent-2));
+  --seal: rgb(var(--accent));
+  --table: rgb(var(--fond));
+  --leather: rgb(var(--encre));
+  --vellum: rgb(var(--creme));
+  --ink-brown: rgb(var(--encre));
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --font-sans: 'Alegreya Sans', ui-sans-serif, system-ui, sans-serif;
   --font-sc: 'Alegreya SC', Georgia, serif;
   --font-serif: 'Alegreya', Georgia, serif;
 }
 
-html { background: var(--table); }
+html { background: rgb(var(--fond)); }
 body {
   overflow-x: hidden;
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--table);
+  background: transparent;
   font-size: 16px;
+  color: rgb(var(--t-paper));
 }
 
-/* La table : un bleu d'encre profond, une lampe en haut à gauche, et le
-   grain du cuir (rien ne bouge). */
-body::before {
-  content: '';
+/* Le fond : couleur du thème, deux halos, le motif de l'atlas. */
+.fond {
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: -10;
   pointer-events: none;
-  background-color: var(--table);
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.85  0 0 0 0 0.8  0 0 0 0 0.65  0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23g)'/%3E%3C/svg%3E"),
-    radial-gradient(60% 45% at 12% -5%, rgba(212, 170, 80, 0.1), transparent 70%),
-    radial-gradient(70% 60% at 100% 110%, rgba(5, 8, 15, 0.7), transparent 70%);
+  background:
+    radial-gradient(55% 45% at 12% -6%, rgb(var(--fond-haut) / 0.55), transparent 70%),
+    radial-gradient(60% 55% at 100% 108%, rgb(var(--fond-bas) / 0.6), transparent 72%),
+    var(--motif) center / cover no-repeat,
+    rgb(var(--fond));
 }
+@media (orientation: portrait) {
+  .fond { background-size: 100% 100%, 100% 100%, auto 120vh, auto; background-position: center, center, 30% 0, center; }
+}
+/* Poussière dorée : elle monte lentement en dérivant et scintille. */
+.fond-particules { position: fixed; inset: 0; z-index: -9; overflow: hidden; pointer-events: none; contain: strict; }
+.fond-particules i {
+  position: absolute;
+  top: auto;
+  bottom: -40px;
+  width: var(--s);
+  height: var(--s);
+  background: rgb(var(--k));
+  opacity: 0.75;
+  -webkit-mask: var(--particule) center / contain no-repeat;
+  mask: var(--particule) center / contain no-repeat;
+  animation: fond-monte var(--t) linear var(--dl) infinite;
+  will-change: transform;
+}
+@keyframes fond-monte {
+  0% { transform: translate3d(0, 40px, 0); opacity: 0; }
+  10% { opacity: 0.8; }
+  25% { transform: translate3d(var(--dx), -26vh, 0); }
+  50% { transform: translate3d(0, -55vh, 0); opacity: 0.35; }
+  75% { transform: translate3d(calc(var(--dx) * -1), -82vh, 0); opacity: 0.8; }
+  100% { transform: translate3d(0, -112vh, 0); opacity: 0; }
+}
+@keyframes fond-tombe {
+  0% { transform: translate3d(0, -40px, 0) rotate(-30deg); }
+  25% { transform: translate3d(var(--dx), 26vh, 0) rotate(25deg); }
+  50% { transform: translate3d(0, 55vh, 0) rotate(-25deg); }
+  75% { transform: translate3d(calc(var(--dx) * -1), 82vh, 0) rotate(25deg); }
+  100% { transform: translate3d(0, 112vh, 0) rotate(-20deg); }
+}
+@media (max-width: 640px) { .fond-particules i:nth-child(2n) { display: none; } }
+@media (prefers-reduced-motion: reduce) { .fond-particules { display: none; } }
 
 /* Alegreya Sans est petite à taille égale : on remonte les tout petits corps. */
 .text-\[9px\] { font-size: 10.5px !important; }
@@ -57,69 +99,156 @@ body::before {
 .text-xs { font-size: 0.8125rem !important; }
 
 /* Titres et étiquettes : petites capitales (jamais de capitales criées). */
-.font-display { font-family: var(--font-sc); letter-spacing: 0.04em; font-weight: 500; }
+.font-display { font-family: var(--font-sc); letter-spacing: 0.04em; font-weight: 700; }
 .font-display.uppercase, .uppercase.font-display { text-transform: none; }
 .tracking-widest2.font-display, .tracking-wide.font-display, .tracking-wider.font-display, .tracking-widest.font-display { letter-spacing: 0.06em; }
 .font-serif-map { font-family: var(--font-serif); }
 
-.scrollbar-thin { scrollbar-width: thin; scrollbar-color: rgba(212, 170, 80, 0.4) transparent; }
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: rgb(var(--accent-2) / 0.5) transparent; }
 .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(212, 170, 80, 0.45); border-radius: 999px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgb(var(--accent-2) / 0.55); border-radius: 999px; }
 
-/* --- Instruments posés sur la carte (boutons flottants, puces) -------- */
+/* --- Instruments en cuir d'encre (boutons flottants, puces) ----------
+   Bord d'encre, filet d'or à l'intérieur, ombre pleine. */
 .glass {
-  background: rgba(28, 37, 56, 0.94);
-  border: 1px solid rgba(212, 170, 80, 0.32);
-  box-shadow: 0 6px 18px -6px rgba(4, 7, 14, 0.7), inset 0 1px 0 rgba(255, 240, 210, 0.05);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.05), transparent 60%), rgb(var(--encre));
+  color: rgb(var(--creme));
+  border: 2px solid rgb(var(--encre));
+  box-shadow: inset 0 0 0 1.5px rgb(var(--accent-2) / 0.3), 0 4px 0 rgb(var(--fond-bas) / 0.75);
 }
-/* --- Chemises de cuir (fenêtres, barre du haut) ----------------------- */
+/* --- Fenêtres et panneaux --------------------------------------------- */
 .glass-strong {
-  background: linear-gradient(180deg, #1f293d, #1a2234);
-  border: 1px solid rgba(212, 170, 80, 0.45);
-  outline: 1px solid rgba(212, 170, 80, 0.16);
-  outline-offset: 3px;
-  box-shadow: 0 24px 60px -18px rgba(3, 6, 12, 0.85), inset 0 1px 0 rgba(255, 240, 210, 0.05);
-}
-nav.glass-strong {
-  outline: none;
-  border-width: 0 0 1px 0;
-  background: #121927;
-  box-shadow: 0 1px 0 rgba(212, 170, 80, 0.12), 0 12px 30px -16px rgba(0, 0, 0, 0.8);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.05), transparent 120px), rgb(var(--encre));
+  color: rgb(var(--creme));
+  border: var(--trait) solid rgb(var(--encre));
+  box-shadow: inset 0 0 0 2px rgb(var(--accent-2) / 0.32), 0 6px 0 rgb(var(--fond-bas) / 0.8);
 }
 .glass-input {
-  background: #111827;
-  border: 1px solid rgba(212, 170, 80, 0.22);
+  background: rgb(0 0 0 / 0.28);
+  color: rgb(var(--creme));
+  border: 2px solid rgb(var(--creme) / 0.2);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .glass-input:focus {
-  border-color: var(--brass);
-  box-shadow: 0 0 0 3px rgba(212, 170, 80, 0.16);
+  border-color: rgb(var(--accent-2));
+  box-shadow: 0 0 0 3px rgb(var(--accent-2) / 0.22);
 }
-.glass-input::placeholder { color: rgba(239, 228, 200, 0.42); }
+.glass-input::placeholder { color: rgb(var(--creme) / 0.45); }
 
-/* Actions principales : sceau de cire. */
+/* Action principale : pastille d'or, contour d'encre, s'enfonce au clic. */
 .btn-accent {
-  background: linear-gradient(180deg, #b8452f, #962f1f);
-  box-shadow: 0 3px 10px -3px rgba(150, 47, 31, 0.6), inset 0 1px 0 rgba(255, 220, 200, 0.22), inset 0 -2px 0 rgba(0, 0, 0, 0.18);
-  color: #fbf1df !important;
+  background: rgb(var(--accent-2)) !important;
+  color: rgb(var(--encre)) !important;
+  border: 2px solid rgb(var(--encre));
+  box-shadow: 0 3px 0 rgb(var(--encre));
+  font-weight: 700;
 }
-.btn-accent:hover:not(:disabled) { background: linear-gradient(180deg, #c64f37, #a33422); }
+.btn-accent:hover:not(:disabled) { filter: brightness(1.07); transform: translateY(-1px); box-shadow: 0 4px 0 rgb(var(--encre)); }
+.btn-accent:active:not(:disabled) { transform: translateY(2px) !important; box-shadow: 0 1px 0 rgb(var(--encre)); }
+/* Secondaire : contour seulement. */
+.btn-ghost {
+  border: 2px solid currentColor;
+  color: inherit;
+  opacity: 0.9;
+}
+.btn-ghost:hover:not(:disabled) { opacity: 1; border-color: rgb(var(--t-accent)); color: rgb(var(--t-accent)); }
+.btn-danger {
+  background: #c23a2b;
+  color: #fff7ee !important;
+  border: 2px solid rgb(var(--encre));
+  box-shadow: 0 3px 0 rgb(var(--encre));
+  font-weight: 700;
+}
+.btn-danger:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgb(var(--encre)); }
+/* État actif (calques, onglets) : or plein. */
 .bg-accent {
-  background-color: #a83a28 !important;
+  background-color: rgb(var(--accent-2)) !important;
   background-image: none;
-  color: #fbf1df !important;
-  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18);
+  color: rgb(var(--encre)) !important;
+  box-shadow: none;
 }
-.bg-accent\/20 { background-color: rgba(212, 170, 80, 0.14) !important; }
+.bg-accent\/20 { background-color: rgb(var(--accent-2) / 0.16) !important; }
+.text-ok { color: #7fd6a0; }
 
 button,
 a {
-  transition: color 0.18s, background-color 0.18s, border-color 0.18s, box-shadow 0.2s, opacity 0.18s, transform 0.14s var(--ease-out);
+  transition: color 0.18s, background-color 0.18s, border-color 0.18s, box-shadow 0.2s, opacity 0.18s, transform 0.14s var(--ease-out), filter 0.18s;
 }
 button:active:not(:disabled) { transform: scale(0.97); }
 
-/* Ancienne barre irisée sous la barre du haut : un filet laiton. */
-.stamp-bar { background: linear-gradient(90deg, transparent, rgba(212, 170, 80, 0.55) 15%, rgba(212, 170, 80, 0.55) 85%, transparent); }
+/* Barre du haut : cartouche de vélin posé sur un trait d'encre (le Wiki
+   a un bandeau d'encre, le Dossier Central laisse voir son fond). */
+.site-bar {
+  --t-paper: var(--encre);
+  --t-accent: var(--accent-on-card);
+  background: rgb(var(--creme));
+  color: rgb(var(--encre));
+  border-bottom: var(--trait) solid rgb(var(--encre));
+  box-shadow: 0 4px 0 rgb(var(--encre) / 0.35);
+}
+.site-bar .brand-mark { font-weight: 700; }
+.nav-btn { border: 2px solid rgb(var(--encre)); color: rgb(var(--encre)); background: transparent; }
+.nav-btn:hover { background: rgb(var(--encre)); color: rgb(var(--creme)); }
+.nav-current { color: rgb(var(--encre)); box-shadow: inset 0 -3px 0 rgb(var(--accent)); border-radius: 0; }
+.stamp-bar { background: rgb(var(--encre)); }
+
+/* --- Petits éléments communs (Lot 92) -------------------------------- */
+.section-label { font-family: var(--font-sc); font-size: 0.78rem; letter-spacing: 0.06em; font-weight: 700; color: rgb(var(--t-accent)); }
+.sheet { background: rgb(0 0 0 / 0.22); border: 2px solid rgb(var(--creme) / 0.14); }
+.note-strip { background: rgb(var(--accent-2) / 0.14); border: 2px dashed rgb(var(--accent-2) / 0.5); }
+.tag-own { display: inline-block; border-radius: 999px; padding: 0 0.5rem; font-weight: 700; background: rgb(var(--accent) / 0.25); color: rgb(var(--t-paper)); border: 1.5px solid rgb(var(--accent)); }
+.chip {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  border-radius: 999px; padding: 0.15rem 0.6rem; font-size: 0.78rem; font-weight: 600;
+  border: 2px solid rgb(var(--t-paper) / 0.3); color: rgb(var(--t-paper));
+}
+.chip > button { opacity: 0.7; }
+.chip > button:hover { opacity: 1; }
+.chip-on { background: rgb(var(--accent) / 0.3); border-color: rgb(var(--accent)); }
+.chip-off { background: rgb(194 58 43 / 0.28); border-color: #e0604d; text-decoration-color: #e0604d; }
+button.chip-off { text-decoration: line-through; }
+.seg-group { display: inline-flex; max-width: 100%; border: 2px solid rgb(var(--t-paper) / 0.35); border-radius: 0.6rem; overflow: hidden; }
+.seg-group.is-full { display: flex; width: 100%; }
+.seg-group.is-full .seg { flex: 1 1 0; }
+.seg { padding: 0.3rem 0.6rem; font-size: 0.78rem; font-weight: 600; line-height: 1.15; color: rgb(var(--t-paper) / 0.8); }
+.seg + .seg { border-left: 2px solid rgb(var(--t-paper) / 0.2); }
+.seg.is-on { background: rgb(var(--accent-2)); color: rgb(var(--encre)); }
+/* Interrupteur. */
+.switch { position: relative; display: inline-flex; width: 2.6rem; height: 1.5rem; cursor: pointer; }
+.switch input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.switch > span[aria-hidden] { position: absolute; inset: 0; border-radius: 999px; background: rgb(var(--t-paper) / 0.2); border: 2px solid rgb(var(--encre)); transition: background 0.2s; }
+.switch > span[aria-hidden]::after { content: ''; position: absolute; top: 2px; left: 2px; width: 1rem; height: 1rem; border-radius: 999px; background: rgb(var(--creme)); border: 2px solid rgb(var(--encre)); transition: transform 0.2s var(--ease-out); }
+.switch input:checked + span[aria-hidden] { background: rgb(var(--accent)); }
+.switch input:checked + span[aria-hidden]::after { transform: translateX(1.1rem); }
+.switch input:focus-visible + span[aria-hidden] { outline: 2px solid rgb(var(--accent-2)); outline-offset: 2px; }
+/* Créatures (gestion). */
+.creature-row { border-radius: 0.9rem; padding: 0.65rem; border: 2px solid rgb(var(--creme) / 0.16); background: rgb(0 0 0 / 0.18); }
+.creature-row.is-off { opacity: 0.6; }
+.creature-portrait { display: grid; place-items: center; flex: none; width: 2.75rem; height: 2.75rem; border-radius: 999px; overflow: hidden; background: rgb(0 0 0 / 0.35); border: 2px solid rgb(var(--accent-2)); font-family: var(--font-sc); font-size: 1.2rem; color: rgb(var(--accent-2)); }
+.creature-portrait img { width: 100%; height: 100%; object-fit: cover; }
+/* Propriétaire d'un lieu. */
+.owner-card { margin-top: 0.75rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; border-radius: 0.9rem; padding: 0.6rem 0.7rem; background: rgb(var(--accent-2) / 0.12); border: 2px solid rgb(var(--accent-2) / 0.55); }
+.owner-seal { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 999px; background: rgb(var(--accent-2)); color: rgb(var(--encre)); border: 2px solid rgb(var(--encre)); box-shadow: 0 2px 0 rgb(var(--encre)); font-size: 1.05rem; }
+
+/* --- Feuilles de vélin (fiches, plans, connexion) --------------------
+   Le texte y passe à l'encre ; or et turquoise foncés. */
+.vellum {
+  --t-paper: var(--encre);
+  --t-accent: var(--accent-on-card);
+  color: rgb(var(--encre));
+  background: rgb(var(--creme));
+  border: var(--trait) solid rgb(var(--encre));
+  box-shadow: var(--ombre);
+}
+.vellum .glass-input { background: #fffaf0; color: rgb(var(--encre)); border: 2px solid rgb(var(--encre)); }
+.vellum .glass-input::placeholder { color: rgb(var(--encre) / 0.45); }
+.vellum .glass-input:focus { border-color: rgb(var(--accent-on-card)); box-shadow: 0 0 0 3px rgb(var(--accent) / 0.25); }
+.vellum .border-white\/10, .vellum .border-white\/15, .vellum .border-white\/20 { border-color: rgb(var(--encre) / 0.18); }
+.vellum .bg-white\/5, .vellum .bg-white\/10 { background-color: rgb(var(--encre) / 0.05); }
+.vellum .sheet { background: rgb(var(--encre) / 0.04); border-color: rgb(var(--encre) / 0.15); }
+.vellum .text-ok { color: #2f7a4a; }
+.vellum .chip-off { background: rgb(194 58 43 / 0.12); }
+.vellum h1.font-display, .vellum h2.text-accent, .vellum h3.text-accent { color: rgb(var(--encre)); }
 
 /* --- Apparitions (en réponse à une action) --------------------------- */
 @keyframes pop-in {
@@ -175,7 +304,7 @@ button:active:not(:disabled) { transform: scale(0.97); }
   50% { stroke-opacity: 0.45; }
 }
 .map-vignette {
-  background: radial-gradient(ellipse at center, transparent 62%, rgba(10, 14, 24, 0.45) 100%);
+  background: radial-gradient(ellipse at center, transparent 66%, rgb(var(--fond-bas) / 0.32) 100%);
 }
 .sel-ring { animation: sel-march 1.2s linear infinite; }
 @keyframes sel-march {
@@ -185,39 +314,41 @@ button:active:not(:disabled) { transform: scale(0.97); }
 .region-label { font-family: var(--font-sc); }
 
 /* --- Finitions ------------------------------------------------------- */
-::selection { background: rgba(212, 170, 80, 0.35); color: #fff; }
+::selection { background: rgb(var(--accent-2) / 0.4); color: rgb(var(--encre)); }
 
 /* Titres de fenêtres et de panneaux : laiton plein. */
 h1.font-display,
 h2.text-accent,
-h3.text-accent { color: #e2c27a; }
+h3.text-accent { color: rgb(var(--accent-2)); }
 
 .brand-mark { letter-spacing: 0.06em; }
 .brand-seal {
   display: inline-flex;
-  height: 1.75rem;
-  width: 1.75rem;
+  height: 2rem;
+  width: 2rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  color: #2a1d08;
-  font-size: 0.8rem;
+  color: rgb(var(--encre));
+  font-size: 0.85rem;
   letter-spacing: 0;
-  background: radial-gradient(circle at 35% 30%, #f0d48a, #b8862f 72%);
-  box-shadow: 0 0 0 2px #121927, 0 0 0 3px rgba(212, 170, 80, 0.7);
+  background: rgb(var(--accent-2));
+  border: 2px solid rgb(var(--encre));
+  box-shadow: 0 2px 0 rgb(var(--encre));
 }
 
-input[type='checkbox'] { accent-color: var(--brass); }
+input[type='checkbox'] { accent-color: rgb(var(--accent)); }
 
 select.glass-input {
   appearance: none;
   -webkit-appearance: none;
   padding-right: 1.9rem;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23d4aa50' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23f2b33d' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.65rem center;
 }
-select option { background: #1a2234; color: #efe4c8; }
+select option { background: #2a1408; color: #fbf0dc; }
+.vellum select.glass-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%232a1408' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E"); }
 
 a:focus-visible,
 button:focus-visible,
@@ -225,7 +356,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid var(--brass);
+  outline: 3px solid rgb(var(--accent));
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -246,7 +377,7 @@ textarea:focus-visible,
 .legal ul { list-style: disc; padding-left: 1.3rem; }
 .legal li { margin: 0.3rem 0; }
 .legal a { text-decoration: underline; }
-.legal .legal-h2 { font-family: var(--font-sc); letter-spacing: 0.04em; font-size: 1.15rem; color: #e2c27a; margin: 1.6rem 0 0.4rem; }
+.legal .legal-h2 { font-family: var(--font-sc); letter-spacing: 0.04em; font-size: 1.15rem; color: rgb(var(--t-accent)); margin: 1.6rem 0 0.4rem; }
 .legal .legal-meta { font-size: 0.8rem; opacity: 0.6; }
 
 /* =====================================================================
@@ -844,4 +975,94 @@ svg.map-night .map-place > .place-disc { fill: #fff0c2; filter: drop-shadow(0 0 
 .weather-badge:hover circle { transform: scale(1.15); }
 @media (prefers-reduced-motion: reduce) {
   .incursion-pulse { animation: none; opacity: 0.6; }
+}
+
+/* =====================================================================
+   Intérieurs (Lot 92) : cartouche du lieu, coupe du bâtiment, plan de
+   l'étage sur vélin, maquette.
+   ===================================================================== */
+.back-link {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  border-radius: 999px; padding: 0.35rem 0.9rem; font-family: var(--font-sc); font-weight: 700; font-size: 0.95rem;
+  background: rgb(var(--encre)); color: rgb(var(--creme)); border: 2px solid rgb(var(--encre)); box-shadow: 0 3px 0 rgb(var(--fond-bas) / 0.8);
+}
+.back-link:hover { color: rgb(var(--accent-2)); }
+.interior-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+.interior-seal {
+  display: grid; place-items: center; flex: none; width: 4.25rem; height: 4.25rem; border-radius: 999px; font-size: 2rem;
+  background: rgb(var(--accent-2)); border: var(--trait) solid rgb(var(--encre)); box-shadow: 0 4px 0 rgb(var(--encre));
+}
+.interior-title { font-family: var(--font-sc); font-weight: 700; font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.05; letter-spacing: 0.02em; color: rgb(var(--encre)); }
+.interior-photo { width: 100%; max-width: 15rem; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 0.8rem; border: var(--trait) solid rgb(var(--encre)); box-shadow: var(--ombre-petite); }
+.interior-floor-title { font-family: var(--font-sc); font-weight: 700; font-size: 1.35rem; color: rgb(var(--encre)); }
+.floor-name-input { background: transparent; border-bottom: 2px dashed rgb(var(--encre) / 0.35); min-width: 0; max-width: 100%; padding: 0 0.15rem; }
+.floor-name-input:focus { border-bottom-color: rgb(var(--accent-on-card)); outline: none; }
+.maquette { background: #f6ecd6; border: 2px solid rgb(var(--encre) / 0.25); }
+.plan-sheet { border-radius: 0.9rem; overflow: hidden; border: var(--trait) solid rgb(var(--encre)); background: #f6ecd6; box-shadow: var(--ombre-petite); max-width: min(100%, 78vh); margin-inline: auto; }
+.plan-label { font-family: var(--font-sc); font-weight: 700; letter-spacing: 0.02em; }
+.room-card { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem; border-radius: 0.9rem; padding: 0.75rem; background: rgb(var(--encre) / 0.05); border: 2px solid rgb(var(--encre) / 0.2); }
+.room-swatch { flex: none; width: 2.5rem; height: 2.5rem; border-radius: 0.6rem; border: 2px solid rgb(var(--encre)); align-self: center; }
+.room-swatch.is-small { width: 0.95rem; height: 0.95rem; border-radius: 0.25rem; border-width: 1.5px; }
+.room-type { display: flex; align-items: center; gap: 0.4rem; border-radius: 0.6rem; padding: 0.35rem 0.5rem; font-size: 0.82rem; font-weight: 600; text-align: left; border: 2px solid rgb(var(--t-paper) / 0.25); }
+.room-type.is-on { border-color: rgb(var(--accent-2)); background: rgb(var(--accent-2) / 0.18); }
+
+/* Coupe du bâtiment : toit, étages, sol, sous-sols. */
+.building-section { display: flex; flex-direction: column; align-self: start; }
+@media (min-width: 768px) { .building-section { position: sticky; top: 1rem; } }
+.section-roof {
+  height: 46px; margin: 0 6px -3px; background: rgb(var(--encre));
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  position: relative;
+}
+.section-walls, .section-earth { display: flex; flex-direction: column; border-inline: var(--trait) solid rgb(var(--encre)); margin-inline: 14px; }
+.section-walls { background: rgb(var(--creme)); }
+.section-floor {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  min-height: 3rem; padding: 0.4rem 0.6rem; text-align: left; line-height: 1.15;
+  font-family: var(--font-sc); font-weight: 700; font-size: 0.92rem;
+  color: rgb(var(--encre)); background: transparent;
+  border-bottom: var(--trait) solid rgb(var(--encre));
+}
+.section-floor::before {
+  content: ''; flex: none; width: 0.9rem; height: 1.15rem; border-radius: 0.45rem 0.45rem 0.1rem 0.1rem;
+  border: 2px solid rgb(var(--encre)); background: rgb(var(--accent) / 0.35);
+}
+.section-floor:hover { background: rgb(var(--accent-2) / 0.25); }
+.section-floor.is-on { background: rgb(var(--accent-2)); }
+.section-floor.is-on::before { background: rgb(255 240 190); box-shadow: 0 0 8px rgb(255 220 120); }
+.section-count { margin-left: auto; min-width: 1.6rem; text-align: center; border-radius: 999px; padding: 0 0.4rem; font-family: var(--font-sans); font-size: 0.78rem; background: rgb(var(--encre)); color: rgb(var(--creme)); }
+.section-ground { height: 14px; background: #6f8f3a; border-top: var(--trait) solid rgb(var(--encre)); border-bottom: 2px solid rgb(var(--encre)); border-radius: 4px; }
+.section-earth {
+  padding-bottom: 0.5rem; border-bottom: var(--trait) solid rgb(var(--encre)); border-radius: 0 0 0.6rem 0.6rem;
+  background: radial-gradient(circle at 20% 30%, rgb(0 0 0 / 0.18) 1.5px, transparent 2px) 0 0 / 14px 14px, #6b4826;
+}
+.section-floor.is-under { background: #e3cfa5; margin: 0.45rem 0.45rem 0; border: 2px solid rgb(var(--encre)); border-radius: 0.5rem; }
+.section-floor.is-under.is-on { background: rgb(var(--accent-2)); }
+.section-add {
+  margin: 0 14px 0.5rem; border-radius: 0.6rem; padding: 0.35rem; font-family: var(--font-sc); font-weight: 700;
+  border: 2px dashed rgb(var(--creme) / 0.8); color: rgb(var(--creme));
+}
+.section-add:hover { background: rgb(var(--encre) / 0.3); }
+.section-add.is-under { margin: 0.5rem 0.45rem 0; border-color: rgb(var(--creme) / 0.6); }
+
+/* Plan de ville (Lot 92). */
+.city-cartouche {
+  display: flex; flex-direction: column; line-height: 1.1;
+  padding: 0.5rem 0.9rem 0.6rem; border-radius: 0.8rem;
+  background: rgb(var(--creme)); color: rgb(var(--encre));
+  border: var(--trait) solid rgb(var(--encre)); box-shadow: var(--ombre-petite);
+  --t-accent: var(--accent-on-card);
+}
+.city-cartouche-name { font-family: var(--font-sc); font-weight: 700; font-size: 1.35rem; }
+.district-label {
+  font-family: var(--font-sc); font-weight: 700; font-size: 3px; letter-spacing: 0.35px;
+  fill: #2a1408; fill-opacity: 0.7;
+  paint-order: stroke; stroke: #efe2c3; stroke-width: 0.6px; stroke-linejoin: round;
+}
+.building-label {
+  font-family: var(--font-sc); font-weight: 700; font-size: 1.35px;
+  fill: #2a1408; paint-order: stroke; stroke: #efe2c3; stroke-width: 0.45px; stroke-linejoin: round;
+}
+@media (hover: hover) {
+  .city-building:hover > g:first-child { filter: brightness(1.1); }
 }

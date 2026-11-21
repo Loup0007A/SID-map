@@ -44,6 +44,9 @@ export interface MapPlace {
   fogUnknown?: boolean;
   discovered_at?: string | null;
   discovered_by?: string | null;
+  /** Lieu-bâtiment donné à un membre (migration 0120). */
+  owner_id?: string | null;
+  owner_since?: string | null;
 }
 
 export interface CityDistrict {

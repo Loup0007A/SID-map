@@ -35,6 +35,38 @@ import { isImageIcon } from '@/lib/icons';
 import { SidIcon } from '@/components/icons/SidIcon';
 
 const CLOSE_SNAP_PX = 14;
+
+// Toits des bâtiments selon leur type (Lot 92).
+const ROOF: Record<string, string> = {
+  maison: '#c4572b',
+  cathedrale: '#6f7f93',
+  auberge: '#c8963e',
+  commerce: '#1e9a9a',
+  autre: '#a89a86',
+};
+
+function centroid(pts: Point[]): Point {
+  if (!pts.length) return { x: 0, y: 0 };
+  return { x: pts.reduce((a, p) => a + p.x, 0) / pts.length, y: pts.reduce((a, p) => a + p.y, 0) / pts.length };
+}
+
+/** Enveloppe convexe (remparts autour des quartiers et des bâtiments). */
+function hull(points: Point[]): Point[] {
+  const p = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
+  if (p.length < 3) return p;
+  const cross = (o: Point, a: Point, b: Point) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const lo: Point[] = [];
+  for (const q of p) {
+    while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop();
+    lo.push(q);
+  }
+  const up: Point[] = [];
+  for (const q of [...p].reverse()) {
+    while (up.length >= 2 && cross(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop();
+    up.push(q);
+  }
+  return [...lo.slice(0, -1), ...up.slice(0, -1)];
+}
 type PointTool = 'point-circle' | 'point-rect';
 type ActiveTool = ShapeTool | PointTool | null;
 
@@ -321,6 +353,17 @@ export default function CityMap({ cityId }: { cityId: string }) {
     };
   })();
 
+  // Remparts : l'enveloppe des quartiers et des bâtiments, élargie de 3 unités.
+  const walls = (() => {
+    const pts = [...districts.flatMap((d) => d.path_points), ...buildings.map((b) => ({ x: b.x, y: b.y }))];
+    if (pts.length < 3) return null;
+    const h = hull(pts);
+    const c = centroid(h);
+    return h.map((p) => {
+      const d = Math.hypot(p.x - c.x, p.y - c.y) || 1;
+      return { x: p.x + ((p.x - c.x) / d) * 3, y: p.y + ((p.y - c.y) / d) * 3 };
+    });
+  })();
   const showGrid = editMode && activeTool !== null;
   const closeSnapReady = activeTool === 'polygon' && tempPoints.length >= 3;
 
@@ -328,19 +371,18 @@ export default function CityMap({ cityId }: { cityId: string }) {
     <div className="flex h-[100dvh] w-full flex-col overflow-hidden">
       <Navbar />
       <div className="relative flex-1 overflow-hidden">
-      <Link
-        href="/carte"
-        className="glass absolute left-4 top-4 z-20 rounded-lg px-3 py-1.5 font-display text-[10px] uppercase tracking-wide text-accent hover:bg-white/10"
-      >
-        ← Retour à la carte du monde
-      </Link>
-
-      <div className="glass absolute left-4 top-14 z-20 rounded-lg px-3 py-1.5 font-display text-sm text-paper">
-        {city?.name}
+      <div className="pointer-events-none absolute left-3 top-3 z-20 flex flex-col items-start gap-2 md:left-4 md:top-4">
+        <Link href="/carte" className="back-link pointer-events-auto text-sm">
+          ← Carte du monde
+        </Link>
+        <div className="city-cartouche pointer-events-auto">
+          <span className="section-label">Plan de ville</span>
+          <span className="city-cartouche-name">{city?.name ?? '…'}</span>
+        </div>
       </div>
 
       {canEdit && (
-        <div className="fixed inset-x-2 bottom-2 z-20 max-w-full md:absolute md:inset-x-auto md:bottom-auto md:left-4 md:top-[6.5rem] md:max-w-[calc(100%-2rem)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="fixed inset-x-2 bottom-2 z-20 max-w-full md:absolute md:inset-x-auto md:bottom-auto md:left-4 md:top-[9.5rem] md:max-w-[calc(100%-2rem)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           {!toolbarOpen ? (
             <button
               onClick={() => setToolbarOpen(true)}
@@ -444,10 +486,11 @@ export default function CityMap({ cityId }: { cityId: string }) {
           {districts.map((d) => (
             <button
               key={d.id}
-              onClick={() => setActiveDistrictFilter(d.id)}
-              className={activeDistrictFilter === d.id ? 'text-accent' : 'text-paper/60 hover:text-accent'}
-              style={{ borderLeft: `3px solid ${d.color}`, paddingLeft: 6 }}
+              onClick={() => setActiveDistrictFilter(activeDistrictFilter === d.id ? null : d.id)}
+              aria-pressed={activeDistrictFilter === d.id}
+              className={`flex items-center gap-1.5 text-left ${activeDistrictFilter === d.id ? 'text-accent' : 'text-paper/70 hover:text-accent'}`}
             >
+              <span aria-hidden className="h-3 w-3 shrink-0 rounded-sm border-2 border-[rgb(var(--encre))]" style={{ background: d.color }} />
               {d.name}
             </button>
           ))}
@@ -482,26 +525,47 @@ export default function CityMap({ cityId }: { cityId: string }) {
           if (vp.isPanning) vp.endPan();
         }}
       >
-        {/* Plan de ville sur vélin : quadrillage de cadastre, table autour (Lot 50). */}
+        {/* Plan de ville (Lot 92) : feuille de vélin posée sur la table en terre
+            cuite, remparts autour des quartiers, quartiers hachurés et nommés. */}
         <defs>
           <pattern id="city-grid" width={5} height={5} patternUnits="userSpaceOnUse">
-            <path d="M5 0H0V5" fill="none" stroke="#2e261d" strokeOpacity={0.1} strokeWidth={0.06} />
+            <path d="M5 0H0V5" fill="none" stroke="#2a1408" strokeOpacity={0.09} strokeWidth={0.06} />
           </pattern>
+          <pattern id="city-tiles" width={0.9} height={0.9} patternUnits="userSpaceOnUse">
+            <path d="M0 0.9H0.9M0.45 0V0.45" stroke="#2a1408" strokeOpacity={0.35} strokeWidth={0.07} />
+          </pattern>
+          {districts.map((d) => (
+            <pattern key={d.id} id={`hatch-${d.id}`} width={1.6} height={1.6} patternUnits="userSpaceOnUse" patternTransform="rotate(40)">
+              <rect width={1.6} height={1.6} fill={d.color} fillOpacity={0.16} />
+              <path d="M0 0V1.6" stroke={d.color} strokeOpacity={0.55} strokeWidth={0.28} />
+            </pattern>
+          ))}
         </defs>
-        <rect x={-200} y={-200} width={500} height={500} fill="#161d2b" />
-        <rect x={-50} y={-50} width={200} height={200} fill="#ece0c2" />
+        <rect x={-48} y={-47} width={200} height={200} rx={2} style={{ fill: 'rgb(var(--encre))' }} />
+        <rect x={-50} y={-50} width={200} height={200} rx={2} fill="#efe2c3" />
         <rect x={-50} y={-50} width={200} height={200} fill="url(#city-grid)" />
-        <rect x={-50} y={-50} width={200} height={200} fill="none" stroke="#2e261d" strokeWidth={0.5} />
+        <rect x={-50} y={-50} width={200} height={200} rx={2} fill="none" style={{ stroke: 'rgb(var(--encre))' }} strokeWidth={0.8} />
+
+        {walls && (
+          <g style={{ pointerEvents: 'none' }}>
+            <polygon points={pointsToSvg(walls)} fill="#e6d4ae" stroke="#2a1408" strokeWidth={1.3} strokeLinejoin="round" />
+            <polygon points={pointsToSvg(walls)} fill="none" stroke="#efe2c3" strokeWidth={0.5} strokeDasharray="0.9 0.9" strokeLinejoin="round" />
+            {walls.map((p, i) => (
+              <circle key={i} cx={p.x} cy={p.y} r={1.5} fill="#cdb78d" stroke="#2a1408" strokeWidth={0.35} />
+            ))}
+          </g>
+        )}
 
         {districts.map((d) => (
           <polygon
             key={d.id}
             points={pointsToSvg(d.path_points)}
-            fill={d.color}
-            fillOpacity={activeDistrictFilter && activeDistrictFilter !== d.id ? 0.1 : 0.4}
-            stroke={deleteMode ? '#d2463b' : '#2e261d'}
-            strokeOpacity={deleteMode ? 1 : 0.6}
-            strokeWidth={deleteMode ? 0.3 : 0.16}
+            fill={`url(#hatch-${d.id})`}
+            fillOpacity={activeDistrictFilter && activeDistrictFilter !== d.id ? 0.25 : 1}
+            stroke={deleteMode ? '#c23a2b' : '#2a1408'}
+            strokeOpacity={deleteMode ? 1 : 0.55}
+            strokeWidth={deleteMode ? 0.4 : 0.25}
+            strokeDasharray={deleteMode ? undefined : '1 0.6'}
             className="cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
@@ -509,6 +573,31 @@ export default function CityMap({ cityId }: { cityId: string }) {
             }}
           />
         ))}
+        {districts.map((d) => {
+          // Nom du quartier près de son bord haut (le centre porte souvent un bâtiment).
+          const c = centroid(d.path_points);
+          const minY = Math.min(...d.path_points.map((p) => p.y));
+          const y = Math.min(c.y, minY + 6);
+          return (
+            <text key={`n-${d.id}`} x={c.x} y={y} textAnchor="middle" className="district-label" style={{ pointerEvents: 'none' }}>
+              {d.name}
+            </text>
+          );
+        })}
+
+        {/* Rose des vents. */}
+        <g transform="translate(92 92)" style={{ pointerEvents: 'none' }} opacity={0.85}>
+          <circle r={5} fill="#efe2c3" stroke="#2a1408" strokeWidth={0.2} />
+          {[0, 90, 180, 270].map((a) => (
+            <path key={a} d="M0 -4.6L0.9 0L-0.9 0Z" transform={`rotate(${a})`} fill={a === 0 ? '#c4572b' : '#2a1408'} />
+          ))}
+          {[45, 135, 225, 315].map((a) => (
+            <path key={a} d="M0 -2.8L0.55 0L-0.55 0Z" transform={`rotate(${a})`} fill="#2a1408" fillOpacity={0.6} />
+          ))}
+          <text y={-5.6} textAnchor="middle" fontSize={1.6} className="district-label" style={{ fontSize: 1.6 }}>
+            N
+          </text>
+        </g>
 
         {showGrid && <GridOverlay viewBox={vp.viewBox} />}
 
@@ -555,13 +644,15 @@ export default function CityMap({ cityId }: { cityId: string }) {
 
         {visibleBuildings.map((b) => {
           const radius = b.width / 2;
-          const iconSize = b.shape === 'circle' ? radius * 0.85 : Math.min(b.width, b.height) * 0.4;
           const occupants = cityPositions.filter((p) => p.building_id === b.id);
+          const roof = ROOF[b.type] ?? ROOF.autre;
+          const badge = Math.min(2.2, Math.max(1.1, Math.min(b.width, b.height) * 0.3));
+          const top = b.shape === 'circle' ? radius : b.height / 2;
           return (
             <g
               key={b.id}
-              transform={`translate(${b.x}, ${b.y}) rotate(${b.rotation})`}
-              className="cursor-pointer"
+              transform={`translate(${b.x}, ${b.y})`}
+              className="city-building cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 if (deleteMode) return deleteBuilding(b);
@@ -572,41 +663,73 @@ export default function CityMap({ cityId }: { cityId: string }) {
                 if (!activeTool) setSelectedBuilding(b);
               }}
             >
-              {b.shape === 'circle' ? (
-                <circle r={radius} fill="#f6eedb" stroke={deleteMode ? '#d2463b' : '#2e261d'} strokeWidth={deleteMode ? 0.35 : 0.18} />
-              ) : (
-                <rect
-                  x={-b.width / 2}
-                  y={-b.height / 2}
-                  width={b.width}
-                  height={b.height}
-                  rx={0.4}
-                  fill="#f6eedb"
-                  stroke={deleteMode ? '#d2463b' : '#2e261d'}
-                  strokeWidth={deleteMode ? 0.35 : 0.18}
-                />
-              )}
+              <g transform={`rotate(${b.rotation})`}>
+                {b.shape === 'circle' ? (
+                  <>
+                    <circle cx={0.45} cy={0.7} r={radius} style={{ fill: 'rgb(var(--encre))' }} />
+                    <circle r={radius} fill={roof} stroke={deleteMode ? '#c23a2b' : '#2a1408'} strokeWidth={deleteMode ? 0.45 : 0.3} />
+                    <circle r={radius * 0.62} fill="none" stroke="#2a1408" strokeOpacity={0.35} strokeWidth={0.18} />
+                    <circle r={radius} fill="url(#city-tiles)" opacity={0.6} />
+                  </>
+                ) : (
+                  <>
+                    <rect x={-b.width / 2 + 0.45} y={-b.height / 2 + 0.7} width={b.width} height={b.height} rx={0.3} style={{ fill: 'rgb(var(--encre))' }} />
+                    <rect x={-b.width / 2} y={-b.height / 2} width={b.width} height={b.height} rx={0.3} fill={roof} stroke={deleteMode ? '#c23a2b' : '#2a1408'} strokeWidth={deleteMode ? 0.45 : 0.3} />
+                    <rect x={-b.width / 2} y={-b.height / 2} width={b.width} height={b.height} fill="url(#city-tiles)" opacity={0.55} />
+                    {b.width >= b.height ? (
+                      <>
+                        <path d={`M${-b.width / 2} ${-b.height / 2}L${-b.width / 2 + b.height / 2} 0L${-b.width / 2} ${b.height / 2}M${b.width / 2} ${-b.height / 2}L${b.width / 2 - b.height / 2} 0L${b.width / 2} ${b.height / 2}`} fill="none" stroke="#2a1408" strokeOpacity={0.5} strokeWidth={0.18} />
+                        <path d={`M${-b.width / 2 + b.height / 2} 0H${b.width / 2 - b.height / 2}`} stroke="#2a1408" strokeWidth={0.28} />
+                        <rect x={-b.width / 2} y={0} width={b.width} height={b.height / 2} fill="#2a1408" fillOpacity={0.14} />
+                      </>
+                    ) : (
+                      <>
+                        <path d={`M${-b.width / 2} ${-b.height / 2}L0 ${-b.height / 2 + b.width / 2}L${b.width / 2} ${-b.height / 2}M${-b.width / 2} ${b.height / 2}L0 ${b.height / 2 - b.width / 2}L${b.width / 2} ${b.height / 2}`} fill="none" stroke="#2a1408" strokeOpacity={0.5} strokeWidth={0.18} />
+                        <path d={`M0 ${-b.height / 2 + b.width / 2}V${b.height / 2 - b.width / 2}`} stroke="#2a1408" strokeWidth={0.28} />
+                        <rect x={0} y={-b.height / 2} width={b.width / 2} height={b.height} fill="#2a1408" fillOpacity={0.14} />
+                      </>
+                    )}
+                  </>
+                )}
+              </g>
               {(() => {
                 const icon = buildingTypes.iconFor(b.type, '🏗️');
-                const s = iconSize * 1.55;
-                return isImageIcon(icon) ? (
-                  <image href={icon} x={-s / 2} y={-s / 2} width={s} height={s} preserveAspectRatio="xMidYMid meet" style={{ pointerEvents: 'none' }} />
-                ) : (
-                  <text textAnchor="middle" dy={iconSize * 0.35} fontSize={iconSize} fill="#2e261d">
-                    {icon}
-                  </text>
+                const s = badge * 1.5;
+                return (
+                  <g style={{ pointerEvents: 'none' }}>
+                    <circle r={badge} fill="#fbf0dc" stroke="#2a1408" strokeWidth={0.22} />
+                    {isImageIcon(icon) ? (
+                      <image href={icon} x={-s / 2} y={-s / 2} width={s} height={s} preserveAspectRatio="xMidYMid meet" />
+                    ) : (
+                      <text textAnchor="middle" dy={badge * 0.38} fontSize={badge * 1.05} fill="#2a1408">
+                        {icon}
+                      </text>
+                    )}
+                  </g>
                 );
               })()}
+              {b.owner_id && (
+                <g transform={`translate(${-badge * 0.95} ${-badge * 0.95})`} style={{ pointerEvents: 'none' }}>
+                  <title>Propriété d&apos;un membre</title>
+                  <circle r={0.75} fill="#f2b33d" stroke="#2a1408" strokeWidth={0.18} />
+                  <path d="M-0.35 0.1L0 -0.25L0.35 0.1V0.4H-0.35Z" fill="#2a1408" />
+                </g>
+              )}
+              {b.name && (
+                <text y={top + 1.9} textAnchor="middle" className="building-label" style={{ pointerEvents: 'none' }}>
+                  {b.name}
+                </text>
+              )}
               {occupants.length > 0 && (
                 <>
-                  <circle cx={radius * 0.75} cy={-radius * 0.75} r={1} fill="#1f5f8f" stroke="#f6eedb" strokeWidth={0.15} />
-                  <text x={radius * 0.75} y={-radius * 0.75} dy="0.4" textAnchor="middle" fontSize="1.1" fill="#fff">
+                  <circle cx={badge * 0.95} cy={-badge * 0.95} r={0.95} fill="#1e9a9a" stroke="#2a1408" strokeWidth={0.18} />
+                  <text x={badge * 0.95} y={-badge * 0.95} dy="0.38" textAnchor="middle" fontSize="1.05" fill="#fff" fontWeight={700}>
                     {occupants.length}
                   </text>
                 </>
               )}
               {openBuildingPresence === b.id && (
-                <foreignObject x={-40} y={radius + 2} width={80} height={Math.min(60, 14 * occupants.length + 8)}>
+                <foreignObject x={-40} y={top + 2.4} width={80} height={Math.min(60, 14 * occupants.length + 8)}>
                   <div className="glass-strong rounded-lg p-1.5 text-[7px] leading-tight text-paper">
                     {occupants.map((o) => (
                       <p key={o.user_id} className="truncate">

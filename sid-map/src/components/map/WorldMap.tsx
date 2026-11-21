@@ -89,6 +89,7 @@ import WeatherLayer from './WeatherLayer';
 import WeatherPanel from './WeatherPanel';
 import IncursionLayer from './IncursionLayer';
 import IncursionCard from './IncursionCard';
+import CreaturesModal from './CreaturesModal';
 import { incursionPos, useEventSettings, useIncursion, useWeather } from '@/lib/hooks/useMapEvents';
 import { weatherRoutes } from '@/lib/weather';
 const QuestPopup = dynamic(() => import('./QuestPopup'), { ssr: false });
@@ -205,6 +206,7 @@ export default function WorldMap() {
   const [selectedRoute, setSelectedRoute] = useState<MapRoute | null>(null);
   const [showPositionPicker, setShowPositionPicker] = useState(false);
   const [showCrystals, setShowCrystals] = useState(false);
+  const [showCreatures, setShowCreatures] = useState(false);
   const [showMounts, setShowMounts] = useState(false);
   const [showLayers, setShowLayers] = useState(false);
   const [showBlackMarkets, setShowBlackMarkets] = useState(false);
@@ -1615,7 +1617,7 @@ export default function WorldMap() {
         </defs>
         {/* Hors du monde : la table (le fond de la page). La feuille de vélin
             déborde un peu autour du monde, avec son filet en damier. */}
-        <rect x={-world * 2} y={-world * 2} width={world * 5} height={world * 5} fill="#161d2b" />
+        <rect x={-world * 2} y={-world * 2} width={world * 5} height={world * 5} fill="transparent" />
         {(() => {
           const m = world * 0.045; // marge de la feuille
           const b = world * 0.011; // largeur du filet en damier
@@ -1629,8 +1631,10 @@ export default function WorldMap() {
           }
           return (
             <g style={{ pointerEvents: 'none' }}>
-              <rect x={-m} y={-m} width={world + 2 * m} height={world + 2 * m} fill="#e4d6b4" />
-              <rect x={-m} y={-m} width={world + 2 * m} height={world + 2 * m} fill="none" stroke="#000" strokeOpacity={0.25} strokeWidth={world * 0.004} />
+              {/* Lot 92 : la feuille posée sur la table, ombre pleine d'encre. */}
+              <rect x={-m + world * 0.004} y={-m + world * 0.012} width={world + 2 * m} height={world + 2 * m} rx={world * 0.006} style={{ fill: 'rgb(var(--encre))' }} />
+              <rect x={-m} y={-m} width={world + 2 * m} height={world + 2 * m} rx={world * 0.006} fill="#e4d6b4" />
+              <rect x={-m} y={-m} width={world + 2 * m} height={world + 2 * m} rx={world * 0.006} fill="none" style={{ stroke: 'rgb(var(--encre))' }} strokeWidth={world * 0.0045} />
               <rect x={0} y={0} width={world} height={world} fill={SEA} />
               <rect x={0} y={0} width={world} height={world} fill="url(#sid-waves)" />
               <rect x={0} y={0} width={world} height={world} fill="url(#sid-graticule)" />
@@ -1852,6 +1856,10 @@ export default function WorldMap() {
           note={selected.kind === 'place' ? placeNotes.notes.get(selected.entity.id) : undefined}
           discoverer={selected.kind === 'place' ? fog?.discoverers?.[selected.entity.id] ?? null : null}
           onNoteChanged={placeNotes.refresh}
+          weather={weather}
+          biomes={biomes}
+          onWeatherChanged={reloadWeather}
+          onPlaceChanged={load}
         />
       )}
 
@@ -2051,8 +2059,19 @@ export default function WorldMap() {
         />
       )}
 
+      {showCreatures && canEdit && (
+        <CreaturesModal
+          places={places}
+          biomes={biomes}
+          incursion={incursion}
+          onClose={() => setShowCreatures(false)}
+          onChanged={reloadIncursion}
+        />
+      )}
+
       {incursion?.started && (
         <IncursionCard
+          onManage={canEdit ? () => setShowCreatures(true) : undefined}
           incursion={incursion}
           open={incursionOpen}
           onToggle={() => setIncursionOpen((v) => !v)}
@@ -2073,6 +2092,8 @@ export default function WorldMap() {
             canEdit={canEdit}
             settings={eventSettings.settings}
             focusBiome={weatherFocus}
+            places={places}
+            onOpenCreatures={() => setShowCreatures(true)}
             shown={showWeather}
             onShow={setShowWeather}
             onChanged={() => {

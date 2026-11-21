@@ -56,13 +56,12 @@ export default function Navbar() {
 
   return (
     <>
-    <nav className="anim-fade relative z-40 flex h-14 shrink-0 items-center justify-between gap-2 glass-strong px-3 md:px-4">
-      <div className="stamp-bar absolute bottom-0 left-0 h-[2px] w-full" />
+    <nav className="site-bar anim-fade relative z-40 flex h-14 shrink-0 items-center justify-between gap-2 px-3 md:px-4">
 
       <Link href="/carte" className="shrink-0 font-display text-[1.05rem] text-paper md:text-[1.2rem]">
         <span className="brand-mark flex items-center gap-2.5">
           <span aria-hidden className="brand-seal">✦</span>
-          <span className="md:hidden">Cartographie</span>
+          <span className="hidden min-[430px]:inline md:hidden">Cartographie</span>
           <span className="hidden md:inline">Cartographie du S.I.D.</span>
         </span>
       </Link>
@@ -81,8 +80,8 @@ export default function Navbar() {
             href={l.href}
             className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none transition ${
               pathname === l.href
-                ? 'hidden text-accent shadow-[inset_0_-2px_0_#d4aa50] md:inline-block'
-                : 'text-paper/75 hover:text-accent'
+                ? 'nav-current hidden md:inline-block'
+                : 'hidden text-paper/75 hover:text-accent md:inline-block'
             }`}
           >
             {l.label}
@@ -91,7 +90,7 @@ export default function Navbar() {
         <button
           onClick={() => guide.openHelp()}
           data-guide="help"
-          className="shrink-0 whitespace-nowrap rounded-md border border-accent/30 px-3 py-1.5 font-display text-[0.95rem] leading-none text-paper/85 transition hover:border-accent hover:text-accent"
+          className="nav-btn shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none"
         >
           ?<span className="hidden md:inline"> Aide</span>
         </button>
@@ -99,7 +98,7 @@ export default function Navbar() {
           onClick={logout}
           aria-label="Déconnexion"
           title="Déconnexion"
-          className="ml-1 shrink-0 whitespace-nowrap rounded-md border border-accent/30 px-3 py-1.5 font-display text-[0.95rem] leading-none text-paper/65 transition hover:border-accent hover:text-accent"
+          className="nav-btn ml-1 shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none"
         >
           <span className="md:hidden" aria-hidden>
             <SidIcon name="power" />

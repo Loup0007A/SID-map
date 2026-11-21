@@ -11,7 +11,10 @@ import IconPicker from './IconPicker';
 import Icon from '@/components/ui/Icon';
 import MountRentalSection from './MountRentalSection';
 import BlackMarketSection from './BlackMarketSection';
-import type { MapPlace, MapZone } from '@/lib/types';
+import PlaceWeatherSection from './PlaceWeatherSection';
+import PlaceOwnerSection from './PlaceOwnerSection';
+import type { WeatherNow } from '@/lib/weather';
+import type { MapBiome, MapPlace, MapZone } from '@/lib/types';
 import { PLACE_LABELS, ZONE_LABELS } from '@/lib/types';
 import { useTypeConfig } from '@/lib/hooks/useTypeConfig';
 import { useGroups } from '@/lib/hooks/useGroups';
@@ -29,8 +32,18 @@ export default function DetailPanel({
   onGoHere,
   note,
   onNoteChanged,
-  discoverer
+  discoverer,
+  weather,
+  biomes,
+  onWeatherChanged,
+  onPlaceChanged
 }: {
+  /** Météo (migration 0120 : temps du lieu et ses règles). */
+  weather?: WeatherNow | null;
+  biomes?: MapBiome[];
+  onWeatherChanged?: () => void;
+  /** Propriétaire changé : recharger la carte. */
+  onPlaceChanged?: () => void;
   /** Brouillard d'exploration : premier membre arrivé sur ce lieu. */
   discoverer?: { nickname: string; at: string } | null;
   /** ouvre l'itinéraire vers ce lieu */
@@ -187,6 +200,17 @@ export default function DetailPanel({
         {entity.description || 'Aucune description pour le moment.'}
       </p>
 
+      {kind === 'place' && biomes && (
+        <PlaceWeatherSection
+          key={entity.id}
+          place={entity as MapPlace}
+          biomes={biomes}
+          weather={weather ?? null}
+          canEdit={canEdit}
+          onChanged={onWeatherChanged}
+        />
+      )}
+
       {wikiEntries.length > 0 && (
         <div className="mt-4 space-y-2">
           <p className="text-[11px] uppercase tracking-wide text-paper/65">
@@ -270,6 +294,15 @@ export default function DetailPanel({
               />
               <SidIcon name="cone" /> Ce lieu est un bâtiment éditable (étages, sous-sols…)
             </label>
+          )}
+          {isBuilding && (
+            <PlaceOwnerSection
+              placeId={entity.id}
+              ownerId={(entity as MapPlace).owner_id}
+              canEdit={canEdit}
+              myUserId={positionsHook?.myUserId ?? null}
+              onChanged={() => onPlaceChanged?.()}
+            />
           )}
           {isBuilding && (
             <Link

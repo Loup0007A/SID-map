@@ -16,10 +16,12 @@ import { GuideProvider } from '@/components/guide/GuideProvider';
 import EventDecor from '@/components/EventDecor';
 import SessionGuard from '@/components/auth/SessionGuard';
 import './globals.css';
+import './fonds.css';
+import Backdrop from '@/components/Backdrop';
 import { BrandProvider } from '@/components/BrandProvider';
 import SiteGate from '@/components/SiteGate';
 import { brandify } from '@/lib/brand';
-import { getBrand, getGlitched } from '@/lib/brand-server';
+import { getBrand, getFondTheme, getGlitched } from '@/lib/brand-server';
 import { GlitchSync } from '@/components/glitch/GlitchSync';
 
 
@@ -41,15 +43,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#121927',
+  themeColor: '#2A1408',
   viewportFit: 'cover'
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [brand, glitched] = await Promise.all([getBrand(), getGlitched()]);
+  const [brand, glitched, theme] = await Promise.all([getBrand(), getGlitched(), getFondTheme()]);
   return (
-    <html lang="fr">
-      <body className="bg-ink text-paper font-body antialiased">
+    <html lang="fr" data-theme={theme ?? undefined}>
+      <body className="text-paper font-body antialiased">
+        <Backdrop />
         <BrandProvider brand={brand} glitched={glitched}>
           <SiteGate>
             <ToastProvider>

@@ -3,18 +3,7 @@
 import { useMemo } from 'react';
 import { FLOOR_STEP, SLAB_THICKNESS, WALL_HEIGHT, isoProject } from '@/lib/iso';
 import type { BuildingFloor, Room } from '@/lib/types';
-
-const ROOM_COLORS: Record<string, string> = {
-  Chambre: '#7c9cbf',
-  Salon: '#c98a5b',
-  Cuisine: '#8fae6b',
-  Salle: '#b08d57',
-  Couloir: '#6b6459',
-  Escalier: '#a0522d',
-  Autel: '#d4af37',
-  Cave: '#3f3a34',
-  Autre: '#8a8a8a'
-};
+import { floorLabel, roomType } from '@/lib/rooms';
 
 function pts(list: { x: number; y: number }[]) {
   return list.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
@@ -62,9 +51,9 @@ export default function Building3DView({ floors }: { floors: BuildingFloor[] }) 
   const sortedFloors = [...floors].sort((a, b) => a.floor_number - b.floor_number);
 
   const { slabFaces, glassCells, roomFootprints, floorLabels, viewBox } = useMemo(() => {
-    const slabFaces: { poly: string; shade: number }[] = [];
-    const glassCells: { poly: string }[] = [];
-    const roomFootprints: { poly: string; color: string; labelX: number; labelY: number; label: string }[] = [];
+    const slabFaces: { poly: string; shade: number; fi: number }[] = [];
+    const glassCells: { poly: string; fi: number }[] = [];
+    const roomFootprints: { poly: string; color: string; labelX: number; labelY: number; label: string; fi: number }[] = [];
     const floorLabels: { x: number; y: number; label: string }[] = [];
 
     let minX = Infinity,
@@ -100,9 +89,9 @@ export default function Building3DView({ floors }: { floors: BuildingFloor[] }) 
         isoProject(B.x, B.y, slabBase)
       ];
       [slabTopFace, slabFrontFace, slabRightFace].forEach((f) => f.forEach(extend));
-      slabFaces.push({ poly: pts(slabRightFace), shade: 0.72 });
-      slabFaces.push({ poly: pts(slabFrontFace), shade: 0.85 });
-      slabFaces.push({ poly: pts(slabTopFace), shade: 1 });
+      slabFaces.push({ poly: pts(slabRightFace), shade: 0.72, fi: i });
+      slabFaces.push({ poly: pts(slabFrontFace), shade: 0.85, fi: i });
+      slabFaces.push({ poly: pts(slabTopFace), shade: 1, fi: i });
 
       // --- Façade vitrée en grille (deux faces visibles) ---
       const cols = 10;
@@ -114,11 +103,11 @@ export default function Building3DView({ floors }: { floors: BuildingFloor[] }) 
 
       subdivideQuad(frontTop[0], frontTop[1], frontBase[1], frontBase[0], cols, rows).forEach((cell) => {
         cell.forEach(extend);
-        glassCells.push({ poly: pts(cell) });
+        glassCells.push({ poly: pts(cell), fi: i });
       });
       subdivideQuad(rightTop[0], rightTop[1], rightBase[1], rightBase[0], cols, rows).forEach((cell) => {
         cell.forEach(extend);
-        glassCells.push({ poly: pts(cell) });
+        glassCells.push({ poly: pts(cell), fi: i });
       });
 
       // --- Pièces visibles à l'intérieur (empreintes plates, pas de murs opaques) ---
@@ -131,15 +120,16 @@ export default function Building3DView({ floors }: { floors: BuildingFloor[] }) 
           { x: room.x + room.w, y: room.y + room.h },
           { x: room.x, y: room.y + room.h }
         ];
-        const projected = corners.map((c) => isoProject(c.x, c.y, wallTop + 0.15));
+        const projected = corners.map((c) => isoProject(c.x, c.y, slabTop + 0.05));
         projected.forEach(extend);
-        const center = isoProject(room.x + room.w / 2, room.y + room.h / 2, wallTop + 0.2);
+        const center = isoProject(room.x + room.w / 2, room.y + room.h / 2, slabTop + 0.2);
         roomFootprints.push({
           poly: pts(projected),
-          color: ROOM_COLORS[room.type] ?? '#8a8a8a',
+          color: roomType(room.type).tint,
           labelX: center.x,
           labelY: center.y,
-          label: room.name
+          label: room.name,
+          fi: i
         });
       });
 
@@ -148,7 +138,7 @@ export default function Building3DView({ floors }: { floors: BuildingFloor[] }) 
       floorLabels.push({
         x: labelAnchor.x,
         y: labelAnchor.y,
-        label: floor.name || `Étage ${floor.floor_number}`
+        label: floorLabel(floor.floor_number, floor.name)
       });
     });
 
@@ -165,37 +155,31 @@ export default function Building3DView({ floors }: { floors: BuildingFloor[] }) 
   }, [sortedFloors]);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-black/5 bg-[#f3f3f1]">
-      <svg viewBox={viewBox} className="h-[560px] w-full">
-        {slabFaces.map((f, i) => (
-          <polygon
-            key={`slab-${i}`}
-            points={f.poly}
-            style={{ fill: `hsl(0,0%,${f.shade * 100}%)` }}
-            stroke="#00000022"
-            strokeWidth={0.25}
-          />
-        ))}
-
-        {roomFootprints.map((r, i) => (
-          <polygon key={`room-${i}`} points={r.poly} fill={r.color} fillOpacity={0.35} stroke="#00000030" strokeWidth={0.2} />
-        ))}
-        {roomFootprints.map((r, i) =>
-          r.label ? (
-            <text key={`label-${i}`} x={r.labelX} y={r.labelY} textAnchor="middle" fontSize="2.4" fill="#2a2a28">
-              {r.label}
-            </text>
-          ) : null
-        )}
-
-        {glassCells.map((c, i) => (
-          <polygon key={`glass-${i}`} points={c.poly} fill="#ffffff" fillOpacity={0.08} stroke="#00000035" strokeWidth={0.18} />
-        ))}
-
-        {floorLabels.map((f, i) => (
-          <text key={`fl-${i}`} x={f.x} y={f.y} fontSize="3.2" fill="#3a3a38" className="select-none">
-            {f.label}
-          </text>
+    <div className="maquette overflow-hidden rounded-xl">
+      <svg viewBox={viewBox} className="h-[460px] w-full md:h-[560px]" role="img" aria-label="Maquette de tous les étages">
+        {/* Du bas vers le haut : dalle, pièces, façade vitrée, nom de l'étage. */}
+        {sortedFloors.map((fl, fi) => (
+          <g key={fl.id}>
+            {slabFaces.filter((f) => f.fi === fi).map((f, i) => (
+              <polygon key={`slab-${i}`} points={f.poly} style={{ fill: `color-mix(in srgb, #f6ecd6 ${Math.round(f.shade * 100)}%, #8b6a47)` }} stroke="#2a1408" strokeWidth={0.3} />
+            ))}
+            {roomFootprints.filter((r) => r.fi === fi).map((r, i) => (
+              <polygon key={`room-${i}`} points={r.poly} fill={r.color} fillOpacity={0.85} stroke="#2a1408" strokeWidth={0.25} />
+            ))}
+            {roomFootprints.filter((r) => r.fi === fi && r.label).map((r, i) => (
+              <text key={`label-${i}`} x={r.labelX} y={r.labelY} textAnchor="middle" fontSize="2.2" fill="#2a1408" className="plan-label">
+                {r.label}
+              </text>
+            ))}
+            {glassCells.filter((c) => c.fi === fi).map((c, i) => (
+              <polygon key={`glass-${i}`} points={c.poly} fill="#9fd4cf" fillOpacity={0.1} stroke="#2a1408" strokeOpacity={0.35} strokeWidth={0.14} />
+            ))}
+            {floorLabels.filter((_, i) => i === fi).map((f, i) => (
+              <text key={`fl-${i}`} x={f.x} y={f.y} fontSize="3.2" fill="#2a1408" className="plan-label select-none">
+                {f.label}
+              </text>
+            ))}
+          </g>
         ))}
       </svg>
     </div>

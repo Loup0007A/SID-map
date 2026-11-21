@@ -85,14 +85,13 @@ function LoginForm() {
         />
       )}
       <div className="w-full max-w-sm">
-        <div className="anim-pop glass-strong overflow-hidden rounded-2xl">
-          <div className="stamp-bar h-1.5 w-full" />
+        <div className="anim-pop vellum overflow-hidden rounded-2xl">
           <form onSubmit={handleSubmit} className="space-y-5 p-8">
             <div className="space-y-1 text-center">
               <p className="font-display text-[10px] uppercase tracking-widest2 text-accent">
                 S.I.D. — Cartographie
               </p>
-              <h1 className="font-display text-xl uppercase tracking-wide text-paper">
+              <h1 className="interior-title text-[1.7rem]">
                 Accès au dossier
               </h1>
             </div>
@@ -123,7 +122,7 @@ function LoginForm() {
               />
             </div>
 
-            {error && <p className="text-xs text-accent">{error}</p>}
+            {error && <p className="text-xs font-semibold text-[#b3261e]">{error}</p>}
 
             <button
               type="submit"

@@ -13,8 +13,8 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     description: brandify('Carte interactive du monde RP de la S.I.D.'),
     start_url: '/carte',
     display: 'standalone',
-    background_color: '#12141b',
-    theme_color: '#1b1e27',
+    background_color: '#C4572B',
+    theme_color: '#2A1408',
     orientation: 'any',
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
