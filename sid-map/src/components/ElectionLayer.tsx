@@ -5,6 +5,10 @@
  * pourpre et or sous la barre, confettis, et une étiquette (date de la
  * proclamation, puis le nom de l'élu). La cérémonie elle-même a lieu sur le
  * Dossier Central. Fichier identique dans la Cartographie et le Wiki.
+ *
+ * Lot 91 : si l'élu a pris le pouvoir par la force (mode « force », connu
+ * à la proclamation), bande d'alerte à la place des fanions, alarme rouge
+ * sur les bords, étiquette de coup d'État, et thème rouge sang.
  */
 
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
@@ -12,7 +16,9 @@ import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { BRAND } from '@/lib/brand';
 
-type Status = { revealed: boolean; reveal_at: string | null; winner: { nickname: string } | null };
+type Status = { revealed: boolean; reveal_at: string | null; mode?: 'election' | 'force' | null; winner: { nickname: string } | null };
+
+const TAPE = "ALERTE · COUP D'ÉTAT · LE CONSEIL EST DISSOUS · COUVRE-FEU EN VIGUEUR · ";
 
 function Flags({ top, width }: { top: number; width: number }) {
   const swag = width < 640 ? 120 : 170;
@@ -79,10 +85,26 @@ export function ElectionLayer({ variant }: { variant: 'map' | 'wiki' }) {
     []
   );
 
+  const force = !!status?.revealed && status.mode === 'force';
+  // Par la force : thème rouge sang (fonds.css du Wiki) et alarme.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (force) {
+      root.dataset.electionMode = 'force';
+      root.dataset.theme = 'election_force';
+    }
+    return () => {
+      delete root.dataset.electionMode;
+      if (root.dataset.theme === 'election_force') root.dataset.theme = 'election';
+    };
+  }, [force]);
+
   if (!mounted) return null;
   const label = status?.revealed
     ? status.winner
-      ? `Vive ${status.winner.nickname}, Dictateur du S.I.D. !`
+      ? force
+        ? `Coup d'État : ${status.winner.nickname} a pris le pouvoir par la force.`
+        : `Vive ${status.winner.nickname}, Dictateur du S.I.D. !`
       : 'Le Conseil du S.I.D. délibère encore…'
     : status?.reveal_at
       ? `Proclamation du Dictateur : ${new Date(status.reveal_at).toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' })}`
@@ -91,16 +113,33 @@ export function ElectionLayer({ variant }: { variant: 'map' | 'wiki' }) {
   return createPortal(
     <>
       <div className={`ev-front ev-${variant}`} aria-hidden>
-        {bar && <Flags top={bar.top} width={bar.width} />}
-        <div className="el-confetti">
-          {bits.map((s, i) => (
-            <i key={i} style={s} />
-          ))}
-        </div>
+        {force ? (
+          <>
+            <div className="el-alarm" />
+            {bar && (
+              <div className="el-tape" style={{ position: 'absolute', top: bar.top, left: 0, width: bar.width }}>
+                <div className="el-tape-track">
+                  {[0, 1, 2, 3].map((i) => (
+                    <span key={i}>{TAPE}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {bar && <Flags top={bar.top} width={bar.width} />}
+            <div className="el-confetti">
+              {bits.map((s, i) => (
+                <i key={i} style={s} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
       {label && (
-        <a href={`${BRAND.urls.site}/dashboard`} className={`el-pill el-pill-${variant}`}>
-          <span aria-hidden>👑</span> {label}
+        <a href={`${BRAND.urls.site}/dashboard`} className={`el-pill el-pill-${variant}${force ? ' is-force' : ''}`}>
+          <span aria-hidden>{force ? '⚠' : '👑'}</span> {label}
         </a>
       )}
     </>,

@@ -769,6 +769,28 @@ svg.map-night .map-place > .place-disc { fill: #fff0c2; filter: drop-shadow(0 0 
   .el-pill-wiki { bottom: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { .el-confetti { display: none; } }
+/* Élection prise par la force (Lot 91) : alarme, bande d'alerte. */
+.el-alarm { position: absolute; inset: 0; animation: el-alarm 2.4s ease-in-out infinite; }
+@keyframes el-alarm {
+  0%, 100% { box-shadow: inset 0 0 40px 4px rgb(255 20 30 / 0.22); }
+  50% { box-shadow: inset 0 0 140px 34px rgb(255 20 30 / 0.5); }
+}
+/* Téléphone : bord plus fin, le contenu reste lisible. */
+@media (max-width: 640px) { .el-alarm { animation-name: el-alarm-s; } }
+@keyframes el-alarm-s {
+  0%, 100% { box-shadow: inset 0 0 24px 2px rgb(255 20 30 / 0.22); }
+  50% { box-shadow: inset 0 0 60px 10px rgb(255 20 30 / 0.45); }
+}
+.el-tape { overflow: hidden; height: 28px; border-block: 3px solid #14030a; background: repeating-linear-gradient(-45deg, #f2c94c 0 14px, #14030a 14px 28px); }
+.el-tape-track { display: inline-flex; white-space: nowrap; animation: el-tape 40s linear infinite; }
+.el-tape-track > span { margin: 2px 0; padding: 0 14px; background: #c1121f; color: #fff1ec; border: 2px solid #14030a; font: 800 12px/18px ui-monospace, monospace; letter-spacing: 0.14em; }
+@keyframes el-tape { to { transform: translateX(-50%); } }
+.el-pill.is-force { background: #8e0b14; border-color: #14030a; color: #fff1ec; }
+.el-pill.is-force:hover { background: #c1121f; }
+@media (prefers-reduced-motion: reduce) {
+  .el-alarm, .el-tape-track { animation: none; }
+  .el-alarm { box-shadow: inset 0 0 90px 20px rgb(255 20 30 / 0.35); }
+}
 
 /* Lieu inconnu (Lot 81) : pseudo et avatar d'un membre brouillé depuis
    L'Envers de la Cartographie (GlitchText, src/brand/glitch.ts).
