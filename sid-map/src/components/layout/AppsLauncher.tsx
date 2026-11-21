@@ -6,6 +6,7 @@ import { usePermission } from '@/lib/hooks/usePermission';
 import { APPS, CATEGORIES, openApp, type AppCategory } from '@/lib/apps';
 import AppIcon from './AppIcon';
 import { LegalLinks } from '@/components/legal/LegalPage';
+import { BRAND } from '@/lib/brand';
 import { useGuide } from '@/components/guide/GuideProvider';
 import { Glyph } from '@/components/icons/SidIcon';
 
@@ -95,7 +96,7 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
                         key={a.id}
                         onClick={() => launch(a.id)}
                         title={a.description}
-                        className="hover-lift flex flex-col items-center gap-1.5 rounded-lg border border-accent/15 bg-[#232e44] p-2.5 text-center hover:border-accent/60 hover:bg-[#28354e]"
+                        className="hover-lift flex flex-col items-center gap-1.5 rounded-lg border border-accent/15 bg-white/5 p-2.5 text-center hover:border-accent/60 hover:bg-white/10"
                       >
                         <AppIcon id={a.id} emoji={a.emoji} />
                         <span className="font-serif text-[15px] font-bold leading-tight text-paper">{a.name}</span>
@@ -105,6 +106,13 @@ export default function AppsLauncher({ onClose }: { onClose: () => void }) {
                 </div>
               </section>
             ))}
+          <a href={`${BRAND.urls.site}/dashboard/settings#confort`} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm hover:border-accent/60">
+            <span>
+              <span className="block font-display text-accent">Affichage</span>
+              <span className="block text-xs text-paper/70">Mode sombre, mode épuré, taille du texte, animations : réglés sur le Dossier Central, valables ici.</span>
+            </span>
+            <span aria-hidden>→</span>
+          </a>
           <LegalLinks className="border-t border-white/10 pt-3" />
         </div>
       </div>

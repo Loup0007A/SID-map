@@ -1632,7 +1632,7 @@ export default function WorldMap() {
           return (
             <g style={{ pointerEvents: 'none' }}>
               {/* Lot 92 : la feuille posée sur la table, ombre pleine d'encre. */}
-              <rect x={-m + world * 0.004} y={-m + world * 0.012} width={world + 2 * m} height={world + 2 * m} rx={world * 0.006} style={{ fill: 'rgb(var(--encre))' }} />
+              <rect className="feuille-ombre" x={-m + world * 0.004} y={-m + world * 0.012} width={world + 2 * m} height={world + 2 * m} rx={world * 0.006} style={{ fill: 'rgb(var(--encre))' }} />
               <rect x={-m} y={-m} width={world + 2 * m} height={world + 2 * m} rx={world * 0.006} fill="#e4d6b4" />
               <rect x={-m} y={-m} width={world + 2 * m} height={world + 2 * m} rx={world * 0.006} fill="none" style={{ stroke: 'rgb(var(--encre))' }} strokeWidth={world * 0.0045} />
               <rect x={0} y={0} width={world} height={world} fill={SEA} />

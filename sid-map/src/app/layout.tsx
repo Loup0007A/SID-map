@@ -23,6 +23,8 @@ import SiteGate from '@/components/SiteGate';
 import { brandify } from '@/lib/brand';
 import { getBrand, getFondTheme, getGlitched } from '@/lib/brand-server';
 import { GlitchSync } from '@/components/glitch/GlitchSync';
+import ComfortSync from '@/components/ComfortSync';
+import { COMFORT_BOOT } from '@/lib/comfortPrefs';
 
 
 // Noms tirés de app_config (Lot 77, voir SETUP.md du site principal).
@@ -50,7 +52,11 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [brand, glitched, theme] = await Promise.all([getBrand(), getGlitched(), getFondTheme()]);
   return (
-    <html lang="fr" data-theme={theme ?? undefined}>
+    <html lang="fr" data-theme={theme ?? undefined} suppressHydrationWarning>
+      <head>
+        {/* Réglages d'affichage du compte (Lot 94) : posés avant le premier affichage. */}
+        <script dangerouslySetInnerHTML={{ __html: COMFORT_BOOT }} />
+      </head>
       <body className="text-paper font-body antialiased">
         <Backdrop />
         <BrandProvider brand={brand} glitched={glitched}>
@@ -64,6 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <EventDecor variant="map" />
           <LabelLinker />
           <GlitchSync />
+          <ComfortSync />
         </BrandProvider>
       </body>
     </html>

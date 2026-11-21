@@ -1066,3 +1066,67 @@ svg.map-night .map-place > .place-disc { fill: #fff0c2; filter: drop-shadow(0 0 
 @media (hover: hover) {
   .city-building:hover > g:first-child { filter: brightness(1.1); }
 }
+
+/* =====================================================================
+   Réglages d'affichage du compte (Lot 94, réglés sur le Dossier Central :
+   Réglages → Affichage ; src/lib/comfortPrefs.ts). Classes sur <html>.
+   ===================================================================== */
+html.texte-grand { font-size: 112.5%; }
+html.texte-tres-grand { font-size: 125%; }
+html.calme .fond-particules { display: none; }
+html.calme *, html.calme *::before, html.calme *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Mode sombre : table de nuit, cartouche et feuilles de vélin passés au
+   cuir sombre. La carte, les plans de ville et d'étage restent des
+   documents sur vélin. */
+:root.sombre {
+  color-scheme: dark;
+  --fond: 36 18 9;
+  --fond-haut: 120 50 20;
+  --fond-bas: 0 0 0;
+  --surface: 52 32 20;
+}
+:root.sombre .fond::after { content: ""; position: absolute; inset: 0; background: rgb(var(--fond) / 0.6); }
+:root.sombre .fond-particules { opacity: 0.55; }
+:root.sombre :is(.vellum, .city-cartouche) {
+  --t-paper: var(--creme);
+  --t-accent: var(--accent-2);
+  color: rgb(var(--creme));
+  background: rgb(var(--surface));
+  border-color: rgb(0 0 0 / 0.65);
+  box-shadow: 0 5px 0 rgb(0 0 0 / 0.55);
+}
+:root.sombre .vellum :is(.interior-title, .interior-floor-title, h1.font-display, h2.text-accent, h3.text-accent) { color: rgb(var(--creme)); }
+:root.sombre .vellum .floor-name-input { border-bottom-color: rgb(var(--creme) / 0.35); }
+:root.sombre .vellum :is(.room-card, .sheet) { background: rgb(255 255 255 / 0.05); border-color: rgb(255 255 255 / 0.18); }
+:root.sombre .vellum .maquette, :root.sombre .vellum .plan-sheet { border-color: rgb(0 0 0 / 0.65); }
+:root.sombre .site-bar {
+  --t-paper: var(--creme);
+  --t-accent: var(--accent-2);
+  background: rgb(var(--encre));
+  color: rgb(var(--creme));
+  border-bottom-color: rgb(var(--accent-2) / 0.65);
+  box-shadow: 0 4px 0 rgb(0 0 0 / 0.45);
+}
+:root.sombre .nav-btn { border-color: rgb(var(--creme) / 0.7); color: rgb(var(--creme)); }
+:root.sombre .nav-btn:hover { background: rgb(var(--creme)); color: rgb(var(--encre)); }
+:root.sombre .nav-current { color: rgb(var(--creme)); }
+
+/* Mode épuré : fond uni, ni motif ni particules, contours fins sans ombre. */
+:root.epure {
+  --ombre: none;
+  --ombre-petite: none;
+  --trait: 2px;
+}
+:root.epure .fond { background: rgb(var(--fond)); }
+:root.epure .fond::after, :root.epure .fond-particules, :root.epure .feuille-ombre { display: none; }
+:root.epure .glass { box-shadow: inset 0 0 0 1.5px rgb(var(--accent-2) / 0.3); }
+:root.epure .glass-strong { box-shadow: inset 0 0 0 2px rgb(var(--accent-2) / 0.32); }
+:root.epure :is(.btn-accent, .btn-danger, .back-link, .brand-seal, .owner-seal, .interior-seal) { box-shadow: none; }
+:root.epure :is(.btn-accent, .btn-danger):hover:not(:disabled) { transform: none; box-shadow: none; }
+:root.epure .site-bar { box-shadow: none; border-bottom-width: 2px; }

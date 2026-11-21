@@ -423,3 +423,11 @@ supabase/migrations/     schéma SQL additif
 - **Plan de ville** : feuille de vélin, remparts autour des quartiers,
   quartiers hachurés et nommés, bâtiments en toits (couleur selon le type)
   avec ombre pleine, nom, sceau du propriétaire et présences.
+
+## Lot 94 — Réglages d'affichage du compte
+
+Mode sombre, mode épuré, taille du texte, animations et décors des fêtes se
+règlent sur le Dossier Central (Réglages → Affichage) et valent ici
+(`profiles.display_prefs`, migration 0116 du Dossier Central).
+`src/lib/comfortPrefs.ts` et `src/components/ComfortSync.tsx` sont identiques
+sur les trois sites ; les règles CSS sont à la fin de `globals.css`.

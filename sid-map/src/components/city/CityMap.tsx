@@ -541,7 +541,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
             </pattern>
           ))}
         </defs>
-        <rect x={-48} y={-47} width={200} height={200} rx={2} style={{ fill: 'rgb(var(--encre))' }} />
+        <rect className="feuille-ombre" x={-48} y={-47} width={200} height={200} rx={2} style={{ fill: 'rgb(var(--encre))' }} />
         <rect x={-50} y={-50} width={200} height={200} rx={2} fill="#efe2c3" />
         <rect x={-50} y={-50} width={200} height={200} fill="url(#city-grid)" />
         <rect x={-50} y={-50} width={200} height={200} rx={2} fill="none" style={{ stroke: 'rgb(var(--encre))' }} strokeWidth={0.8} />
