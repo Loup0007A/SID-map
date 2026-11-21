@@ -49,7 +49,6 @@ import { biomeTextureId, reliefTextureId, findTexture } from '@/lib/textures';
 import Modal from '@/components/ui/Modal';
 import { useTextures } from '@/lib/hooks/useTextures';
 import { APP_EVENT } from '@/lib/apps';
-import { exportMapPng } from '@/lib/exportMap';
 import { useMountTypes } from '@/lib/hooks/useMountTypes';
 import { isQuestFinished } from '@/lib/types';
 import TerritoryFlag from './TerritoryFlag';
@@ -88,11 +87,12 @@ import { useExploration } from '@/lib/hooks/useExploration';
 import WeatherLayer from './WeatherLayer';
 import WeatherPanel from './WeatherPanel';
 import IncursionLayer from './IncursionLayer';
-import IncursionCard from './IncursionCard';
-import CreaturesModal from './CreaturesModal';
 import { incursionPos, useEventSettings, useIncursion, useWeather } from '@/lib/hooks/useMapEvents';
 import { weatherRoutes } from '@/lib/weather';
 const QuestPopup = dynamic(() => import('./QuestPopup'), { ssr: false });
+// Lot 95 : fenêtre d'admin et IncursionCard (évent rare) chargées à la demande.
+const CreaturesModal = dynamic(() => import('./CreaturesModal'), { ssr: false });
+const IncursionCard = dynamic(() => import('./IncursionCard'), { ssr: false });
 const TexturePicker = dynamic(() => import('./TexturePicker'), { ssr: false });
 const CrystalsModal = dynamic(() => import('./CrystalsModal'), { ssr: false });
 const MountsModal = dynamic(() => import('./MountsModal'), { ssr: false });
@@ -319,7 +319,8 @@ export default function WorldMap() {
         setShowBlackMarkets(true);
         break;
       case 'export':
-        exportMapPng(vp.svgRef.current, 'carte-du-monde-sid').then((ok) =>
+        // Export à la demande : son code n'est chargé qu'au clic.
+        import('@/lib/exportMap').then(({ exportMapPng }) => exportMapPng(vp.svgRef.current, 'carte-du-monde-sid')).then((ok) =>
           showToast(ok ? 'Image exportée.' : 'Export impossible depuis ce navigateur.', ok ? 'success' : 'error')
         );
         break;

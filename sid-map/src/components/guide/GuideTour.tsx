@@ -126,7 +126,7 @@ export default function GuideTour({
           <h3 className="font-display text-sm uppercase tracking-wide text-accent">{step.title}</h3>
           <p className="text-sm leading-relaxed text-paper/85">{step.body}</p>
           <div className="flex items-center gap-2 pt-2">
-            <button onClick={onEnd} className="mr-auto text-xs text-paper/65 underline hover:text-accent">
+            <button onClick={onEnd} className="mr-auto py-1 text-xs text-paper/65 underline hover:text-accent">
               {last ? 'Fermer' : 'Passer la visite'}
             </button>
             {index > 0 && (

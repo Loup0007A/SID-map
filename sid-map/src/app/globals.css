@@ -133,7 +133,7 @@ body {
   border-color: rgb(var(--accent-2));
   box-shadow: 0 0 0 3px rgb(var(--accent-2) / 0.22);
 }
-.glass-input::placeholder { color: rgb(var(--creme) / 0.45); }
+.glass-input::placeholder { color: rgb(var(--creme) / 0.89); }
 
 /* Action principale : pastille d'or, contour d'encre, s'enfonce au clic. */
 .btn-accent {
@@ -378,7 +378,7 @@ textarea:focus-visible,
 .legal li { margin: 0.3rem 0; }
 .legal a { text-decoration: underline; }
 .legal .legal-h2 { font-family: var(--font-sc); letter-spacing: 0.04em; font-size: 1.15rem; color: rgb(var(--t-accent)); margin: 1.6rem 0 0.4rem; }
-.legal .legal-meta { font-size: 0.8rem; opacity: 0.6; }
+.legal .legal-meta { font-size: 0.8rem; opacity: 0.85; }
 
 /* =====================================================================
    Fluidité de la carte (téléphones surtout)
@@ -1015,7 +1015,7 @@ svg.map-night .map-place > .place-disc { fill: #fff0c2; filter: drop-shadow(0 0 
   position: relative;
 }
 .section-walls, .section-earth { display: flex; flex-direction: column; border-inline: var(--trait) solid rgb(var(--encre)); margin-inline: 14px; }
-.section-walls { background: rgb(var(--creme)); }
+.section-walls { background: rgb(var(--creme)); color: rgb(var(--encre)); }
 .section-floor {
   display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
   min-height: 3rem; padding: 0.4rem 0.6rem; text-align: left; line-height: 1.15;
@@ -1105,6 +1105,9 @@ html.calme *, html.calme *::before, html.calme *::after {
 :root.sombre .vellum .floor-name-input { border-bottom-color: rgb(var(--creme) / 0.35); }
 :root.sombre .vellum :is(.room-card, .sheet) { background: rgb(255 255 255 / 0.05); border-color: rgb(255 255 255 / 0.18); }
 :root.sombre .vellum .maquette, :root.sombre .vellum .plan-sheet { border-color: rgb(0 0 0 / 0.65); }
+:root.sombre .section-walls { background: rgb(96 66 44); color: rgb(var(--creme)); }
+/* Plan de ville : le vélin reste, baissé comme sous une lampe. */
+:root.sombre .city-plan { filter: brightness(0.8) saturate(0.9); }
 :root.sombre .site-bar {
   --t-paper: var(--creme);
   --t-accent: var(--accent-2);
@@ -1130,3 +1133,7 @@ html.calme *, html.calme *::before, html.calme *::after {
 :root.epure :is(.btn-accent, .btn-danger, .back-link, .brand-seal, .owner-seal, .interior-seal) { box-shadow: none; }
 :root.epure :is(.btn-accent, .btn-danger):hover:not(:disabled) { transform: none; box-shadow: none; }
 :root.epure .site-bar { box-shadow: none; border-bottom-width: 2px; }
+
+/* Un mot très long (pseudo, titre, lien) passe à la ligne plutôt que de
+   faire déborder la page sur téléphone (Lot 95). */
+body { overflow-wrap: break-word; } /* Lot 95 */

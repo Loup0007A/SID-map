@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { sessionExpiry } from '@/lib/supabase/sessionCookie';
+import { withComfortCookie } from '@/lib/comfortCookie';
 
 /**
  * Garde de la Cartographie : sans session, direction /login.
@@ -10,7 +11,7 @@ import { sessionExpiry } from '@/lib/supabase/sessionCookie';
  * données restent protégées par la base (RLS). Avant, chaque page attendait
  * ici un aller-retour vers le serveur d'authentification de Supabase.
  */
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname.startsWith('/login');
   // Pages légales : lisibles sans être connecté.
@@ -24,7 +25,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
   // (Déjà connecté sur /login : la page renvoie elle-même vers la carte.)
-  return NextResponse.next();
+  // Appareil neuf : réglages d'affichage du compte posés avant la page.
+  return withComfortCookie(request, NextResponse.next());
 }
 
 export const config = {

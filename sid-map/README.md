@@ -431,3 +431,23 @@ règlent sur le Dossier Central (Réglages → Affichage) et valent ici
 (`profiles.display_prefs`, migration 0116 du Dossier Central).
 `src/lib/comfortPrefs.ts` et `src/components/ComfortSync.tsx` sont identiques
 sur les trois sites ; les règles CSS sont à la fin de `globals.css`.
+
+## Lot 95 — Lisibilité, outils de contrôle
+
+- **Contrastes** : `scripts/fonds.mjs` assombrit le fond de chaque thème juste
+  assez pour un texte crème à 4,5:1 (`lisible()`), et l'accent « sur carte » à
+  6:1. Les textes estompés (`text-paper/60`…) gardent au moins 80 % d'opacité.
+- **Appareil neuf** : `src/lib/comfortCookie.ts` (identique sur les trois
+  sites), appelé par le middleware, pose les réglages d'affichage du compte
+  dans le cookie `sid-confort` avant la première page ; le script du `<head>`
+  le lit si la mémoire locale est vide.
+- **Fichiers communs** : `npm run communs` compare les fichiers partagés avec
+  les deux autres sites (GitHub, ou `SID_DIRS=<dossier des trois dépôts>`) ;
+  `npm run communs -- --copier` recopie ceux de ce site chez les autres.
+- **Tests d'affichage** : `SID_TEST_URL=<adresse> npm run test:affichage`
+  (Playwright ; pages dans `tests/pages.ts`, pages de membre avec
+  `SID_TEST_COOKIE` et `SID_TEST_COOKIE_NAME`). Vérifie les classes posées
+  avant React, les contrastes (échec sous 3:1), les surfaces claires en mode
+  sombre et le défilement horizontal à 360 px. Captures dans `test-results/`.
+  Un élément aux couleurs choisies par un membre peut porter
+  `data-contraste-libre`.

@@ -479,7 +479,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
         <div className="glass absolute right-4 top-40 z-20 flex max-h-[40vh] flex-col gap-1 overflow-y-auto scrollbar-thin rounded-xl p-2.5 font-display text-[10px] uppercase md:top-32">
           <button
             onClick={() => setActiveDistrictFilter(null)}
-            className={!activeDistrictFilter ? 'text-accent' : 'text-paper/60 hover:text-accent'}
+            className={`min-h-[1.5rem] text-left ${!activeDistrictFilter ? 'text-accent' : 'text-paper/60 hover:text-accent'}`}
           >
             Tous les quartiers
           </button>
@@ -488,7 +488,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
               key={d.id}
               onClick={() => setActiveDistrictFilter(activeDistrictFilter === d.id ? null : d.id)}
               aria-pressed={activeDistrictFilter === d.id}
-              className={`flex items-center gap-1.5 text-left ${activeDistrictFilter === d.id ? 'text-accent' : 'text-paper/70 hover:text-accent'}`}
+              className={`flex min-h-[1.5rem] items-center gap-1.5 text-left ${activeDistrictFilter === d.id ? 'text-accent' : 'text-paper/70 hover:text-accent'}`}
             >
               <span aria-hidden className="h-3 w-3 shrink-0 rounded-sm border-2 border-[rgb(var(--encre))]" style={{ background: d.color }} />
               {d.name}
@@ -507,7 +507,7 @@ export default function CityMap({ cityId }: { cityId: string }) {
         ref={vp.svgRef}
         viewBox={vp.viewBoxString}
         style={{ touchAction: 'none' }}
-        className={`h-full w-full select-none ${
+        className={`city-plan h-full w-full select-none ${
           deleteMode
             ? 'cursor-not-allowed'
             : editMode && activeTool

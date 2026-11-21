@@ -22,6 +22,11 @@ const config: Config = {
         turquoise: 'rgb(var(--accent) / <alpha-value>)',
         or: 'rgb(var(--accent-2) / <alpha-value>)'
       },
+      // Lisibilité (Lot 95) : un texte « paper » estompé (text-paper/65…)
+      // garde au moins 80 % d'opacité (4,5:1) ; fonds et bordures inchangés.
+      textColor: {
+        paper: 'rgb(var(--t-paper) / calc(0.8 + <alpha-value> * 0.2))'
+      },
       fontFamily: {
         display: ['"Alegreya SC"', 'Georgia', 'serif'],
         body: ['"Alegreya Sans"', 'ui-sans-serif', 'sans-serif'],
