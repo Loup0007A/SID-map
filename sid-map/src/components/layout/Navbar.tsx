@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import AppsLauncher from './AppsLauncher';
 import { useGuide } from '@/components/guide/GuideProvider';
 import { SidIcon } from "@/components/icons/SidIcon";
+import { BoutonRechercheCommune } from '@/components/RechercheCommune';
 
 const LINKS = [{ href: '/carte', label: 'Carte du monde' }];
 const STORAGE_KEY = 'sid-navbar-collapsed';
@@ -87,6 +88,8 @@ export default function Navbar() {
             {l.label}
           </Link>
         ))}
+        {/* Lot 96 : recherche sur les trois sites (Ctrl+K). */}
+        <BoutonRechercheCommune className="nav-btn flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none" />
         <button
           onClick={() => guide.openHelp()}
           data-guide="help"

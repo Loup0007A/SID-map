@@ -1137,3 +1137,115 @@ html.calme *, html.calme *::before, html.calme *::after {
 /* Un mot très long (pseudo, titre, lien) passe à la ligne plutôt que de
    faire déborder la page sur téléphone (Lot 95). */
 body { overflow-wrap: break-word; } /* Lot 95 */
+
+/* --- Recherche commune aux trois sites (Lot 96, RechercheCommune.tsx) --- */
+.rc-fond {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: max(4rem, env(safe-area-inset-top)) 1rem 1rem;
+  background: rgb(var(--encre) / 0.55);
+}
+.rc-fenetre {
+  display: flex;
+  width: min(40rem, 100%);
+  max-height: min(34rem, calc(100dvh - 6rem));
+  flex-direction: column;
+  overflow: hidden;
+  --rc-ink: var(--encre);
+  --rc-bg: var(--creme);
+  border: var(--trait, 2px) solid rgb(var(--encre));
+  border-radius: 0.9rem;
+  background: rgb(var(--rc-bg));
+  color: rgb(var(--rc-ink));
+  box-shadow: 0 6px 0 rgb(var(--encre) / 0.85);
+}
+.rc-champ {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-bottom: 2px solid rgb(var(--rc-ink) / 0.15);
+  padding: 0.75rem 0.9rem;
+}
+.rc-champ input {
+  min-width: 0;
+  flex: 1;
+  background: transparent;
+  font-size: 1.05rem;
+  color: inherit;
+  outline: none;
+}
+.rc-champ input::placeholder { color: rgb(var(--rc-ink) / 0.6); }
+.rc-fermer {
+  min-height: 2rem;
+  border-radius: 0.5rem;
+  border: 1.5px solid rgb(var(--rc-ink) / 0.3);
+  padding: 0 0.6rem;
+  font-size: 0.8rem;
+}
+.rc-fermer:hover, .rc-fermer:focus-visible { border-color: rgb(var(--rc-ink)); }
+.rc-liste { overflow-y: auto; padding: 0.35rem 0.4rem 0.6rem; }
+.rc-groupe {
+  padding: 0.6rem 0.6rem 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgb(var(--rc-ink) / 0.8);
+}
+.rc-ailleurs { font-weight: 400; }
+.rc-opt {
+  display: flex;
+  min-height: 2.75rem;
+  cursor: pointer;
+  align-items: center;
+  gap: 0.7rem;
+  border-radius: 0.6rem;
+  padding: 0.35rem 0.6rem;
+}
+.rc-opt.is-active { background: rgb(var(--accent) / 0.16); box-shadow: inset 3px 0 0 rgb(var(--accent)); }
+.rc-image, .rc-icone {
+  display: grid;
+  height: 2rem;
+  width: 2rem;
+  flex: none;
+  place-items: center;
+  border-radius: 0.45rem;
+  object-fit: cover;
+  background: rgb(var(--rc-ink) / 0.08);
+}
+.rc-textes { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.rc-titre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.rc-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem; color: rgb(var(--rc-ink) / 0.75); }
+.rc-vide { padding: 1.5rem 1rem; text-align: center; font-size: 0.9rem; color: rgb(var(--rc-ink) / 0.8); }
+.rc-bouton {
+  display: inline-flex;
+  min-height: 2.5rem;
+  flex: none;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 0.5rem;
+  padding: 0 0.7rem;
+}
+:root.sombre .rc-fenetre { --rc-ink: var(--creme); --rc-bg: var(--surface); border-color: rgb(0 0 0); }
+@media (max-width: 639px) { .rc-bouton-texte { display: none; } }
+
+/* --- Carto hors ligne (Lot 96, HorsLigne.tsx) --- */
+.hors-ligne {
+  position: fixed;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 80;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  transform: translateX(-50%);
+  border: 2px solid rgb(var(--encre));
+  border-radius: 0.75rem;
+  background: rgb(var(--creme));
+  color: rgb(var(--encre));
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 0 rgb(var(--encre) / 0.8);
+}
+:root.sombre .hors-ligne { background: rgb(var(--surface)); color: rgb(var(--creme)); border-color: rgb(0 0 0); }

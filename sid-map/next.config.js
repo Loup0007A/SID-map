@@ -1,13 +1,5 @@
-// Contrôle technique (Lot 61) : en-têtes de sécurité sur toutes les pages.
-//  - nosniff : le navigateur ne devine pas le type d'un fichier ;
-//  - SAMEORIGIN : le site ne peut pas être affiché dans un cadre d'un autre site
-//    (protection contre le « clickjacking », ex. un faux bouton posé sur la Banque) ;
-//  - Referrer-Policy : les adresses complètes ne fuient pas vers les autres sites.
-const SECURITY_HEADERS = [
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-];
+// En-têtes de sécurité : en-tetes-securite.js (identique sur les trois sites).
+const { SECURITY_HEADERS } = require('./en-tetes-securite');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -15,7 +7,11 @@ const nextConfig = {
   // (/_next/image répond 404), ce qui écarte ses failles connues.
   images: { unoptimized: true },
   async headers() {
-    return [{ source: '/:path*', headers: SECURITY_HEADERS }];
+    return [
+      { source: '/:path*', headers: SECURITY_HEADERS },
+      // Service worker (Carto hors ligne) : toujours revérifié.
+      { source: '/sw-carto.js', headers: [{ key: 'Cache-Control', value: 'no-cache' }] },
+    ];
   },
   webpack: (config) => {
     // Lot 77 : le JSX passe par src/brand (tsconfig jsxImportSource). Le cache

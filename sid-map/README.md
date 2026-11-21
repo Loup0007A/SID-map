@@ -451,3 +451,20 @@ sur les trois sites ; les règles CSS sont à la fin de `globals.css`.
   sombre et le défilement horizontal à 360 px. Captures dans `test-results/`.
   Un élément aux couleurs choisies par un membre peut porter
   `data-contraste-libre`.
+
+## Lot 96 — Carto hors ligne, sécurité, recherche commune
+
+- **Hors ligne** : `public/sw-carto.js` garde les pages de la carte, le
+  JavaScript et les images ; `src/lib/horsLigne.ts` (branché sur le client
+  Supabase) garde la dernière réponse de chaque lecture (tables et fonctions
+  listées dans `LECTURES`) au nom du membre, et la ressert sans réseau ;
+  `src/components/HorsLigne.tsx` installe le service worker, affiche le
+  bandeau et efface tout à la déconnexion. Une nouvelle fonction de lecture à
+  garder : l'ajouter à `LECTURES`. Changer `VERSION` dans `sw-carto.js` vide
+  les anciennes copies.
+- **Bâtiments** : le propriétaire ne change plus que la description et
+  l'image (migration 0121).
+- **Recherche commune** : `src/components/RechercheCommune.tsx` (identique sur
+  les trois sites), bouton « Trois sites » de la barre et Ctrl+K.
+- **En-têtes** : `en-tetes-securite.js` (identique sur les trois sites).
+- **Secrets** : `npm run secrets` (`SCELLE_CLE=…` pour la phrase du sceau).

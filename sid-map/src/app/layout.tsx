@@ -24,6 +24,8 @@ import { brandify } from '@/lib/brand';
 import { getBrand, getFondTheme, getGlitched } from '@/lib/brand-server';
 import { GlitchSync } from '@/components/glitch/GlitchSync';
 import ComfortSync from '@/components/ComfortSync';
+import RechercheCommune from '@/components/RechercheCommune';
+import HorsLigne from '@/components/HorsLigne';
 import { COMFORT_BOOT } from '@/lib/comfortPrefs';
 
 
@@ -71,6 +73,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <LabelLinker />
           <GlitchSync />
           <ComfortSync />
+          <RechercheCommune ici="map" />
+          <HorsLigne />
         </BrandProvider>
       </body>
     </html>
