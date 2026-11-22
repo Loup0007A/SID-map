@@ -77,13 +77,14 @@ export default function CommentsBox({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Écrire un commentaire…"
-          className="flex-1 glass-input rounded-lg px-3 py-2 text-sm outline-none"
+          aria-label="Commentaire"
+          className="min-w-0 flex-1 glass-input rounded-lg px-3 py-2 text-sm outline-none"
           onKeyDown={(e) => e.key === 'Enter' && post()}
         />
         <button
           onClick={post}
           disabled={posting}
-          className="btn-accent rounded-lg px-4 py-2 text-sm font-medium text-paper disabled:opacity-50"
+          className="btn-accent shrink-0 rounded-lg px-4 py-2 text-sm font-medium text-paper disabled:opacity-50"
         >
           Envoyer
         </button>

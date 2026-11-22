@@ -57,7 +57,7 @@ export default function Navbar() {
 
   return (
     <>
-    <nav className="site-bar anim-fade relative z-40 flex h-14 shrink-0 items-center justify-between gap-2 px-3 md:px-4">
+    <nav className="site-bar anim-fade relative z-40 flex h-14 shrink-0 items-center justify-between gap-1.5 px-2 sm:gap-2 sm:px-3 md:px-4">
 
       <Link href="/carte" className="shrink-0 font-display text-[1.05rem] text-paper md:text-[1.2rem]">
         <span className="brand-mark flex items-center gap-2.5">
@@ -67,19 +67,20 @@ export default function Navbar() {
         </span>
       </Link>
 
-      <div className="flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-1.5">
+      <div className="flex min-w-0 items-center gap-0.5 overflow-x-auto sm:gap-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-1.5">
         <button
           onClick={() => setAppsOpen(true)}
           data-guide="apps"
-          className="btn-accent shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none text-paper md:px-3.5"
+          className="btn-accent shrink-0 whitespace-nowrap rounded-md px-2 py-1.5 font-display text-[0.95rem] leading-none text-paper sm:px-3 md:px-3.5"
         >
-          Applications
+          <span className="sm:hidden">Applis</span>
+          <span className="hidden sm:inline">Applications</span>
         </button>
         {LINKS.map((l) => (
           <Link
             key={l.href}
             href={l.href}
-            className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none transition ${
+            className={`shrink-0 whitespace-nowrap rounded-md px-1.5 py-1.5 font-display text-[0.95rem] leading-none sm:px-3 transition ${
               pathname === l.href
                 ? 'nav-current hidden md:inline-block'
                 : 'hidden text-paper/75 hover:text-accent md:inline-block'
@@ -91,18 +92,18 @@ export default function Navbar() {
         {/* Lot 97 : carnet de voyage (visible aussi sur téléphone). */}
         <Link
           href="/carnet"
-          className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none transition ${
+          className={`shrink-0 whitespace-nowrap rounded-md px-1.5 py-1.5 font-display text-[0.95rem] leading-none sm:px-3 transition ${
             pathname === '/carnet' ? 'nav-current' : 'text-paper/75 hover:text-accent'
           }`}
         >
           Carnet<span className="hidden lg:inline"> de voyage</span>
         </Link>
         {/* Lot 96 : recherche sur les trois sites (Ctrl+K). */}
-        <BoutonRechercheCommune className="nav-btn flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none" />
+        <BoutonRechercheCommune className="nav-btn flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-1.5 py-1.5 font-display text-[0.95rem] leading-none sm:px-3" />
         <button
           onClick={() => guide.openHelp()}
           data-guide="help"
-          className="nav-btn shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none"
+          className="nav-btn shrink-0 whitespace-nowrap rounded-md px-1.5 py-1.5 font-display text-[0.95rem] leading-none sm:px-3"
         >
           ?<span className="hidden md:inline"> Aide</span>
         </button>
@@ -110,7 +111,7 @@ export default function Navbar() {
           onClick={logout}
           aria-label="Déconnexion"
           title="Déconnexion"
-          className="nav-btn ml-1 shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none"
+          className="nav-btn shrink-0 sm:ml-1 whitespace-nowrap rounded-md px-1.5 py-1.5 font-display text-[0.95rem] leading-none sm:px-3"
         >
           <span className="md:hidden" aria-hidden>
             <SidIcon name="power" />
@@ -120,7 +121,7 @@ export default function Navbar() {
         <button
           onClick={toggle}
           title="Replier la barre de navigation"
-          className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-paper/65 hover:bg-white/10 hover:text-accent"
+          className="flex h-7 w-6 shrink-0 items-center sm:ml-1 sm:w-7 justify-center rounded-lg text-paper/65 hover:bg-white/10 hover:text-accent"
         >
           ▴
         </button>
