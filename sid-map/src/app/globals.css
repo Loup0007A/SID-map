@@ -1249,3 +1249,11 @@ body { overflow-wrap: break-word; } /* Lot 95 */
   box-shadow: 0 4px 0 rgb(var(--encre) / 0.8);
 }
 :root.sombre .hors-ligne { background: rgb(var(--surface)); color: rgb(var(--creme)); border-color: rgb(0 0 0); }
+
+/* --- Carnet de voyage (Lot 97) --- */
+.carnet-barre { height: 0.6rem; overflow: hidden; border-radius: 99px; border: 1.5px solid rgb(var(--encre) / 0.6); background: rgb(var(--encre) / 0.08); }
+.carnet-barre > span { display: block; height: 100%; background: rgb(var(--accent)); }
+.carnet-frise { border-left: 2px dashed rgb(var(--encre) / 0.35); padding-left: 0.9rem; }
+.carnet-note { border-left: 3px solid rgb(var(--accent) / 0.7); padding-left: 0.7rem; font-size: 1.02rem; line-height: 1.55; }
+:root.sombre .carnet-barre { border-color: rgb(var(--creme) / 0.5); background: rgb(var(--creme) / 0.1); }
+:root.sombre .carnet-frise { border-left-color: rgb(var(--creme) / 0.35); }

@@ -468,3 +468,11 @@ sur les trois sites ; les règles CSS sont à la fin de `globals.css`.
   les trois sites), bouton « Trois sites » de la barre et Ctrl+K.
 - **En-têtes** : `en-tetes-securite.js` (identique sur les trois sites).
 - **Secrets** : `npm run secrets` (`SCELLE_CLE=…` pour la phrase du sceau).
+
+## Lot 97 — Carnet de voyage
+
+- `/carnet` (`src/components/carnet/Carnet.tsx`), lien « Carnet » de la barre.
+- Migration 0122 : `carnet_etapes` (une ligne par arrivée, remplie par un
+  déclencheur sur `character_positions`), `carnet_notes` (note privée par
+  lieu), `carnet()` (chiffres, étapes, lieux parcourus). Lisible hors ligne
+  (`carnet` est dans `LECTURES`, `/carnet` dans le service worker).

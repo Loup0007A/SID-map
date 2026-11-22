@@ -1,7 +1,7 @@
 /*
  * Service worker de la Cartographie (Lot 96) : la carte s'ouvre sans réseau.
  *
- *  - pages (/carte, /ville/…, /batiment/…, /lieu/…) : réseau d'abord ; sans
+ *  - pages (/carte, /carnet, /ville/…, /batiment/…, /lieu/…) : réseau d'abord ; sans
  *    réseau, la dernière version vue ;
  *  - JavaScript et CSS de Next (/_next/static) : jamais modifiés une fois
  *    publiés, gardés tels quels ;
@@ -10,11 +10,11 @@
  * Les données (lieux, routes, météo…) sont gardées par la page elle-même
  * (src/lib/horsLigne.ts). Rien n'est gardé pour /login ni pour l'API.
  */
-const VERSION = "carto-v1";
+const VERSION = "carto-v2";
 const PAGES = `${VERSION}-pages`;
 const STATIQUE = `${VERSION}-statique`;
 const IMAGES = `${VERSION}-images`;
-const PAGES_GARDEES = /^\/(carte|ville\/|batiment\/|lieu\/)/;
+const PAGES_GARDEES = /^\/(carte|carnet|ville\/|batiment\/|lieu\/)/;
 const MAX_IMAGES = 400;
 
 self.addEventListener("install", () => self.skipWaiting());

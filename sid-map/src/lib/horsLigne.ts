@@ -18,6 +18,7 @@ const SAVED_AT = "x-sid-enregistre";
 /** Fonctions sans effet (lectures) dont la réponse peut être resservie hors ligne. */
 const LECTURES = new Set([
   "get_world_map",
+  "carnet",
   "get_city_plan",
   "get_building_detail",
   "map_weather_now",

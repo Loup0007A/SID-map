@@ -88,6 +88,15 @@ export default function Navbar() {
             {l.label}
           </Link>
         ))}
+        {/* Lot 97 : carnet de voyage (visible aussi sur téléphone). */}
+        <Link
+          href="/carnet"
+          className={`shrink-0 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none transition ${
+            pathname === '/carnet' ? 'nav-current' : 'text-paper/75 hover:text-accent'
+          }`}
+        >
+          Carnet<span className="hidden lg:inline"> de voyage</span>
+        </Link>
         {/* Lot 96 : recherche sur les trois sites (Ctrl+K). */}
         <BoutonRechercheCommune className="nav-btn flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 font-display text-[0.95rem] leading-none" />
         <button
