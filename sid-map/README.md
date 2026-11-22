@@ -485,3 +485,9 @@ sur les trois sites ; les règles CSS sont à la fin de `globals.css`.
   `mes_epingles` est dans `LECTURES` (hors ligne).
 - **Contraste renforcé** : classe `contraste-fort`, `--attenue` dans
   `tailwind.config.ts`, règles en fin de `globals.css`.
+
+## Lot 99 — Audit de sécurité
+
+- Connexion : `?next=` limité aux chemins internes (`/\site` refusé).
+- Client service_role retiré de `src/lib/supabase/server.ts` (inutilisé).
+- Détails : `CHANGELOG_LOT99_AUDIT_SECURITE.md`.

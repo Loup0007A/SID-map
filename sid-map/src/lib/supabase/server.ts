@@ -30,15 +30,3 @@ export function createClient() {
     }
   );
 }
-
-// Client "admin" : bypass RLS. UNIQUEMENT dans des routes serveur qui
-// vérifient elles-mêmes les permissions (ex: purge de commentaires,
-// tâches cron). Ne jamais exposer côté client.
-export function createAdminClient() {
-  const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}

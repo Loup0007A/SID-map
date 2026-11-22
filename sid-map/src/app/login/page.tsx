@@ -26,7 +26,8 @@ function LoginForm() {
   const [intro, setIntro] = useState(false);
   // Retour vers la page demandée (chemin interne seulement).
   const nextParam = params.get('next');
-  const next = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/carte';
+  // « /\site.com » vaut « //site.com » pour un navigateur : refusé aussi (Lot 99).
+  const next = nextParam && /^\/(?![\\/])[^\s\\]*$/.test(nextParam) ? nextParam : '/carte';
 
   // Déjà connecté : directement à la carte.
   useEffect(() => {
