@@ -10,6 +10,7 @@ import CommentsBox from '@/components/map/CommentsBox';
 import Navbar from '@/components/layout/Navbar';
 import Icon from '@/components/ui/Icon';
 import { SidIcon } from '@/components/icons/SidIcon';
+import { BoutonEpingle } from '@/components/Epingles';
 import OwnerPicker from '@/components/city/OwnerPicker';
 import PlaceOwnerSection, { useMemberLabel } from '@/components/map/PlaceOwnerSection';
 import { uploadMapImage } from '@/lib/uploadImage';
@@ -186,6 +187,9 @@ export default function InteriorPage(target: Target) {
               <div className="min-w-0 flex-1">
                 <p className="section-label">{head.kicker} · intérieur</p>
                 <h1 className="interior-title">{head.name}</h1>
+                <div className="mt-2">
+                  <BoutonEpingle kind={target.kind === 'place' ? 'lieu' : 'batiment'} cible={target.id} ici="map" nom={head.name} />
+                </div>
                 {!editing && (
                   <p className="mt-2 max-w-[65ch] whitespace-pre-wrap font-serif text-[1.05rem] leading-relaxed">
                     {head.description || (canEdit ? 'Pas encore de description. Ajoute-en une.' : 'Pas encore de description.')}

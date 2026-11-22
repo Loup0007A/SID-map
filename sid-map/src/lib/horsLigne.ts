@@ -19,6 +19,7 @@ const SAVED_AT = "x-sid-enregistre";
 const LECTURES = new Set([
   "get_world_map",
   "carnet",
+  "mes_epingles",
   "get_city_plan",
   "get_building_detail",
   "map_weather_now",

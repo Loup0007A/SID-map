@@ -1,5 +1,6 @@
 'use client';
 
+import { BoutonEpingle } from '@/components/Epingles';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -378,6 +379,11 @@ export default function CityMap({ cityId }: { cityId: string }) {
         <div className="city-cartouche pointer-events-auto">
           <span className="section-label">Plan de ville</span>
           <span className="city-cartouche-name">{city?.name ?? '…'}</span>
+          {city && (
+            <span className="mt-1.5 block">
+              <BoutonEpingle kind="lieu" cible={cityId} ici="map" nom={city.name} />
+            </span>
+          )}
         </div>
       </div>
 

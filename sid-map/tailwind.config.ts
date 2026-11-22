@@ -25,7 +25,7 @@ const config: Config = {
       // Lisibilité (Lot 95) : un texte « paper » estompé (text-paper/65…)
       // garde au moins 80 % d'opacité (4,5:1) ; fonds et bordures inchangés.
       textColor: {
-        paper: 'rgb(var(--t-paper) / calc(0.8 + <alpha-value> * 0.2))'
+        paper: 'rgb(var(--t-paper) / calc(var(--attenue, 0.8) + <alpha-value> * (1 - var(--attenue, 0.8))))'
       },
       fontFamily: {
         display: ['"Alegreya SC"', 'Georgia', 'serif'],

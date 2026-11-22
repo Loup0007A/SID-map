@@ -133,11 +133,12 @@ export default function DetailPanel({
           <button
             onClick={onToggleFavorite}
             aria-pressed={!!isFavorite}
+            title="Épingles : retrouvables sur les trois sites (Ctrl+K)"
             className={`ml-auto mr-2 rounded-lg border px-2.5 py-1 text-xs ${
               isFavorite ? 'border-[#e7c34a]/60 text-[#e7c34a]' : 'border-white/15 text-paper/70 hover:border-accent hover:text-accent'
             }`}
           >
-            {isFavorite ? '★ Favori' : '☆ Favori'}
+            {isFavorite ? '★ Épinglé' : '☆ Épingler'}
           </button>
         )}
         {canEdit && (

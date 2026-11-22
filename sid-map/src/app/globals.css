@@ -1257,3 +1257,27 @@ body { overflow-wrap: break-word; } /* Lot 95 */
 .carnet-note { border-left: 3px solid rgb(var(--accent) / 0.7); padding-left: 0.7rem; font-size: 1.02rem; line-height: 1.55; }
 :root.sombre .carnet-barre { border-color: rgb(var(--creme) / 0.5); background: rgb(var(--creme) / 0.1); }
 :root.sombre .carnet-frise { border-left-color: rgb(var(--creme) / 0.35); }
+
+/* =========================================================
+   Contraste renforcé (Lot 98, Réglages du Dossier Central) : textes
+   estompés pleins (--attenue, tailwind.config.ts), fond uni, bordures
+   marquées, cadre de focus épais.
+   ========================================================= */
+:root.contraste-fort { --attenue: 1; }
+:root.contraste-fort .fond { background: rgb(var(--fond)); }
+:root.contraste-fort .fond::after, :root.contraste-fort .fond-particules, :root.contraste-fort .feuille-ombre { display: none; }
+:root.contraste-fort :is([class*="border-white/"], [class*="border-paper/"]) { border-color: rgb(var(--t-paper) / 0.7); }
+:root.contraste-fort :is(.opacity-60, .opacity-70, .opacity-75, .opacity-80, .btn-ghost) { opacity: 1; }
+:root.contraste-fort :focus-visible { outline: 3px solid rgb(var(--t-paper)) !important; outline-offset: 2px; }
+:root.contraste-fort ::placeholder { color: currentColor; opacity: 0.8; }
+:root.contraste-fort .glass { box-shadow: inset 0 0 0 2px rgb(var(--t-paper) / 0.6); }
+
+/* --- Épingles (Lot 98, Epingles.tsx) --- */
+.epingle-bouton {
+  display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; border-radius: 999px;
+  border: 2px solid currentColor; font-family: var(--font-sc); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em;
+}
+.epingle-bouton:hover:not(:disabled) { background: rgb(var(--t-paper) / 0.12); }
+.epingle-bouton[aria-pressed="true"] { background: rgb(var(--t-paper) / 0.16); }
+.epingle-bouton:disabled { opacity: 0.6; }
+.epingle-erreur { display: block; margin-top: 0.25rem; font-size: 0.8rem; color: rgb(var(--accent)); }

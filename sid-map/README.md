@@ -476,3 +476,12 @@ sur les trois sites ; les règles CSS sont à la fin de `globals.css`.
   déclencheur sur `character_positions`), `carnet_notes` (note privée par
   lieu), `carnet()` (chiffres, étapes, lieux parcourus). Lisible hors ligne
   (`carnet` est dans `LECTURES`, `/carnet` dans le service worker).
+
+## Lot 98 — Épingles, contraste
+
+- **Épingles** : bouton « Épingler » des lieux, bâtiments et plans de ville ;
+  les lieux favoris (`useFavorites`) sont maintenant les épingles « lieu » du
+  compte (`src/components/Epingles.tsx`, migration 0125 du Dossier Central).
+  `mes_epingles` est dans `LECTURES` (hors ligne).
+- **Contraste renforcé** : classe `contraste-fort`, `--attenue` dans
+  `tailwind.config.ts`, règles en fin de `globals.css`.
