@@ -491,3 +491,10 @@ sur les trois sites ; les règles CSS sont à la fin de `globals.css`.
 - Connexion : `?next=` limité aux chemins internes (`/\site` refusé).
 - Client service_role retiré de `src/lib/supabase/server.ts` (inutilisé).
 - Détails : `CHANGELOG_LOT99_AUDIT_SECURITE.md`.
+
+## Lot 100 — Next 16
+
+- Next 16.4.6 et React 19 (Next 14 n'est plus corrigé).
+- `createClient()` serveur asynchrone, `middleware.ts` devient `proxy.ts`,
+  build avec `--webpack`, `npm run lint` passe par ESLint.
+- Node 20.9 minimum sur Vercel. Détails : `CHANGELOG_LOT100_NEXT16.md`.

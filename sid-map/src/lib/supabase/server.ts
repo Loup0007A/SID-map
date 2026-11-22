@@ -5,8 +5,8 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 // Client "serveur" respectant le RLS (à utiliser dans les Server
 // Components et Route Handlers).
-export function createClient() {
-  const cookieStore = cookies();
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,8 +22,8 @@ export function createClient() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // appelé depuis un Server Component : ignoré, le middleware
-            // se charge du refresh de session.
+            // appelé depuis un Server Component : ignoré, le proxy
+            // (src/proxy.ts) se charge du refresh de session.
           }
         }
       }

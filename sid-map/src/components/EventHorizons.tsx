@@ -259,7 +259,7 @@ function Armistice() {
   );
 }
 
-const ART: Partial<Record<HorizonKind, () => JSX.Element>> = {
+const ART: Partial<Record<HorizonKind, () => React.JSX.Element>> = {
   halloween: Halloween,
   noel: Noel,
   saint_valentin: Valentin,

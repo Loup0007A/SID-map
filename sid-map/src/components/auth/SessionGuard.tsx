@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 /**
  * Session expirée et impossible à rafraîchir (déconnexion ailleurs, compte
  * supprimé…) : retour à la connexion. Lecture sur place, sans réseau, sauf
- * si le jeton doit être rafraîchi. Le middleware, lui, ne vérifie que la
+ * si le jeton doit être rafraîchi. Le proxy (src/proxy.ts), lui, ne vérifie que la
  * présence du cookie.
  */
 export default function SessionGuard() {

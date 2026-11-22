@@ -11,7 +11,7 @@ import { withComfortCookie } from '@/lib/comfortCookie';
  * données restent protégées par la base (RLS). Avant, chaque page attendait
  * ici un aller-retour vers le serveur d'authentification de Supabase.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname.startsWith('/login');
   // Pages légales : lisibles sans être connecté.

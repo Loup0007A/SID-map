@@ -7,7 +7,7 @@ export default function ExportMapButton({
   svgRef,
   filename
 }: {
-  svgRef: React.RefObject<SVGSVGElement>;
+  svgRef: React.RefObject<SVGSVGElement | null>;
   filename: string;
 }) {
   const { showToast } = useToast();

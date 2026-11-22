@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 
 /**
- * Lecture du cookie de session Supabase sans appel réseau (middleware).
+ * Lecture du cookie de session Supabase sans appel réseau (proxy).
  * Sert seulement à savoir s'il faut rafraîchir le jeton : les données, elles,
  * restent protégées par la base (RLS), qui vérifie le jeton à chaque requête.
  */

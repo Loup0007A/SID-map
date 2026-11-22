@@ -17,7 +17,7 @@ export default function ScaleBar({
 }: {
   /** plus petite taille possible sans laisser d'élément hors carte */
   minWorld?: number;
-  svgRef: React.RefObject<SVGSVGElement>;
+  svgRef: React.RefObject<SVGSVGElement | null>;
   viewBoxW: number;
   settings: MapSettings;
   canEdit: boolean;
