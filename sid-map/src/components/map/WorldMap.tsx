@@ -181,6 +181,61 @@ export default function WorldMap() {
   const { incursion, reload: reloadIncursion } = useIncursion();
   const eventSettings = useEventSettings();
   const [incursionOpen, setIncursionOpen] = useState(false);
+  // Colonne du haut (signalement, bandeau) : jamais plus bas que la pile de
+  // boutons quand elles se croisent (téléphone) ; au-delà, elle défile.
+  const hautRef = useRef<HTMLDivElement>(null);
+  const [hautMax, setHautMax] = useState<number | null>(null);
+  useEffect(() => {
+    const calc = () => {
+      const h = hautRef.current;
+      const pile = document.querySelector('[data-pile-actions]');
+      if (!h || !pile) return setHautMax(null);
+      const a = h.getBoundingClientRect();
+      // Étendue réelle des panneaux (la colonne elle-même prend toute la largeur).
+      let gauche = Infinity;
+      let droite = -Infinity;
+      for (const el of h.children) {
+        const r = el.getBoundingClientRect();
+        if (r.width) {
+          gauche = Math.min(gauche, r.left);
+          droite = Math.max(droite, r.right);
+        }
+      }
+      let top = Infinity;
+      for (const el of pile.children) {
+        const r = el.getBoundingClientRect();
+        if (r.height && r.left < droite && r.right > gauche) top = Math.min(top, r.top);
+      }
+      const m = top === Infinity ? null : Math.max(96, Math.floor(top - a.top - 8));
+      setHautMax((v) => (v === m ? v : m));
+    };
+    calc();
+    const t = setInterval(calc, 800);
+    window.addEventListener('resize', calc);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener('resize', calc);
+    };
+  }, []);
+  // Signalement de créature masqué par le membre (cet appareil, par incursion).
+  const [incursionMasquee, setIncursionMasquee] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      setIncursionMasquee(localStorage.getItem('sid-map-incursion-masquee'));
+    } catch {
+      /* stockage indisponible */
+    }
+  }, []);
+  const masquerIncursion = (id: string | null) => {
+    setIncursionMasquee(id);
+    setIncursionOpen(false);
+    try {
+      if (id) localStorage.setItem('sid-map-incursion-masquee', id);
+      else localStorage.removeItem('sid-map-incursion-masquee');
+    } catch {
+      /* stockage indisponible */
+    }
+  };
   const [weatherFocus, setWeatherFocus] = useState<string | null>(null);
   const [showWeather, setShowWeather] = useState(true);
 
@@ -1794,7 +1849,7 @@ export default function WorldMap() {
           />
         )}
 
-        {incursion?.started && (
+        {incursion?.started && incursion.id !== incursionMasquee && (
           <IncursionLayer incursion={incursion} showReach={incursionOpen} onOpen={() => setIncursionOpen(true)} />
         )}
 
@@ -1985,7 +2040,6 @@ export default function WorldMap() {
         </div>
       )}
 
-      <MapCoach tip={coachTip} onDismiss={guide.dismiss} />
 
       {flightMode && flightTarget && myPlaceForFlight && activeMountForFlight && (
         <FlightPanel
@@ -2070,20 +2124,31 @@ export default function WorldMap() {
         />
       )}
 
-      {incursion?.started && (
-        <IncursionCard
-          onManage={canEdit ? () => setShowCreatures(true) : undefined}
-          incursion={incursion}
-          open={incursionOpen}
-          onToggle={() => setIncursionOpen((v) => !v)}
-          onFocus={() => {
-            const p = incursionPos(incursion, Date.now());
-            vp.panTo(p.x, p.y, 30, isDesktop ? 0.5 : 0.4);
-          }}
-          onChanged={reloadIncursion}
-          toast={showToast}
-        />
-      )}
+      {/* Haut de la carte : signalement de créature puis bandeau d'aide ou de
+          voyage, empilés (ils se recouvraient, boutons compris). Sur téléphone,
+          la colonne s'arrête avant les boutons de zoom. */}
+      <div
+        ref={hautRef}
+        style={hautMax != null ? { maxHeight: hautMax } : undefined}
+        className="pointer-events-none absolute inset-x-0 top-16 z-20 flex flex-col items-center gap-2 overflow-y-auto overscroll-contain pl-3 pr-16 scrollbar-thin sm:px-3 [&>*]:shrink-0"
+      >
+        {incursion?.started && incursion.id !== incursionMasquee && (
+          <IncursionCard
+            onHide={() => masquerIncursion(incursion.id)}
+            onManage={canEdit ? () => setShowCreatures(true) : undefined}
+            incursion={incursion}
+            open={incursionOpen}
+            onToggle={() => setIncursionOpen((v) => !v)}
+            onFocus={() => {
+              const p = incursionPos(incursion, Date.now());
+              vp.panTo(p.x, p.y, 30, isDesktop ? 0.5 : 0.4);
+            }}
+            onChanged={reloadIncursion}
+            toast={showToast}
+          />
+        )}
+        <MapCoach tip={coachTip} onDismiss={guide.dismiss} />
+      </div>
 
       <MapActionStack raised={canEdit && toolbarOpen && editMode}>
         {weather && (weather.enabled || canEdit) && (
@@ -2142,6 +2207,16 @@ export default function WorldMap() {
           />
         </div>
         <MapLegend
+          extra={
+            incursion?.started && incursion.id === incursionMasquee ? (
+              <button
+                onClick={() => masquerIncursion(null)}
+                className="w-full rounded-lg border border-[#c0392b]/60 px-2 py-1.5 text-left text-xs text-paper/85 hover:bg-[#c0392b]/15"
+              >
+                Réafficher le signalement : {incursion.entry.title ?? 'une créature'} rôde
+              </button>
+            ) : undefined
+          }
           sections={[
             {
               title: 'Lieux',

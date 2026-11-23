@@ -2,7 +2,7 @@
 
 import Icon from '@/components/ui/Icon';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { usePermission } from '@/lib/hooks/usePermission';
 import IconPicker from './IconPicker';
 
@@ -30,7 +30,7 @@ function slugify(label: string) {
     .replace(/^_+|_+$/g, '');
 }
 
-export default function MapLegend({ sections }: { sections: LegendSection[] }) {
+export default function MapLegend({ sections, extra }: { sections: LegendSection[]; extra?: ReactNode }) {
   const { allowed: canEdit } = usePermission('manage_map');
   const [open, setOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -42,6 +42,7 @@ export default function MapLegend({ sections }: { sections: LegendSection[] }) {
     <div className="relative">
       {open && (
         <div className="anim-pop glass-strong mb-2 max-h-[65vh] w-64 space-y-4 overflow-y-auto scrollbar-thin rounded-2xl p-3">
+          {extra}
           {sections.map((s) => (
             <div key={s.title}>
               <p className="mb-1 font-display text-[10px] uppercase tracking-wide text-accent">{s.title}</p>

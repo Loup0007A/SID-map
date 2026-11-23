@@ -22,7 +22,10 @@ export default function IncursionCard({
   onChanged,
   toast,
   onManage,
+  onHide,
 }: {
+  /** Masquer complètement ce signalement (panneau et marqueur). */
+  onHide: () => void;
   /** Gestion de la carte : ouvrir la gestion des créatures. */
   onManage?: () => void;
   incursion: Incursion;
@@ -64,9 +67,9 @@ export default function IncursionCard({
   }
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-16 z-20 flex justify-center pl-3 pr-16 sm:px-3">
       <div className="incursion-card pointer-events-auto glass-strong w-full max-w-md overflow-hidden rounded-2xl text-paper">
-        <button onClick={onToggle} aria-expanded={open} className="flex w-full items-center gap-3 p-2.5 text-left">
+        <div className="flex items-center">
+        <button onClick={onToggle} aria-expanded={open} className="flex min-w-0 flex-1 items-center gap-3 p-2.5 text-left">
           <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full ring-2 ring-[#c0392b]">
             {incursion.entry.image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -84,6 +87,15 @@ export default function IncursionCard({
           </span>
           <span aria-hidden className={`text-paper/60 transition ${open ? 'rotate-180' : ''}`}>▾</span>
         </button>
+        <button
+          onClick={onHide}
+          aria-label="Masquer ce signalement"
+          title="Masquer ce signalement (Légende pour le réafficher)"
+          className="mr-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg leading-none text-paper/70 hover:bg-white/10 hover:text-paper"
+        >
+          ×
+        </button>
+        </div>
         {open && (
           <div className="space-y-2 border-t border-white/10 p-3">
             {incursion.entry.summary && <p className="text-sm text-paper/80">{incursion.entry.summary}</p>}
@@ -121,6 +133,5 @@ export default function IncursionCard({
           </div>
         )}
       </div>
-    </div>
   );
 }

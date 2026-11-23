@@ -8,7 +8,12 @@
 // en bas de l'écran ; on remonte la pile pour ne pas la recouvrir.
 export default function MapActionStack({ children, raised = false }: { children: React.ReactNode; raised?: boolean }) {
   return (
-    <div className={`absolute right-4 z-20 flex flex-col-reverse items-end gap-2 md:bottom-3 ${raised ? 'bottom-36' : 'bottom-20'}`}>
+    // Le conteneur laisse passer les clics (ses vides recouvraient la carte et
+    // le bandeau de voyage) ; seuls ses boutons les reçoivent.
+    <div
+      data-pile-actions
+      className={`pointer-events-none absolute right-4 z-20 flex flex-col-reverse items-end gap-2 md:bottom-3 [&>*]:pointer-events-auto ${raised ? 'bottom-36' : 'bottom-20'}`}
+    >
       {children}
     </div>
   );
