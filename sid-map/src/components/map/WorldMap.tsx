@@ -217,6 +217,29 @@ export default function WorldMap() {
       window.removeEventListener('resize', calc);
     };
   }, []);
+  // Bandeaux masqués sur cet appareil (un voyage précis : « voyage:<départ> »).
+  const [bandeauxMasques, setBandeauxMasques] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem('sid-map-bandeaux-masques') ?? '[]');
+      if (Array.isArray(v)) setBandeauxMasques(v.filter((x) => typeof x === 'string'));
+    } catch {
+      /* stockage indisponible */
+    }
+  }, []);
+  const basculerBandeau = (cle: string, masquer: boolean) => {
+    setBandeauxMasques((l) => {
+      const n = masquer ? [...l.filter((x) => x !== cle), cle].slice(-30) : l.filter((x) => x !== cle);
+      try {
+        localStorage.setItem('sid-map-bandeaux-masques', JSON.stringify(n));
+      } catch {
+        /* stockage indisponible */
+      }
+      return n;
+    });
+  };
+  // Consigne du vol libre réduite à son bouton « Quitter ».
+  const [volReduit, setVolReduit] = useState(false);
   // Signalement de créature masqué par le membre (cet appareil, par incursion).
   const [incursionMasquee, setIncursionMasquee] = useState<string | null>(null);
   useEffect(() => {
@@ -1092,10 +1115,11 @@ export default function WorldMap() {
       const dest = places.find((p) => p.id === trip?.destinationId);
       const stop = trip && trip.legCount > 1 ? places.find((p) => p.id === trip.nextStopId) : null;
       const remaining = trip?.remainingMinutes ?? computeRemainingMinutes(myPos, now);
+      const cle = `voyage:${myPos.travel_started_at}`;
+      if (bandeauxMasques.includes(cle)) return null;
       return {
-        id: 'traveling',
+        id: cle,
         emoji: myPos.flight_target_place_id ? '🕊️' : '🛣',
-        sticky: true,
         text: `En voyage vers ${dest?.name ?? 'ta destination'} — ${remaining <= 0 ? 'arrivée imminente' : `arrivée dans ${formatMinutes(remaining)}`}${stop ? ` (prochaine étape : ${stop.name})` : ''}. Le trajet continue même page fermée.`,
         secondary: { label: 'Détails', run: () => setShowPositionPicker(true) }
       };
@@ -1416,6 +1440,61 @@ export default function WorldMap() {
     document.documentElement.classList.add('map-page');
     return () => document.documentElement.classList.remove('map-page');
   }, []);
+
+  // Hors vol libre, la consigne retrouve sa taille.
+  useEffect(() => {
+    if (!flightMode) setVolReduit(false);
+  }, [flightMode]);
+
+  // Consigne du mode en cours (mesure, vol libre, édition) et son bouton.
+  const consigne = modeHint ? (
+    <>
+      {flightMode && volReduit ? (
+        <span aria-hidden>🕊️</span>
+      ) : (
+        <span className="min-w-0"><GlyphText text={modeHint} /></span>
+      )}
+      {measureMode ? (
+        <button
+          onClick={() => {
+            setMeasureMode(false);
+            setMeasurePts([]);
+          }}
+          className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent"
+        >
+          Quitter
+        </button>
+      ) : flightMode ? (
+        <button
+          onClick={() => {
+            setFlightMode(false);
+            setFlightTarget(null);
+          }}
+          className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent"
+        >
+          Quitter
+        </button>
+      ) : deleteMode ? (
+        <button onClick={toggleDeleteMode} className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent">
+          Désactiver
+        </button>
+      ) : activeTool ? (
+        <button onClick={resetDrawing} className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent">
+          Annuler
+        </button>
+      ) : null}
+      {flightMode && (
+        <button
+          onClick={() => setVolReduit((v) => !v)}
+          aria-label={volReduit ? 'Afficher la consigne du vol libre' : 'Réduire la consigne du vol libre'}
+          title={volReduit ? 'Afficher la consigne' : 'Réduire'}
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-paper/65 hover:bg-white/10 hover:text-accent"
+        >
+          {volReduit ? '…' : '×'}
+        </button>
+      )}
+    </>
+  ) : null;
 
   return (
     <div className="flex h-[100dvh] w-full flex-col overflow-hidden">
@@ -2005,38 +2084,9 @@ export default function WorldMap() {
       {modeHint && (
         <div
           role="status"
-          className="anim-drop glass-strong absolute left-1/2 top-36 z-20 md:bottom-3 md:top-auto flex w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-2xl px-3.5 py-2 text-xs text-paper/90"
+          className="anim-drop glass-strong absolute bottom-3 left-1/2 z-20 hidden w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-2 rounded-2xl px-3.5 py-2 text-xs text-paper/90 md:flex"
         >
-          <span className="min-w-0"><GlyphText text={modeHint} /></span>
-          {measureMode ? (
-            <button
-              onClick={() => {
-                setMeasureMode(false);
-                setMeasurePts([]);
-              }}
-              className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent"
-            >
-              Quitter
-            </button>
-          ) : flightMode ? (
-            <button
-              onClick={() => {
-                setFlightMode(false);
-                setFlightTarget(null);
-              }}
-              className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent"
-            >
-              Quitter
-            </button>
-          ) : deleteMode ? (
-            <button onClick={toggleDeleteMode} className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent">
-              Désactiver
-            </button>
-          ) : activeTool ? (
-            <button onClick={resetDrawing} className="shrink-0 rounded-full border border-white/20 px-2.5 py-0.5 text-paper/70 hover:text-accent">
-              Annuler
-            </button>
-          ) : null}
+          {consigne}
         </div>
       )}
 
@@ -2147,7 +2197,12 @@ export default function WorldMap() {
             toast={showToast}
           />
         )}
-        <MapCoach tip={coachTip} onDismiss={guide.dismiss} />
+        {modeHint && (
+          <div role="status" className="anim-drop glass-strong pointer-events-auto flex w-max max-w-full items-center gap-2 rounded-2xl px-3.5 py-2 text-xs text-paper/90 md:hidden">
+            {consigne}
+          </div>
+        )}
+        <MapCoach tip={coachTip} onDismiss={(id) => (id.startsWith('voyage:') ? basculerBandeau(id, true) : guide.dismiss(id))} />
       </div>
 
       <MapActionStack raised={canEdit && toolbarOpen && editMode}>
@@ -2208,13 +2263,25 @@ export default function WorldMap() {
         </div>
         <MapLegend
           extra={
-            incursion?.started && incursion.id === incursionMasquee ? (
-              <button
-                onClick={() => masquerIncursion(null)}
-                className="w-full rounded-lg border border-[#c0392b]/60 px-2 py-1.5 text-left text-xs text-paper/85 hover:bg-[#c0392b]/15"
-              >
-                Réafficher le signalement : {incursion.entry.title ?? 'une créature'} rôde
-              </button>
+            (incursion?.started && incursion.id === incursionMasquee) || (myPos?.travel_started_at && bandeauxMasques.includes(`voyage:${myPos.travel_started_at}`)) ? (
+              <div className="space-y-1.5">
+                {incursion?.started && incursion.id === incursionMasquee && (
+                  <button
+                    onClick={() => masquerIncursion(null)}
+                    className="w-full rounded-lg border border-[#c0392b]/60 px-2 py-1.5 text-left text-xs text-paper/85 hover:bg-[#c0392b]/15"
+                  >
+                    Réafficher le signalement : {incursion.entry.title ?? 'une créature'} rôde
+                  </button>
+                )}
+                {myPos?.travel_started_at && bandeauxMasques.includes(`voyage:${myPos.travel_started_at}`) && (
+                  <button
+                    onClick={() => basculerBandeau(`voyage:${myPos.travel_started_at}`, false)}
+                    className="w-full rounded-lg border border-white/20 px-2 py-1.5 text-left text-xs text-paper/85 hover:bg-white/10"
+                  >
+                    Réafficher le bandeau : {myPos.flight_target_place_id ? 'vol' : 'voyage'} en cours
+                  </button>
+                )}
+              </div>
             ) : undefined
           }
           sections={[

@@ -99,6 +99,16 @@ export function ElectionLayer({ variant }: { variant: 'map' | 'wiki' }) {
     };
   }, [force]);
 
+  // Étiquette masquée sur cet appareil, jusqu'au prochain changement.
+  const [masquee, setMasquee] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      setMasquee(localStorage.getItem('sid-election-etiquette-masquee'));
+    } catch {
+      /* stockage indisponible */
+    }
+  }, []);
+
   if (!mounted) return null;
   const label = status?.revealed
     ? status.winner
@@ -137,10 +147,28 @@ export function ElectionLayer({ variant }: { variant: 'map' | 'wiki' }) {
           </>
         )}
       </div>
-      {label && (
-        <a href={`${BRAND.urls.site}/dashboard`} className={`el-pill el-pill-${variant}${force ? ' is-force' : ''}`}>
-          <span aria-hidden>{force ? '⚠' : '👑'}</span> {label}
-        </a>
+      {label && label !== masquee && (
+        <span className={`el-pill el-pill-${variant}${force ? ' is-force' : ''}`}>
+          <a href={`${BRAND.urls.site}/dashboard`} className="el-pill-lien">
+            <span aria-hidden>{force ? '⚠' : '👑'}</span> {label}
+          </a>
+          <button
+            type="button"
+            className="el-pill-fermer"
+            aria-label="Masquer cette étiquette"
+            title="Masquer"
+            onClick={() => {
+              setMasquee(label);
+              try {
+                localStorage.setItem('sid-election-etiquette-masquee', label);
+              } catch {
+                /* stockage indisponible */
+              }
+            }}
+          >
+            ×
+          </button>
+        </span>
       )}
     </>,
     document.body
