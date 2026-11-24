@@ -35,7 +35,7 @@ export interface AppDef {
 export const APPS: AppDef[] = [
   { id: 'position', name: 'Ma position', description: 'Où tu es, ton statut, partir en voyage.', category: 'voyage', emoji: '📍' },
   { id: 'flight', name: 'Vol libre', description: 'Voler vers un lieu en ligne droite avec une monture volante.', category: 'voyage', emoji: '🕊️' },
-  { id: 'itinerary', name: 'Itinéraire', description: 'Calculer un trajet entre deux lieux.', category: 'voyage', emoji: '🧭' },
+  { id: 'itinerary', name: 'Itinéraire', description: 'Calculer un trajet, ajouter des pauses, le programmer à la seconde.', category: 'voyage', emoji: '🧭' },
   { id: 'nearby', name: 'À proximité', description: 'Les lieux les plus proches de ton personnage, avec distance et durée.', category: 'voyage', emoji: '📡' },
   { id: 'notes', name: 'Carnet', description: 'Tes notes de voyage, gardées sur cet appareil.', category: 'personnage', emoji: '📓' },
   { id: 'mounts', name: 'Montures', description: 'Ta monture, ses stats et le catalogue.', category: 'personnage', emoji: '🐎' },

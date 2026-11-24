@@ -20,6 +20,7 @@ const LECTURES = new Set([
   "get_world_map",
   "carnet",
   "mes_epingles",
+  "mes_trajets_programmes",
   "get_city_plan",
   "get_building_detail",
   "map_weather_now",

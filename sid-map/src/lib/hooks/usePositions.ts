@@ -79,9 +79,9 @@ export function usePositions() {
   }
 
   /** Itinéraire à plusieurs étapes, depuis la position actuelle. */
-  async function startRoutePlan(steps: { routeId: string; toPlaceId: string }[]) {
+  async function startRoutePlan(steps: ({ routeId: string; toPlaceId: string } | { pauseMinutes: number })[]) {
     const { data, error } = await supabase.rpc('start_route_plan', {
-      p_planned_path: steps.map((s) => ({ route_id: s.routeId, to_place_id: s.toPlaceId }))
+      p_planned_path: steps.map((s) => ('pauseMinutes' in s ? { pause_minutes: s.pauseMinutes } : { route_id: s.routeId, to_place_id: s.toPlaceId }))
     });
     if (!error) load();
     const d = data as { error?: string; message?: string; duration_minutes?: number } | null;

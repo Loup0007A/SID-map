@@ -509,9 +509,12 @@ export default function WorldMap() {
   }, [loading, loadError, positionsHook.loading, myPos?.place_id, myPos?.active_mount_id, myPos?.status, zones.length, places.length, routes.length, biomes.length, relief.length, scaleSet, mountTypes.mountTypes.length]);
   useEffect(() => () => guide.setFacts(null), []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function startPlannedRoute(plan: RoutePlan): Promise<boolean> {
+  async function startPlannedRoute(plan: RoutePlan, pauses: Record<number, number> = {}): Promise<boolean> {
     const { error, message, data } = await positionsHook.startRoutePlan(
-      plan.steps.map((st) => ({ routeId: st.route.id, toPlaceId: st.toPlaceId }))
+      plan.steps.flatMap((st, i) => {
+        const leg = { routeId: st.route.id, toPlaceId: st.toPlaceId };
+        return pauses[i] ? [leg, { pauseMinutes: pauses[i] }] : [leg];
+      })
     );
     if (error) {
       showToast(message ?? 'Impossible de partir.', 'error');
@@ -535,7 +538,16 @@ export default function WorldMap() {
     traveling: !!myPos?.travel_started_at,
     speedMultiplier: activeMountForFlight?.speed_multiplier ?? 1,
     mountName: activeMountForFlight?.name ?? null,
-    onStart: startPlannedRoute
+    canFly: !!activeMountForFlight?.can_fly,
+    onStart: startPlannedRoute,
+    onFlyNow: async (toPlaceId: string) => {
+      const { error } = await positionsHook.startJourney({ targetPlaceId: toPlaceId });
+      if (error === 'out_of_range') showToast('Trop loin pour cette monture.', 'error');
+      else if (error === 'forbidden_biome') showToast('Cette monture ne peut pas traverser ce biome.', 'error');
+      else if (error) showToast('Vol impossible.', 'error');
+      else showToast('Envol !');
+      return !error;
+    }
   };
 
   async function confirmFlight() {
@@ -1119,8 +1131,10 @@ export default function WorldMap() {
       if (bandeauxMasques.includes(cle)) return null;
       return {
         id: cle,
-        emoji: myPos.flight_target_place_id ? '🕊️' : '🛣',
-        text: `En voyage vers ${dest?.name ?? 'ta destination'} — ${remaining <= 0 ? 'arrivée imminente' : `arrivée dans ${formatMinutes(remaining)}`}${stop ? ` (prochaine étape : ${stop.name})` : ''}. Le trajet continue même page fermée.`,
+        emoji: trip?.paused ? '⏸' : myPos.flight_target_place_id ? '🕊️' : '🛣',
+        text: trip?.paused
+          ? `En pause à ${places.find((p) => p.id === myPos.place_id)?.name ?? 'une étape'} jusqu’à ${trip.pauseEndsAt?.toLocaleTimeString('fr-FR') ?? '?'}, puis en route vers ${dest?.name ?? 'ta destination'} (arrivée dans ${formatMinutes(remaining)}). Le trajet continue même page fermée.`
+          : `En voyage vers ${dest?.name ?? 'ta destination'} — ${remaining <= 0 ? 'arrivée imminente' : `arrivée dans ${formatMinutes(remaining)}`}${stop ? ` (prochaine étape : ${stop.name})` : ''}. Le trajet continue même page fermée.`,
         secondary: { label: 'Détails', run: () => setShowPositionPicker(true) }
       };
     }
@@ -2347,7 +2361,7 @@ export default function WorldMap() {
           <Modal
             title="🧭 Itinéraire"
             windowId="itinerary"
-            maxWidth="max-w-xs"
+            maxWidth="max-w-sm"
             onClose={() => {
               setHighlightedPlan(null);
               setShowPlanner(false);

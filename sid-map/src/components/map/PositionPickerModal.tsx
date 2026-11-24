@@ -106,7 +106,12 @@ export default function PositionPickerModal({
           <p className="text-sm text-paper/80">
             En route vers <span className="text-accent">{destPlace?.name ?? '?'}</span>
           </p>
-          {stopPlace && (
+          {trip?.paused && (
+            <p className="text-xs text-accent">
+              En pause à {places.find((p) => p.id === myPosition.place_id)?.name ?? 'une étape'} jusqu’à {trip.pauseEndsAt?.toLocaleTimeString('fr-FR')}
+            </p>
+          )}
+          {stopPlace && !trip?.paused && (
             <p className="text-xs text-paper/60">
               Étape en cours : vers {stopPlace.name} · encore {trip!.legCount - 1} étape{trip!.legCount - 1 > 1 ? 's' : ''} après
             </p>

@@ -498,3 +498,15 @@ sur les trois sites ; les règles CSS sont à la fin de `globals.css`.
 - `createClient()` serveur asynchrone, `middleware.ts` devient `proxy.ts`,
   build avec `--webpack`, `npm run lint` passe par ESLint.
 - Node 20.9 minimum sur Vercel. Détails : `CHANGELOG_LOT100_NEXT16.md`.
+
+## Lot 102 — Trajets programmés
+
+- Migration 0123 : pauses dans le moteur de trajet (`_travel_tick`),
+  `_start_route_plan_at`, table `trajets_programmes`, `trajet_estimer`,
+  `trajet_programmer`, `trajet_annuler`, `mes_trajets_programmes`,
+  `trajets_programmes_lancer` (chaque minute via `run_scheduled_jobs`, 0132 du
+  Dossier Central, et à chaque vérification du membre).
+- `RoutePlannerPanel.tsx` (routes une à une, pauses, vol, heure à la seconde)
+  et `ScheduledTrips.tsx` (liste, annulation). Pauses : `isPaused` et
+  `tripInfo` dans `src/lib/travel.ts`.
+- Détails : `CHANGELOG_LOT102_TRAJETS_PROGRAMMES.md`.

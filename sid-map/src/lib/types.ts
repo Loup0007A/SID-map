@@ -126,7 +126,8 @@ export interface CharacterPosition {
   travel_started_at: string | null;
   travel_duration_minutes: number | null;
   /** étapes restantes (étape en cours comprise), durée figée au départ */
-  planned_path?: { route_id: string; to_place_id: string; minutes?: number }[] | null;
+  /** étapes restantes, l'étape en cours en tête ; une pause (0123) a pause, minutes et place_id */
+  planned_path?: { route_id?: string; to_place_id?: string; minutes?: number; pause?: boolean; place_id?: string }[] | null;
   arrived_at: string | null;
   active_mount_id: string | null;
   mount_expires_at?: string | null;

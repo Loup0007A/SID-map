@@ -197,7 +197,7 @@ export default function Carnet() {
                 )}
                 {parJour.map((list) => (
                   <section key={list[0].id} className="space-y-2">
-                    <h2 className="section-label">{jour(list[0].date)}</h2>
+                    <h2 className="section-label vellum inline-block rounded-full px-3 py-0.5">{jour(list[0].date)}</h2>
                     <ol className="carnet-frise space-y-2">
                       {list.map((e) => (
                         <li key={e.id} className="vellum rounded-xl px-4 py-3">
